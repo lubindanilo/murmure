@@ -99,6 +99,7 @@ p { text-wrap: pretty; margin: 0; }
 @media (hover: hover) { .copy:hover { opacity: 0.9; } }
 .copy:active { transform: scale(0.96); }
 .copy.done { background: var(--fg); color: var(--bg); }
+.mobile-note { display: none; }
 .hint { margin-top: 12px; font-size: 14px; line-height: 20px; color: var(--muted); }
 .proof { margin-top: 24px; font-size: 14px; line-height: 20px; color: var(--muted); }
 
@@ -203,6 +204,7 @@ p { text-wrap: pretty; margin: 0; }
   .title { font-size: 48px; }
   .lead { font-size: 18px; line-height: 28px; }
   .copy span { display: none; }
+  .mobile-note { display: block; margin-top: 12px; font-size: 14px; line-height: 20px; font-weight: 600; }
   .doc { padding: 24px 24px 48px; }
   .features, .steps ol { grid-template-columns: 1fr; }
   .features { gap: 40px; padding: 80px 16px; }
