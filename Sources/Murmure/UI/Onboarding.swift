@@ -51,7 +51,9 @@ struct OnboardingView: View {
     @EnvironmentObject var app: AppController
     @EnvironmentObject var settings: Settings
     @ObservedObject private var setup = Setup.shared
-    @State private var step: OnboardingStep = .welcome
+    /// `-demoStep N` en argument ouvre directement l'étape N (captures d'écran en CI).
+    @State private var step: OnboardingStep = OnboardingStep(rawValue: UserDefaults.standard.integer(forKey: "demoStep")) ?? .welcome
+    private let isDemo = UserDefaults.standard.object(forKey: "demoStep") != nil
     @State private var micGranted = AudioRecorder.permission == .authorized
     @State private var axGranted = HotkeyMonitor.isTrusted
     private let poll = Timer.publish(every: 0.5, on: .main, in: .common).autoconnect()
@@ -88,6 +90,7 @@ struct OnboardingView: View {
             let trusted = HotkeyMonitor.isTrusted
             if trusted && !axGranted { app.restartHotkey() }
             axGranted = trusted
+            if isDemo { return }
             if step == .microphone && micGranted { advance() }
             if step == .accessibility && axGranted { advance() }
         }

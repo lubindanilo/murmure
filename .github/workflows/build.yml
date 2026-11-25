@@ -114,6 +114,22 @@ jobs:
           test -x /Applications/Murmure.app/Contents/MacOS/Murmure
           codesign --verify --deep --strict /Applications/Murmure.app && echo "installé et signé"
 
+      - name: Captures d'écran
+        continue-on-error: true
+        run: |
+          mkdir -p shots
+          system_profiler SPDisplaysDataType | grep -i resolution || true
+          shot() { name=$1; shift; open -n build/Murmure.app --args "$@"; sleep 7; screencapture -x "shots/$name.png"; pkill -x Murmure || true; sleep 2; }
+          for s in 0 1 2 3 4 5; do shot "onboarding-$s" -hasCompletedOnboarding NO -demoStep $s; done
+          for sec in general modes dictionary history license; do shot "reglages-$sec" -hasCompletedOnboarding YES -demoSettings $sec; done
+          ls -la shots
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: shots-${{ github.sha }}
+          path: shots
+          if-no-files-found: ignore
+
       - uses: actions/upload-artifact@v4
         with:
           name: murmure-${{ github.sha }}

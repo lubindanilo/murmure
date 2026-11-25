@@ -28,7 +28,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         Task { @MainActor in
             AppController.shared.start()
-            if !Settings.shared.hasCompletedOnboarding {
+            if let demo = UserDefaults.standard.string(forKey: "demoSettings") {
+                SettingsWindow.shared.show(SettingsSection(rawValue: demo) ?? .general)
+            } else if !Settings.shared.hasCompletedOnboarding {
                 OnboardingWindow.shared.show()
             } else if !HotkeyMonitor.isTrusted || AudioRecorder.permission != .authorized {
                 SettingsWindow.shared.show(.general)
