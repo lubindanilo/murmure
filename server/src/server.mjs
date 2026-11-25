@@ -207,7 +207,7 @@ async function handleWebhook(event) {
 // ---------- HTTP ----------
 
 const buckets = new Map();
-function rateLimited(ip, limit = 60) {
+function rateLimited(ip, limit = 120) {
   const minute = Math.floor(Date.now() / 60_000);
   const key = `${ip}:${minute}`;
   const n = (buckets.get(key) ?? 0) + 1;

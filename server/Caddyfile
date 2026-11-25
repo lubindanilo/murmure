@@ -1,0 +1,4 @@
+188-245-2-239.sslip.io {
+	encode gzip
+	reverse_proxy licenses:8787
+}

@@ -1,0 +1,28 @@
+# Serveur de licences Murmure + Caddy (HTTPS automatique) sur l'IP publique du VPS.
+# Vercel relaie https://murmure-mac.vercel.app/api/* vers ce serveur.
+services:
+  licenses:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      PUBLIC_URL: https://murmure-mac.vercel.app/api
+    volumes:
+      - ./data:/data
+    mem_limit: 256m
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8787/health"]
+      interval: 30s
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on: [licenses]
+    ports:
+      - "188.245.2.239:80:80"
+      - "188.245.2.239:443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    mem_limit: 128m
+volumes:
+  caddy_data:
