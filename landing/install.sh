@@ -20,7 +20,7 @@ trap 'rm -rf "$tmp"' EXIT
 say "Téléchargement de Murmure…"
 curl -fL --progress-bar "$URL" -o "$tmp/Murmure.zip" || fail "Téléchargement impossible. Vérifiez votre connexion et réessayez."
 ditto -x -k "$tmp/Murmure.zip" "$tmp" || fail "Archive illisible. Réessayez dans un instant."
-[ -d "$tmp/$APP_NAME" ] || fail "Archive incomplète. Réessayez dans un instant."
+[ -d "${tmp}/${APP_NAME}" ] || fail "Archive incomplète. Réessayez dans un instant."
 
 dest="/Applications"
 [ -w "$dest" ] || dest="$HOME/Applications"
@@ -32,12 +32,12 @@ if pgrep -x Murmure >/dev/null 2>&1; then
   pkill -x Murmure 2>/dev/null || true
 fi
 
-say "Installation dans $dest…"
-rm -rf "$dest/$APP_NAME"
-ditto "$tmp/$APP_NAME" "$dest/$APP_NAME"
-xattr -dr com.apple.quarantine "$dest/$APP_NAME" 2>/dev/null || true
+say "Installation dans ${dest}…"
+rm -rf "${dest}/${APP_NAME}"
+ditto "${tmp}/${APP_NAME}" "${dest}/${APP_NAME}"
+xattr -dr com.apple.quarantine "${dest}/${APP_NAME}" 2>/dev/null || true
 
-open "$dest/$APP_NAME"
+open "${dest}/${APP_NAME}"
 if [ -n "${MURMURE_UPDATE:-}" ]; then
   say "Murmure est à jour."
 else

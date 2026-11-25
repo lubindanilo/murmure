@@ -74,7 +74,8 @@ jobs:
 
       - name: Audio de test
         run: |
-          VOICE=$(say -v '?' | awk '/fr_FR/{print $1; exit}')
+          VOICE=$(say -v '?' | awk '/fr_FR/ && /Thomas|Amélie|Amelie|Audrey|Aurélie/{print $1; exit}')
+          [ -n "$VOICE" ] || VOICE=$(say -v '?' | awk '/fr_FR/{print $1; exit}')
           echo "Voix : ${VOICE:-défaut}"
           say ${VOICE:+-v "$VOICE"} -o "$RUNNER_TEMP/fr.aiff" "Bonjour, je voudrais décaler la réunion de demain à quinze heures, parce que Louis ne peut pas le matin. Tu peux prévenir Axel ?"
           afconvert -f WAVE -d LEI16@16000 "$RUNNER_TEMP/fr.aiff" Tests/fixtures/fr.wav
