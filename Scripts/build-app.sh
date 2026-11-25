@@ -9,6 +9,8 @@ APP="$ROOT/build/Murmure.app"
 VERSION="$(cat "$ROOT/VERSION" 2>/dev/null || echo 0.1.0)"
 # Identité de signature : "-" (ad hoc) par défaut, ou "Developer ID Application: …" pour distribuer.
 SIGN_ID="${MURMURE_SIGN_IDENTITY:--}"
+KC_ARGS=()
+[ -n "${MURMURE_KEYCHAIN:-}" ] && KC_ARGS=(--keychain "$MURMURE_KEYCHAIN")
 
 cd "$ROOT"
 swift build -c "$CONFIG" --arch arm64
@@ -58,8 +60,8 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 PLIST
 
 # Signature : runtime durci + entitlements (micro, réseau) pour la notarisation.
-codesign --force --sign "$SIGN_ID" --timestamp=none "$APP/Contents/Frameworks/llama.framework"
-codesign --force --sign "$SIGN_ID" --options runtime --timestamp=none \
+codesign --force --sign "$SIGN_ID" ${KC_ARGS[@]+"${KC_ARGS[@]}"} --timestamp=none "$APP/Contents/Frameworks/llama.framework"
+codesign --force --sign "$SIGN_ID" ${KC_ARGS[@]+"${KC_ARGS[@]}"} --options runtime --timestamp=none \
   --entitlements "$ROOT/Resources/Murmure.entitlements" "$APP"
 
 echo "OK : $APP"

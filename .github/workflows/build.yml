@@ -1,0 +1,107 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+    paths: ["Sources/**", "Package.*", "Scripts/**", "Resources/**", "Tests/**", ".github/workflows/build.yml"]
+  workflow_dispatch:
+    inputs:
+      llms:
+        description: "LLM à comparer (ids séparés par des virgules, vide = aucun)"
+        default: ""
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mac:
+    runs-on: macos-15
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Environnement
+        run: |
+          sw_vers; uname -m; swift --version; xcodebuild -version
+          system_profiler SPDisplaysDataType | grep -E "Chipset|Metal" || true
+
+      - uses: actions/cache@v4
+        with:
+          path: .build
+          key: spm-${{ runner.os }}-${{ hashFiles('Package.resolved') }}-v1
+          restore-keys: spm-${{ runner.os }}-
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/Library/Application Support/Murmure/Models
+          key: models-v1-${{ github.run_id }}
+          restore-keys: models-v1-
+
+      - name: Certificat de signature
+        env:
+          CERT_P12: ${{ secrets.MURMURE_CERT_P12 }}
+          CERT_PASSWORD: ${{ secrets.MURMURE_CERT_PASSWORD }}
+        run: |
+          if [ -z "$CERT_P12" ]; then echo "Pas de certificat : signature ad hoc"; exit 0; fi
+          KC="$RUNNER_TEMP/signing.keychain-db"
+          security create-keychain -p ci "$KC"
+          security set-keychain-settings -lut 3600 "$KC"
+          security unlock-keychain -p ci "$KC"
+          echo "$CERT_P12" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security import "$RUNNER_TEMP/cert.p12" -k "$KC" -P "$CERT_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k ci "$KC" >/dev/null
+          security list-keychains -d user -s "$KC" $(security list-keychains -d user | tr -d '"')
+          HASH=$(security find-identity -p codesigning "$KC" | awk '/\)/{print $2; exit}')
+          if [ -z "$HASH" ]; then
+            HASH=$(security find-certificate -a -Z -c "Murmure" "$KC" | awk '/SHA-1/{print $3; exit}')
+          fi
+          echo "Identité : $HASH"
+          echo "MURMURE_SIGN_IDENTITY=$HASH" >> "$GITHUB_ENV"
+          echo "MURMURE_KEYCHAIN=$KC" >> "$GITHUB_ENV"
+
+      - name: Compilation
+        run: Scripts/build-app.sh release
+
+      - name: Vérification du bundle
+        run: |
+          APP=build/Murmure.app
+          codesign -dvvv "$APP" 2>&1 | grep -E "Identifier|Authority|Signature|TeamIdentifier|flags"
+          codesign -d -r- "$APP" 2>&1 | tail -1
+          codesign --verify --deep --strict "$APP" && echo "signature OK"
+          otool -L "$APP/Contents/MacOS/Murmure" | grep -i llama
+          plutil -lint "$APP/Contents/Info.plist"
+
+      - name: Audio de test
+        run: |
+          VOICE=$(say -v '?' | awk '/fr_FR/{print $1; exit}')
+          echo "Voix : ${VOICE:-défaut}"
+          say ${VOICE:+-v "$VOICE"} -o "$RUNNER_TEMP/fr.aiff" "Bonjour, je voudrais décaler la réunion de demain à quinze heures, parce que Louis ne peut pas le matin. Tu peux prévenir Axel ?"
+          afconvert -f WAVE -d LEI16@16000 "$RUNNER_TEMP/fr.aiff" Tests/fixtures/fr.wav
+          ls -la Tests/fixtures/fr.wav
+
+      - name: Transcription (Parakeet Ultra) + nettoyage
+        run: |
+          build/Murmure.app/Contents/MacOS/Murmure --selftest Tests/fixtures/fr.wav --model parakeet-ultra --llm qwen2.5-1.5b 2>&1 \
+            | grep -vE "^(llama|load|print_info|ggml|graph|llm_load|common)" | tee selftest.txt
+          grep -q "^Brut : ." selftest.txt
+          grep -q "^IA : ." selftest.txt
+
+      - name: Comparatif LLM
+        if: ${{ github.event.inputs.llms != '' }}
+        run: |
+          build/Murmure.app/Contents/MacOS/Murmure --llmtest Tests/fixtures/dictees-brutes.txt --llm "${{ github.event.inputs.llms }}" 2>&1 \
+            | grep -E "^(=====|#|Téléchargement|Échec|LLM)" | tee llm-compare.txt
+
+      - name: Archive
+        run: |
+          cd build && ditto -c -k --keepParent Murmure.app Murmure.zip && shasum -a 256 Murmure.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: murmure-${{ github.sha }}
+          path: |
+            build/Murmure.zip
+            selftest.txt
+            llm-compare.txt
+          if-no-files-found: ignore
