@@ -1,0 +1,138 @@
+import AVFoundation
+import Foundation
+
+/// Vérification de bout en bout sans micro ni interface :
+///   Murmure --selftest fichier.wav [--model parakeet-v3] [--llm qwen2.5-1.5b] [--mode Nettoyage]
+/// Télécharge les modèles si besoin, transcrit le fichier, puis applique l'IA locale.
+@MainActor
+enum SelfTest {
+    static func run(_ args: [String]) async -> Int32 {
+        func value(_ flag: String) -> String? {
+            guard let i = args.firstIndex(of: flag), i + 1 < args.count else { return nil }
+            return args[i + 1]
+        }
+        let settings = Settings.shared
+        if let textsPath = value("--llmtest") { return await llmTest(textsPath, llms: value("--llm") ?? "", settings: settings) }
+        guard let path = value("--selftest") else { return 2 }
+        let modelID = value("--model") ?? settings.selectedModelID
+        guard let model = ModelCatalog.model(modelID) else {
+            print("Modèle inconnu : \(modelID)"); return 2
+        }
+
+        do {
+            let samples = try AudioFile.load(URL(fileURLWithPath: path))
+            print("Audio : \(String(format: "%.1f", Double(samples.count) / AudioRecorder.sampleRate)) s")
+
+            let manager = ModelManager.shared
+            if model.needsDownload, !manager.isReady(model) {
+                print("Téléchargement de \(model.name)…")
+                manager.download(model)
+                while true {
+                    switch manager.status(model) {
+                    case .installed: break
+                    case .failed(let m): print("Échec : \(m)"); return 1
+                    default: try await Task.sleep(nanoseconds: 500_000_000); continue
+                    }
+                    break
+                }
+            }
+            var t = Date()
+            let engine = try await manager.engine(for: model)
+            print("Chargement : \(String(format: "%.2f", Date().timeIntervalSince(t))) s")
+            t = Date()
+            let language = settings.language == "auto" || model.isEnglishOnly ? nil : settings.language
+            let raw = try await engine.transcribe(samples, language: language, vocabulary: settings.dictionary)
+            print("[\(model.name)] \(String(format: "%.2f", Date().timeIntervalSince(t))) s")
+            print("Brut : \(TextProcessing.apply(raw, replacements: settings.replacements))")
+
+            if let llmID = value("--llm"), let llm = LocalLLM.model(llmID) {
+                let ai = PostProcessor.shared
+                if !ai.installed.contains(llm.id) {
+                    print("Téléchargement de \(llm.name) (\(llm.sizeLabel))…")
+                    ai.download(llm)
+                    while !ai.installed.contains(llm.id) {
+                        if ai.downloadProgress[llm.id] == nil, let e = ai.lastError { print("Échec : \(e)"); return 1 }
+                        try await Task.sleep(nanoseconds: 500_000_000)
+                    }
+                }
+                settings.aiBackend = .embedded
+                settings.aiLocalModelID = llm.id
+                let modeName = value("--mode")
+                let mode = modeName.flatMap { name in
+                    ModeStore.shared.mode(named: name) ?? ModeTemplates.all.first { $0.name == name }
+                } ?? Mode.main()
+                t = Date()
+                var out = try await ai.process(raw, mode: mode, context: DictationContext(), settings: settings)
+                if let target = mode.translateTo {
+                    out = try await Translator.shared.translate(out, from: settings.language, to: target)
+                }
+                print("[\(llm.name) · \(mode.name)] \(String(format: "%.2f", Date().timeIntervalSince(t))) s")
+                print("IA : \(out)")
+            }
+            return 0
+        } catch {
+            print("Erreur : \(error.localizedDescription)")
+            return 1
+        }
+    }
+}
+
+extension SelfTest {
+    /// Compare des LLM sur des transcriptions brutes (une par ligne) :
+    ///   Murmure --llmtest textes.txt --llm qwen2.5-1.5b,gemma-3-1b
+    static func llmTest(_ path: String, llms: String, settings: Settings) async -> Int32 {
+        guard let content = try? String(contentsOfFile: path, encoding: .utf8) else { print("Fichier illisible"); return 2 }
+        let texts = content.split(separator: "\n").map(String.init).filter { !$0.isEmpty }
+        let ai = PostProcessor.shared
+        let mode = Mode.main()
+        for id in llms.split(separator: ",").map(String.init) {
+            guard let llm = LocalLLM.model(id) else { print("LLM inconnu : \(id)"); continue }
+            if !ai.installed.contains(llm.id) {
+                print("Téléchargement de \(llm.name)…")
+                ai.download(llm)
+                while !ai.installed.contains(llm.id) {
+                    if ai.downloadProgress[llm.id] == nil, let e = ai.lastError { print("Échec : \(e)"); return 1 }
+                    try? await Task.sleep(nanoseconds: 500_000_000)
+                }
+            }
+            settings.aiBackend = .embedded
+            settings.aiLocalModelID = llm.id
+            print("\n===== \(llm.name) =====")
+            for (i, text) in texts.enumerated() {
+                let t = Date()
+                do {
+                    let out = try await ai.process(text, mode: mode, context: DictationContext(), settings: settings)
+                    print("#\(i + 1) [\(String(format: "%.2f", Date().timeIntervalSince(t))) s] \(out)")
+                } catch {
+                    print("#\(i + 1) ERREUR \(error.localizedDescription)")
+                }
+            }
+        }
+        return 0
+    }
+}
+
+enum AudioFile {
+    /// Lit un fichier audio et le convertit en Float32 mono 16 kHz.
+    static func load(_ url: URL) throws -> [Float] {
+        let file = try AVAudioFile(forReading: url)
+        let target = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: AudioRecorder.sampleRate,
+                                   channels: 1, interleaved: false)!
+        guard let converter = AVAudioConverter(from: file.processingFormat, to: target),
+              let input = AVAudioPCMBuffer(pcmFormat: file.processingFormat, frameCapacity: AVAudioFrameCount(file.length))
+        else { throw MurmureError.emptyAudio }
+        try file.read(into: input)
+        let capacity = AVAudioFrameCount(Double(input.frameLength) * AudioRecorder.sampleRate / file.processingFormat.sampleRate) + 1024
+        guard let output = AVAudioPCMBuffer(pcmFormat: target, frameCapacity: capacity) else { throw MurmureError.emptyAudio }
+        var done = false
+        var error: NSError?
+        converter.convert(to: output, error: &error) { _, status in
+            if done { status.pointee = .endOfStream; return nil }
+            done = true
+            status.pointee = .haveData
+            return input
+        }
+        if let error { throw error }
+        return Array(UnsafeBufferPointer(start: output.floatChannelData![0], count: Int(output.frameLength)))
+    }
+}

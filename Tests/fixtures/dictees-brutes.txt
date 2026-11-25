@@ -1,0 +1,6 @@
+euh donc en fait je voulais te dire que la réunion de demain elle est décalée à 15h euh parce que Louis il peut pas le matin du coup tu peux prévenir Axel
+Salut Thomas, euh, est-ce que tu peux m'envoyer le devis pour le projet Mibba avant vendredi ? Enfin, avant jeudi, plutôt, parce que je le présente jeudi soir.
+alors l'idée c'est de c'est de créer un agent qui lit les mails entrants et qui euh qui les classe par priorité et ensuite il envoie un résumé sur Slack tous les matins à 9h
+Bon, j'ai relu le contrat. Il manque la clause de confidentialité, et euh, le montant c'est pas 12000 mais 15000 euros hors taxes. Tu peux corriger ça ?
+hum ok ça marche je regarde ça ce soir et je te redis demain matin
+Est-ce que tu peux m'expliquer comment marche le système de cache, genre, euh, pourquoi la requête elle prend trois secondes alors qu'on a mis Redis devant ?

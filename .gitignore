@@ -1,0 +1,13 @@
+.build/
+build/
+*.xcodeproj/
+.swiftpm/
+.DS_Store
+.impeccable/review/
+.impeccable/questions/
+.impeccable/mocks/
+.impeccable/config.local.json
+
+# Secrets du serveur de licences
+server/.env*
+server/data/
