@@ -316,16 +316,21 @@ struct PrimaryButton: View {
     }
 
     var body: some View {
+        if prominent {
+            label.buttonStyle(.borderedProminent).tint(Theme.voice).keyboardShortcut(.defaultAction)
+        } else {
+            label.buttonStyle(.bordered)
+        }
+    }
+
+    private var label: some View {
         Button(action: action) {
             Text(title)
                 .font(.system(size: 14, weight: .semibold))
                 .frame(minWidth: 200)
                 .padding(.vertical, 4)
         }
-        .buttonStyle(.borderedProminent)
-        .tint(prominent ? Theme.voice : Color.secondary)
         .controlSize(.large)
-        .keyboardShortcut(.defaultAction)
     }
 }
 

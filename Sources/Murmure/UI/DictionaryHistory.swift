@@ -15,7 +15,7 @@ struct DictionarySettings: View {
                     Button("Ajouter", action: addWord).disabled(newWord.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
                 if settings.dictionary.isEmpty {
-                    Text("Noms propres, marques, jargon : les modèles les orthographieront comme vous les écrivez ici.")
+                    Text("Noms propres, marques, jargon : écrits ici, ils seront orthographiés comme vous le voulez.")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 } else {
@@ -26,7 +26,7 @@ struct DictionarySettings: View {
             } header: {
                 Text("Mots personnels")
             } footer: {
-                Text("Envoyés comme vocabulaire à Whisper, Apple Speech et aux services cloud qui l'acceptent, et donnés à l'IA locale comme orthographe de référence.")
+                Text("L'IA locale reprend leur orthographe exacte. Pour un mot toujours mal entendu, ajoutez plutôt un remplacement.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

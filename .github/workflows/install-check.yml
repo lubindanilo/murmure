@@ -1,0 +1,25 @@
+name: install-check
+
+# Vérifie le vrai parcours d'un utilisateur : la commande de la landing installe la dernière version publiée.
+on:
+  workflow_dispatch:
+
+jobs:
+  install:
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - name: Commande d'installation publique
+        run: |
+          curl -fsSL https://murmure-mac.vercel.app/install.sh | sed 's#^open .*#echo "(ouverture ignorée en CI)"#' | bash
+      - name: Vérifications
+        run: |
+          APP=/Applications/Murmure.app
+          codesign --verify --deep --strict "$APP" && echo "signature OK"
+          codesign -d -r- "$APP" 2>&1 | tail -1
+          xattr -l "$APP" | grep -c quarantine || echo "pas de quarantaine"
+          spctl --assess -vv "$APP" 2>&1 || true
+          plutil -p "$APP/Contents/Info.plist" | grep -E "ShortVersion|Minimum"
+          "$APP/Contents/MacOS/Murmure" --licensetest
+      - name: Version publiée
+        run: curl -fsSL https://murmure-mac.vercel.app/version.json
