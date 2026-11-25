@@ -163,8 +163,15 @@ final class AppController: ObservableObject {
         recordingStart = Date()
         phase = .recording(handsFree: handsFree || settings.triggerMode == .toggle)
         currentMode = resolvedMode()
-        play("Tink")
-        hud.show()
+        // Retour visuel et sonore un peu différé : un raccourci clavier fait avec la touche de dictée
+        // (⌘C avec ⌘ droite) annule l'enregistrement avant, sans bip ni panneau.
+        let started = recordingStart
+        let delay: TimeInterval = handsFree ? 0 : 0.2
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+            guard let self, case .recording = self.phase, self.recordingStart == started else { return }
+            self.play("Tink")
+            self.hud.show()
+        }
 
         // L'URL du navigateur arrive un peu plus tard (AppleScript) : le mode peut alors changer.
         let wantsURL = modes.modes.contains { !$0.websites.isEmpty || $0.includeBrowserURL }
