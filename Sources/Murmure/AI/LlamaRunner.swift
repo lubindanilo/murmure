@@ -43,10 +43,10 @@ actor LlamaRunner {
         context = nil; model = nil; vocab = nil; loadedPath = nil
     }
 
-    func generate(system: String, user: String, maxTokens: Int, temperature: Float = 0) throws -> String {
+    func generate(messages: [(role: String, content: String)], maxTokens: Int, temperature: Float = 0) throws -> String {
         guard let model, let context, let vocab else { throw MurmureError.llm("modèle non chargé.") }
 
-        let prompt = formatChat(model: model, system: system, user: user)
+        let prompt = formatChat(model: model, messages: messages)
         var tokens = tokenize(vocab: vocab, text: prompt)
         let nCtx = Int(llama_n_ctx(context))
         guard tokens.count + maxTokens < nCtx else { throw MurmureError.llm("texte trop long pour le modèle local.") }
@@ -89,23 +89,21 @@ actor LlamaRunner {
     }
 
     /// Applique le gabarit de conversation du modèle (ChatML pour Qwen, Gemma, etc.).
-    private func formatChat(model: OpaquePointer, system: String, user: String) -> String {
+    private func formatChat(model: OpaquePointer, messages: [(role: String, content: String)]) -> String {
         let template = llama_model_chat_template(model, nil)
-        let roles = [strdup("system"), strdup("user")]
-        let contents = [strdup(system), strdup(user)]
+        let roles = messages.map { strdup($0.role) }
+        let contents = messages.map { strdup($0.content) }
         defer { (roles + contents).forEach { free($0) } }
-        var messages = [
-            llama_chat_message(role: roles[0], content: contents[0]),
-            llama_chat_message(role: roles[1], content: contents[1]),
-        ]
-        var buffer = [CChar](repeating: 0, count: (system.utf8.count + user.utf8.count) * 2 + 512)
-        var n = llama_chat_apply_template(template, &messages, messages.count, true, &buffer, Int32(buffer.count))
+        var chat = zip(roles, contents).map { llama_chat_message(role: $0.0, content: $0.1) }
+        let total = messages.reduce(0) { $0 + $1.content.utf8.count }
+        var buffer = [CChar](repeating: 0, count: total * 2 + 1024)
+        var n = llama_chat_apply_template(template, &chat, chat.count, true, &buffer, Int32(buffer.count))
         if n > Int32(buffer.count) {
             buffer = [CChar](repeating: 0, count: Int(n) + 1)
-            n = llama_chat_apply_template(template, &messages, messages.count, true, &buffer, Int32(buffer.count))
+            n = llama_chat_apply_template(template, &chat, chat.count, true, &buffer, Int32(buffer.count))
         }
         guard n > 0 else {
-            return "<|im_start|>system\n\(system)<|im_end|>\n<|im_start|>user\n\(user)<|im_end|>\n<|im_start|>assistant\n"
+            return messages.map { "<|im_start|>\($0.role)\n\($0.content)<|im_end|>\n" }.joined() + "<|im_start|>assistant\n"
         }
         return String(decoding: buffer[0..<Int(n)].map { UInt8(bitPattern: $0) }, as: UTF8.self)
     }

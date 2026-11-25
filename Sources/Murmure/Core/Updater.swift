@@ -15,8 +15,8 @@ final class Updater: ObservableObject {
             var req = URLRequest(url: Self.site.appendingPathComponent("version.json"))
             req.cachePolicy = .reloadIgnoringLocalCacheData
             req.timeoutInterval = 10
-            guard let (data, _) = try? await URLSession.shared.data(for: req),
-                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+            guard let result = try? await URLSession.shared.data(for: req),
+                  let json = try? JSONSerialization.jsonObject(with: result.0) as? [String: Any],
                   let latest = json["version"] as? String else { return }
             if Self.isNewer(latest, than: LicenseManager.appVersion) { available = latest }
         }

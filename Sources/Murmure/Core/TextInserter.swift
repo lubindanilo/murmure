@@ -85,6 +85,24 @@ enum TextProcessing {
         return out.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    /// Retire les hésitations (euh, hum, uh…) et les mots répétés par erreur (« le le »),
+    /// sauf les doublons légitimes du français (« nous nous », « vous vous »).
+    static func removeFillers(_ text: String) -> String {
+        var out = text
+        let fillers = "(?i)(?<![\\p{L}\\p{N}])(euh+|heu+|hum+|hmm+|uh+|um+|erm)(?![\\p{L}\\p{N}])[,.…]?\\s*"
+        out = out.replacingOccurrences(of: fillers, with: "", options: .regularExpression)
+        if let regex = try? NSRegularExpression(pattern: "(?i)(?<![\\p{L}\\p{N}])(?!(?:nous|vous)\\b)(\\p{L}+)(\\s+\\1)+(?![\\p{L}\\p{N}])") {
+            out = regex.stringByReplacingMatches(in: out, range: NSRange(out.startIndex..., in: out), withTemplate: "$1")
+        }
+        out = out.replacingOccurrences(of: "\\s+([,.])", with: "$1", options: .regularExpression)
+        out = out.replacingOccurrences(of: "\\s{2,}", with: " ", options: .regularExpression)
+        out = out.trimmingCharacters(in: CharacterSet(charactersIn: " ,"))
+        if let first = out.first, first.isLowercase, text.first?.isUppercase == true {
+            out = first.uppercased() + out.dropFirst()
+        }
+        return out
+    }
+
     static func wordCount(_ text: String) -> Int {
         text.split { $0.isWhitespace || $0.isNewline }.count
     }

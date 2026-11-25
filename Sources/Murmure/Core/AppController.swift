@@ -232,6 +232,8 @@ final class AppController: ObservableObject {
             }
             guard !text.isEmpty else { finishQuietly(); return }
 
+            if mode.cleanup || !mode.instructions.isEmpty { text = TextProcessing.removeFillers(text) }
+            guard !text.isEmpty else { finishQuietly(); return }
             let rawText = text
             var output = mode.outputMode
             var skipAI = false

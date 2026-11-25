@@ -22,7 +22,7 @@ struct MurmureApp: App {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
-        if CommandLine.arguments.contains(where: { $0 == "--selftest" || $0 == "--llmtest" }) {
+        if CommandLine.arguments.contains(where: { ["--selftest", "--llmtest", "--licensetest"].contains($0) }) {
             Task { @MainActor in exit(await SelfTest.run(CommandLine.arguments)) }
             return
         }

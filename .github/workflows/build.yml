@@ -87,6 +87,9 @@ jobs:
           grep -q "^Brut : ." selftest.txt
           grep -q "^IA : ." selftest.txt
 
+      - name: Licence (serveur de production)
+        run: build/Murmure.app/Contents/MacOS/Murmure --licensetest
+
       - name: Comparatif LLM
         if: ${{ github.event.inputs.llms != '' }}
         run: |

@@ -12,6 +12,7 @@ enum SelfTest {
             return args[i + 1]
         }
         let settings = Settings.shared
+        if args.contains("--licensetest") { return await licenseTest() }
         if let textsPath = value("--llmtest") { return await llmTest(textsPath, llms: value("--llm") ?? "", settings: settings) }
         guard let path = value("--selftest") else { return 2 }
         let modelID = value("--model") ?? settings.selectedModelID
@@ -101,7 +102,7 @@ extension SelfTest {
             for (i, text) in texts.enumerated() {
                 let t = Date()
                 do {
-                    let out = try await ai.process(text, mode: mode, context: DictationContext(), settings: settings)
+                    let out = try await ai.process(TextProcessing.removeFillers(text), mode: mode, context: DictationContext(), settings: settings)
                     print("#\(i + 1) [\(String(format: "%.2f", Date().timeIntervalSince(t))) s] \(out)")
                 } catch {
                     print("#\(i + 1) ERREUR \(error.localizedDescription)")
@@ -109,6 +110,28 @@ extension SelfTest {
             }
         }
         return 0
+    }
+}
+
+extension SelfTest {
+    /// Demande un jeton d'essai au serveur de production pour un Mac fictif et vérifie sa signature.
+    static func licenseTest() async -> Int32 {
+        let device = (0..<32).map { _ in String("0123456789abcdef".randomElement()!) }.joined()
+        var req = URLRequest(url: LicenseManager.server.appendingPathComponent("/v1/device"))
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.httpBody = try? JSONSerialization.data(withJSONObject: ["device_id": device, "app_version": "selftest"])
+        guard let result = try? await URLSession.shared.data(for: req),
+              let json = try? JSONSerialization.jsonObject(with: result.0) as? [String: Any],
+              let payload = json["token"] as? String, let signature = json["signature"] as? String else {
+            print("Licence : serveur injoignable (\(LicenseManager.server))"); return 1
+        }
+        guard let token = LicenseManager.verify(payload: payload, signature: signature), token.device == device else {
+            print("Licence : signature ou contenu invalide"); return 1
+        }
+        let days = Int(((token.trialEndsAt ?? Date()).timeIntervalSinceNow / 86_400).rounded())
+        print("Licence OK : plan \(token.plan), essai \(days) jours, serveur \(LicenseManager.server)")
+        return days == LicenseManager.trialDays ? 0 : 1
     }
 }
 
