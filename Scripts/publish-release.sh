@@ -27,7 +27,7 @@ fi
 printf '{\n  "version": "%s",\n  "published": "%s"\n}\n' "$VERSION" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > landing/version.json
 if ! git diff --quiet landing/version.json 2>/dev/null || ! git ls-files --error-unmatch landing/version.json >/dev/null 2>&1; then
   git add landing/version.json
-  git commit -qm "Publier Murmure $VERSION [skip ci]"
+  git commit -qm "Publier Murmure $VERSION"
   git push -q
 fi
 echo "Publié : https://github.com/$PUB/releases/tag/$tag"
