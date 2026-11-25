@@ -1,5 +1,7 @@
 # Murmure : reprise sur le VPS (nuit du 25 au 26 novembre 2026)
 
+> **Statut (26/11, nuit) : tâches 1 à 7 faites. Lire `docs/MORNING.md`.**
+
 Lubin dort. Objectif : **demain matin, il envoie le lien à ~30 contacts très intéressés, ils installent
 Murmure et ça marche**. Les offres payantes ouvrent demain (essai de 7 jours, donc personne ne paie avant
 le 3 décembre environ : Paddle peut être branché demain avec Lubin, mais tout doit être prêt à le recevoir).
