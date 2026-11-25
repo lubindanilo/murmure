@@ -28,10 +28,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         Task { @MainActor in
             AppController.shared.start()
-            if !Settings.shared.hasCompletedOnboarding || !HotkeyMonitor.isTrusted
-                || AudioRecorder.permission != .authorized {
+            if !Settings.shared.hasCompletedOnboarding {
+                OnboardingWindow.shared.show()
+            } else if !HotkeyMonitor.isTrusted || AudioRecorder.permission != .authorized {
                 SettingsWindow.shared.show(.general)
             }
+            Updater.shared.check()
         }
     }
 
@@ -86,45 +88,38 @@ struct MenuContent: View {
     @ObservedObject private var license = LicenseManager.shared
     @ObservedObject private var setup = Setup.shared
 
+    @ObservedObject private var updater = Updater.shared
+
     var body: some View {
         Button(recordLabel) { app.toggleFromMenu() }
-        Text("Maintenez \(settings.triggerKey.label) pour dicter")
-
+            .disabled(!setup.isComplete)
         if !setup.isComplete {
-            Text("Installation des modèles en cours…")
+            Text("Préparation de la voix…")
         }
         switch license.state {
-        case .trial(let days, _): Text("Essai gratuit : \(days) jour\(days > 1 ? "s" : "") restant\(days > 1 ? "s" : "")")
-        case .expired: Button("Essai terminé : activer Murmure…") { SettingsWindow.shared.show(.license) }
-        case .licensed: EmptyView()
+        case .trial(let days, _) where days <= 3:
+            Button("Essai : \(days) jour\(days > 1 ? "s" : "") restant\(days > 1 ? "s" : "")…") { SettingsWindow.shared.show(.license) }
+        case .expired:
+            Button("Essai terminé : activer Murmure…") { SettingsWindow.shared.show(.license) }
+        default:
+            EmptyView()
         }
 
-        Divider()
-
-        Menu("Mode : \(store.mode(store.pinnedModeID)?.name ?? store.main.name)") {
-            ForEach(store.modes) { mode in
-                Toggle(mode.name, isOn: Binding(
-                    get: { (store.pinnedModeID ?? store.main.id) == mode.id },
-                    set: { if $0 { store.pinnedModeID = mode.isMain ? nil : mode.id } }))
-            }
+        if store.modes.count > 1 {
             Divider()
-            Button("Gérer les modes…") { SettingsWindow.shared.show(.modes) }
-        }
-        Toggle("IA locale", isOn: $settings.aiEnabled)
-
-        Divider()
-
-        if let last = app.lastText {
-            Button("Copier la dernière dictée") {
-                NSPasteboard.general.clearContents()
-                NSPasteboard.general.setString(last, forType: .string)
+            Picker("Mode", selection: Binding(
+                get: { store.pinnedModeID ?? store.main.id },
+                set: { id in store.pinnedModeID = (id == store.main.id) ? nil : id })) {
+                ForEach(store.modes) { Text($0.name).tag($0.id) }
             }
         }
-        Button("Historique…") { SettingsWindow.shared.show(.history) }
+
+        Divider()
+        if updater.available != nil {
+            Button("Installer la mise à jour…") { updater.install() }
+        }
         Button("Réglages…") { SettingsWindow.shared.show(.general) }
             .keyboardShortcut(",")
-
-        Divider()
         Button("Quitter Murmure") { NSApp.terminate(nil) }
             .keyboardShortcut("q")
     }

@@ -119,7 +119,7 @@ final class Settings: ObservableObject {
 
     private init() {
         let d = UserDefaults.standard
-        triggerKey = TriggerKey(rawValue: d.string(forKey: "triggerKey") ?? "") ?? .rightOption
+        triggerKey = TriggerKey(rawValue: d.string(forKey: "triggerKey") ?? "") ?? .rightCommand
         triggerMode = TriggerMode(rawValue: d.string(forKey: "triggerMode") ?? "") ?? .hold
         selectedModelID = "parakeet-ultra"
         language = d.string(forKey: "language") ?? "fr"

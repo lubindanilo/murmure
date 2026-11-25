@@ -2,14 +2,25 @@ import AVFoundation
 import SwiftUI
 
 enum SettingsSection: String, CaseIterable, Identifiable {
-    case general, modes, ai, dictionary, history, license
+    case general, modes, dictionary, history, license
     var id: String { rawValue }
+
+    /// Les anciens liens murmure://tab/ai ouvrent Général.
+    init?(rawValue: String) {
+        switch rawValue {
+        case "general", "ai", "models": self = .general
+        case "modes": self = .modes
+        case "dictionary": self = .dictionary
+        case "history": self = .history
+        case "license": self = .license
+        default: return nil
+        }
+    }
 
     var title: String {
         switch self {
         case .general: return "Général"
         case .modes: return "Modes"
-        case .ai: return "IA locale"
         case .dictionary: return "Dictionnaire"
         case .history: return "Historique"
         case .license: return "Licence"
@@ -20,7 +31,6 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         switch self {
         case .general: return "gearshape"
         case .modes: return "square.stack"
-        case .ai: return "wand.and.stars"
         case .dictionary: return "character.book.closed"
         case .history: return "clock.arrow.circlepath"
         case .license: return "key"
@@ -47,7 +57,6 @@ struct SettingsView: View {
                 switch nav.section {
                 case .general: GeneralSettings()
                 case .modes: ModesSettings()
-                case .ai: AISettings()
                 case .dictionary: DictionarySettings()
                 case .history: HistoryView()
                 case .license: LicenseView()
@@ -73,21 +82,9 @@ struct GeneralSettings: View {
 
     var body: some View {
         Form {
-            if needsSetup {
-                Section {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Deux autorisations avant la première dictée")
-                            .font(.headline)
-                        Text("Le micro pour vous entendre, l'accessibilité pour détecter la touche de dictée et coller le texte là où se trouve votre curseur.")
-                            .foregroundStyle(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    .padding(.vertical, 4)
-                }
-            }
-
             SetupSection()
 
+            if needsSetup {
             Section("Autorisations") {
                 PermissionRow(title: "Micro", granted: micStatus == .authorized,
                               detail: micStatus == .denied ? "Refusé : à réactiver dans Réglages Système" : "Pour enregistrer votre voix") {
@@ -107,6 +104,8 @@ struct GeneralSettings: View {
                 }
             }
 
+            }
+
             Section("Raccourci") {
                 Picker("Touche de dictée (mode principal)", selection: $settings.triggerKey) {
                     ForEach(TriggerKey.allCases) { Text($0.label).tag($0) }
@@ -115,8 +114,8 @@ struct GeneralSettings: View {
                     ForEach(TriggerMode.allCases) { Text($0.label).tag($0) }
                 }
                 Text(settings.triggerMode == .hold
-                     ? "Maintenez la touche pendant que vous parlez, relâchez pour insérer. Un appui bref lance le mode mains libres : rappuyez pour terminer. Échap annule."
-                     : "Appuyez une fois pour commencer, une seconde fois pour insérer. Échap annule.")
+                     ? "Un appui bref lance la dictée mains libres. Échap annule."
+                     : "Échap annule.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -126,11 +125,18 @@ struct GeneralSettings: View {
                 Picker("Langue", selection: $settings.language) {
                     ForEach(Languages.all, id: \.code) { Text($0.name).tag($0.code) }
                 }
-                Toggle("Rétablir le presse-papiers après le collage", isOn: $settings.restoreClipboard)
+                Toggle(isOn: $settings.aiEnabled) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Nettoyer avec l'IA locale")
+                        Text("Retire les « euh », corrige la ponctuation et applique les modes. Sur votre Mac, sans coût.")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+                .onChange(of: settings.aiEnabled) { _, on in if on { Setup.shared.install() } else { PostProcessor.shared.unload() } }
                 Toggle("Sons de début et de fin", isOn: $settings.playSounds)
             }
 
-            Section("Système") {
+            Section {
                 Toggle("Ouvrir Murmure à l'ouverture de session", isOn: $launchAtLogin)
                     .onChange(of: launchAtLogin) { _, value in LaunchAtLogin.set(value) }
             }
@@ -141,7 +147,6 @@ struct GeneralSettings: View {
             let trusted = HotkeyMonitor.isTrusted
             if trusted && !axTrusted { app.restartHotkey() }
             axTrusted = trusted
-            if !needsSetup && !settings.hasCompletedOnboarding { settings.hasCompletedOnboarding = true }
         }
     }
 }

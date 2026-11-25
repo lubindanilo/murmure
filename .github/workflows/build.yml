@@ -93,15 +93,29 @@ jobs:
           build/Murmure.app/Contents/MacOS/Murmure --llmtest Tests/fixtures/dictees-brutes.txt --llm "${{ github.event.inputs.llms }}" 2>&1 \
             | grep -E "^(=====|#|Téléchargement|Échec|LLM)" | tee llm-compare.txt
 
-      - name: Archive
+      - name: Archive et DMG
         run: |
-          cd build && ditto -c -k --keepParent Murmure.app Murmure.zip && shasum -a 256 Murmure.zip
+          cd build
+          ditto -c -k --keepParent Murmure.app Murmure.zip
+          mkdir dmg && cp -R Murmure.app dmg/ && ln -s /Applications dmg/Applications
+          hdiutil create -volname Murmure -srcfolder dmg -fs HFS+ -format UDZO -ov Murmure.dmg >/dev/null
+          shasum -a 256 Murmure.zip Murmure.dmg
+
+      - name: Test du script d'installation
+        run: |
+          python3 -m http.server 8765 --directory build >/dev/null 2>&1 &
+          sleep 1
+          sed 's#^URL=.*#URL="http://127.0.0.1:8765/Murmure.zip"#; s#^open .*#echo "(open ignoré en CI)"#' landing/install.sh > "$RUNNER_TEMP/install.sh"
+          bash "$RUNNER_TEMP/install.sh"
+          test -x /Applications/Murmure.app/Contents/MacOS/Murmure
+          codesign --verify --deep --strict /Applications/Murmure.app && echo "installé et signé"
 
       - uses: actions/upload-artifact@v4
         with:
           name: murmure-${{ github.sha }}
           path: |
             build/Murmure.zip
+            build/Murmure.dmg
             selftest.txt
             llm-compare.txt
           if-no-files-found: ignore

@@ -3,21 +3,137 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Murmure</title>
-<style>
-  :root { color-scheme: light dark; }
-  body { margin: 0; min-height: 100dvh; display: grid; place-items: center;
-         font: 17px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
-         background: #fbfbfd; color: #1d1d1f; }
-  @media (prefers-color-scheme: dark) { body { background: #0b0b0c; color: #f5f5f7; } }
-  h1 { font-size: 48px; letter-spacing: -0.02em; margin: 0 0 8px; }
-  p { margin: 0; opacity: .7; }
-</style>
+<title>Murmure · La dictée locale pour Mac</title>
+<meta name="description" content="Maintenez une touche, parlez, relâchez : le texte arrive là où se trouve votre curseur. Transcription et nettoyage sur votre Mac, hors ligne. 7 jours d'essai.">
+<meta property="og:title" content="Murmure · La dictée locale pour Mac">
+<meta property="og:description" content="Parlez, Murmure écrit. Tout reste sur votre Mac.">
+<meta property="og:image" content="https://murmure-mac.vercel.app/og.png">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type":"Question","name":"Pourquoi une commande dans le Terminal ?","acceptedAnswer":{"@type":"Answer","text":"Murmure n'est pas encore notarisé par Apple. La commande télécharge l'app et l'installe dans Applications sans alerte de sécurité. Le DMG fonctionne aussi."}},
+{"@type":"Question","name":"Ma voix est-elle envoyée sur internet ?","acceptedAnswer":{"@type":"Answer","text":"Non. La transcription et le nettoyage tournent sur votre Mac. Murmure ne contacte internet que pour télécharger ses modèles une fois et vérifier votre licence."}}
+]}
+</script>
 </head>
 <body>
-<main>
-  <h1>Murmure</h1>
-  <p>Bientôt disponible.</p>
+<a class="skip" href="#main">Aller au contenu</a>
+
+<header class="nav">
+  <a class="brand" href="/" aria-current="page"><img src="/favicon.svg" alt="" width="22" height="22">Murmure</a>
+  <a class="nav-cta" href="#installer">Installer</a>
+</header>
+
+<main id="main">
+  <section class="hero" id="installer">
+    <h1 class="title">Parlez.<br>Murmure écrit.</h1>
+    <p class="lead">Maintenez une touche, dictez, relâchez. Le texte arrive là où se trouve votre curseur, dans toutes vos apps. Tout se passe sur votre Mac.</p>
+
+    <div class="install">
+      <div class="cmd" role="group" aria-label="Commande d'installation">
+        <code id="cmd">curl -fsSL https://murmure-mac.vercel.app/install.sh | bash</code>
+        <button class="copy" id="copy" type="button">
+          <i class="ph ph-copy" aria-hidden="true"></i><span>Copier</span>
+        </button>
+      </div>
+      <p class="hint">Collez cette ligne dans le Terminal, puis Entrée. <a href="https://github.com/lubindanilo/murmure-releases/releases/latest/download/Murmure.dmg">Ou téléchargez le DMG</a>.</p>
+    </div>
+
+    <p class="proof">7 jours d'essai complet, sans carte bancaire</p>
+
+    <figure class="demo" aria-label="Démonstration : une dictée insérée dans un e-mail">
+      <div class="doc">
+        <div class="doc-bar"><span></span><span></span><span></span></div>
+        <p class="doc-to">À : Axel</p>
+        <p class="doc-text"><span id="typed"></span><span class="caret" aria-hidden="true"></span></p>
+      </div>
+      <div class="hud" id="hud" aria-hidden="true">
+        <div class="bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <span class="hud-label" id="hud-label">0:03</span>
+      </div>
+      <figcaption class="sr">Murmure transcrit la dictée « euh salut Axel la réunion de demain est décalée à 15h » en « Salut Axel, la réunion de demain est décalée à 15 h. »</figcaption>
+    </figure>
+  </section>
+
+  <section class="features reveal" aria-labelledby="features-title">
+    <h2 id="features-title" class="sr">Ce que fait Murmure</h2>
+    <article>
+      <i class="ph ph-lock-simple" aria-hidden="true"></i>
+      <h3>Rien ne quitte votre Mac</h3>
+      <p>Parakeet transcrit votre voix sur la puce Apple, même sans connexion. Aucun audio n'est envoyé, aucun compte à créer.</p>
+    </article>
+    <article>
+      <i class="ph ph-sparkle" aria-hidden="true"></i>
+      <h3>Du texte propre, sans les « euh »</h3>
+      <p>Une IA locale corrige la ponctuation et retire les hésitations avant de coller. Aucun coût par mot.</p>
+    </article>
+    <article>
+      <i class="ph ph-stack" aria-hidden="true"></i>
+      <h3>Un mode pour chaque usage</h3>
+      <p>E-mail, message, prompt pour IA, traduction en anglais. Un mot dit au début, une touche ou l'app ouverte choisit le bon.</p>
+    </article>
+  </section>
+
+  <section class="tagline" aria-label="En une phrase">
+    <p id="tagline">Écrivez à la vitesse où vous pensez, sans rien envoyer nulle part.</p>
+  </section>
+
+  <section class="steps reveal" aria-labelledby="steps-title">
+    <h2 id="steps-title">Prêt en deux minutes</h2>
+    <ol>
+      <li><strong>Installez</strong><span>Une commande dans le Terminal. Murmure s'ouvre tout seul.</span></li>
+      <li><strong>Autorisez</strong><span>Le micro, et l'accessibilité pour coller au curseur. L'app vous guide.</span></li>
+      <li><strong>Dictez</strong><span>Maintenez ⌘ droite, parlez, relâchez. Partout où vous écrivez.</span></li>
+    </ol>
+  </section>
+
+  <section class="faq reveal" aria-labelledby="faq-title">
+    <h2 id="faq-title">Questions</h2>
+    <details>
+      <summary>Pourquoi une commande dans le Terminal ?</summary>
+      <p>Murmure n'est pas encore notarisé par Apple. La commande télécharge l'app depuis GitHub et l'installe dans Applications, sans alerte de sécurité. Vous préférez le DMG ? Glissez Murmure dans Applications, ouvrez-le, puis allez dans Réglages Système, Confidentialité et sécurité, et cliquez sur « Ouvrir quand même ».</p>
+    </details>
+    <details>
+      <summary>Ma voix est-elle envoyée sur internet ?</summary>
+      <p>Non. La transcription et le nettoyage tournent sur votre Mac. Murmure ne se connecte que pour télécharger ses modèles, une seule fois, et pour vérifier votre essai ou votre licence.</p>
+    </details>
+    <details>
+      <summary>Quel Mac faut-il ?</summary>
+      <p>Un Mac avec puce Apple (M1 ou plus récent) sous macOS 15 Sequoia ou plus récent, et environ 2 Go d'espace libre pour les modèles.</p>
+    </details>
+    <details>
+      <summary>Quelles langues sont reconnues ?</summary>
+      <p>25 langues européennes, dont le français, l'anglais, l'espagnol, l'allemand, l'italien et le portugais. La traduction vers l'anglais ou une autre langue passe par le traducteur intégré à macOS.</p>
+    </details>
+    <details>
+      <summary>Que se passe-t-il après les 7 jours ?</summary>
+      <p>Murmure vous propose de l'activer. Rien n'est prélevé automatiquement et vos modes, votre dictionnaire et votre historique sont conservés.</p>
+    </details>
+    <details>
+      <summary>Comment mettre à jour ou désinstaller ?</summary>
+      <p>Quand une version sort, Murmure le signale dans son menu. Pour le désinstaller, quittez l'app, glissez-la dans la corbeille et supprimez le dossier Murmure dans ~/Library/Application Support.</p>
+    </details>
+  </section>
+
+  <section class="final reveal">
+    <h2>Essayez Murmure aujourd'hui</h2>
+    <a class="button" href="#installer">Installer Murmure</a>
+    <p class="proof">7 jours d'essai complet, sans carte bancaire</p>
+  </section>
 </main>
+
+<footer class="footer">
+  <span>Murmure</span>
+  <nav aria-label="Informations légales"><a href="/confidentialite">Confidentialité</a><a href="/conditions">Conditions</a></nav>
+</footer>
+
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+<script src="/main.js" defer></script>
 </body>
 </html>
