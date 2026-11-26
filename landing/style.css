@@ -126,15 +126,35 @@ img { display: block; }
 .mb-icon { display: grid; place-items: center; width: 28px; height: 20px; border-radius: 5px; background: rgb(30 36 51 / 0.1); }
 .mb-icon .mark { width: 13px; height: 12px; }
 
+/* Encoche de MacBook : bas arrondi, raccords incurvés en haut, caméra au centre. */
 .notch {
-  position: absolute; z-index: 3; top: 0; left: 50%; transform: translateX(-50%);
-  display: grid; place-items: center; width: 168px; height: 34px;
-  background: #000; color: #fff; border-radius: 0 0 14px 14px;
-  font-size: 13px; line-height: 16px; font-weight: 500;
-  box-shadow: 0 6px 16px rgb(0 0 0 / 0.25);
+  position: absolute; z-index: 4; top: 0; left: 50%; transform: translateX(-50%);
+  width: 19%; height: 28px; background: #000; border-radius: 0 0 9px 9px;
 }
+.notch::before, .notch::after {
+  content: ""; position: absolute; top: 0; width: 7px; height: 7px;
+}
+.notch::before { left: -7px; background: radial-gradient(circle at 0 100%, transparent 6.5px, #000 7px); }
+.notch::after { right: -7px; background: radial-gradient(circle at 100% 100%, transparent 6.5px, #000 7px); }
+.cam { position: absolute; top: 10px; left: 50%; width: 7px; height: 7px; margin-left: -3.5px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #2c3550 0, #0b0d14 60%); box-shadow: 0 0 0 1.5px #101218; }
+
+/* Île : elle sort de l'encoche et affiche l'état sous la caméra. */
+.island {
+  position: absolute; z-index: 3; top: 0; left: 50%; translate: -50% 0;
+  display: grid; place-items: end center; width: 25%; min-width: 180px; height: 62px; padding-bottom: 9px;
+  background: #000; color: #fff; border-radius: 0 0 22px 22px;
+  font-size: 13px; line-height: 16px; font-weight: 500;
+  box-shadow: 0 10px 24px rgb(0 0 0 / 0.3);
+  transform-origin: 50% 0;
+  transition-property: scale, opacity; transition-duration: 350ms; transition-timing-function: var(--ease);
+  scale: 0.62 0.45; opacity: 0;
+}
+.island.open { scale: 1 1; opacity: 1; }
+.island::before, .island::after { content: ""; position: absolute; top: 0; width: 10px; height: 10px; }
+.island::before { left: -10px; background: radial-gradient(circle at 0 100%, transparent 9.5px, #000 10px); }
+.island::after { right: -10px; background: radial-gradient(circle at 100% 100%, transparent 9.5px, #000 10px); }
 .notch-state {
-  grid-area: 1 / 1; display: inline-flex; align-items: center; gap: 8px;
+  grid-area: 1 / 1; white-space: nowrap; display: inline-flex; align-items: center; gap: 8px;
   opacity: 0; filter: blur(3px); scale: 0.9;
   transition-property: opacity, filter, scale; transition-duration: 300ms; transition-timing-function: var(--ease-ui);
 }
@@ -362,7 +382,8 @@ kbd {
   .lead { font-size: 16px; line-height: 24px; margin-top: 24px; }
   .screen { aspect-ratio: 4 / 3.6; border-width: 4px; border-radius: 12px; }
   .mb-left span, .mb-right > i, .mb-right > span:not(.mb-icon) { display: none; }
-  .notch { width: 132px; height: 28px; font-size: 12px; }
+  .notch { width: 26%; }
+  .island { width: 52%; min-width: 0; font-size: 12px; }
   .win { top: 15%; width: 86%; }
   .win-body { padding: 8px 16px 24px; min-height: 150px; }
   .win-h { font-size: 18px; line-height: 24px; }

@@ -123,6 +123,7 @@ let visible = true;
 
 function setState(name) {
   states.forEach((el) => el.classList.toggle("on", el.dataset.state === name));
+  hud.classList.toggle("open", name !== "idle");
 }
 function setStep(name) {
   Object.entries(steps).forEach(([k, el]) => el && el.classList.toggle("on", k === name));

@@ -111,8 +111,9 @@ struct HUDView: View {
             .frame(minWidth: notchWidth > 0 ? notchWidth + 28 : 0)
             .frame(height: row)
             .padding(.top, notchHeight)
+            .padding(.horizontal, NotchShape.defaultEar)
             .background(
-                UnevenRoundedRectangle(bottomLeadingRadius: 16, bottomTrailingRadius: 16, style: .continuous)
+                NotchShape(ear: NotchShape.defaultEar, radius: 16)
                     .fill(Color.black)
                     .shadow(color: .black.opacity(0.28), radius: 12, y: 6)
             )
@@ -194,5 +195,30 @@ struct Waveform: View {
         if Theme.reduceMotion { return 6 }
         let wave = (sin(t * 5 - Double(i) * 0.7) + 1) / 2
         return minH + CGFloat(wave) * 8
+    }
+}
+
+/// Silhouette d'encoche de MacBook : haut droit, bas arrondi, et raccords incurvés (« oreilles »)
+/// qui la fondent dans le bord de l'écran.
+struct NotchShape: Shape {
+    static let defaultEar: CGFloat = 8
+    var ear: CGFloat = NotchShape.defaultEar
+    var radius: CGFloat = 16
+
+    func path(in rect: CGRect) -> Path {
+        let w = rect.width, h = rect.height
+        let r = min(radius, (w - 2 * ear) / 2, h)
+        var p = Path()
+        p.move(to: CGPoint(x: 0, y: 0))
+        p.addLine(to: CGPoint(x: w, y: 0))
+        p.addQuadCurve(to: CGPoint(x: w - ear, y: ear), control: CGPoint(x: w - ear, y: 0))
+        p.addLine(to: CGPoint(x: w - ear, y: h - r))
+        p.addQuadCurve(to: CGPoint(x: w - ear - r, y: h), control: CGPoint(x: w - ear, y: h))
+        p.addLine(to: CGPoint(x: ear + r, y: h))
+        p.addQuadCurve(to: CGPoint(x: ear, y: h - r), control: CGPoint(x: ear, y: h))
+        p.addLine(to: CGPoint(x: ear, y: ear))
+        p.addQuadCurve(to: CGPoint(x: 0, y: 0), control: CGPoint(x: ear, y: 0))
+        p.closeSubpath()
+        return p
     }
 }

@@ -74,15 +74,13 @@ struct OnboardingView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             ZStack {
-                RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Palette.card)
                 illustration
                     .id(step)
                     .transition(Theme.stepTransition)
             }
+            .frame(maxWidth: .infinity)
             .frame(height: 210)
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .padding(.horizontal, 14)
-            .padding(.top, 14)
+            .padding(.top, 10)
 
             ZStack(alignment: .topLeading) {
                 VStack(alignment: .leading, spacing: 8) {
@@ -108,7 +106,7 @@ struct OnboardingView: View {
         }
         .frame(width: Self.size.width, height: Self.size.height)
         .foregroundStyle(Palette.ink)
-        .background(Palette.window)
+        .background(Palette.card)
         .animation(Theme.stepAnimation, value: step)
         .tint(Theme.voice)
         .onAppear {
@@ -486,6 +484,9 @@ private struct ScreenArt: View {
             .padding(.horizontal, 8)
             .frame(height: 16)
             .background(Color.white.opacity(0.7))
+            NotchShape(ear: 3, radius: 4)
+                .fill(Color.black)
+                .frame(width: 62, height: 16)
             ZStack(alignment: .bottomTrailing) {
                 Tile(width: 36, height: 34) { BarsGlyph(height: 15, color: Theme.voice) }
                 Image(systemName: "cursorarrow").font(.system(size: 15)).foregroundStyle(Color.black)
