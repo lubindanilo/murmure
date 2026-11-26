@@ -12,7 +12,30 @@ enum Theme {
     static let hudText = Color.white.opacity(0.92)
     static let hudSecondary = Color.white.opacity(0.62)
 
+    /// Fond plat des zones d'illustration (onboarding, en-têtes).
+    static let stage = Color.primary.opacity(0.035)
+
     static var reduceMotion: Bool { NSWorkspace.shared.accessibilityDisplayShouldReduceMotion }
+
+    /// Changement d'étape : léger fondu, flou de 4 pt et 12 pt de montée ; fondu seul si les animations sont réduites.
+    static var stepTransition: AnyTransition {
+        if reduceMotion { return .opacity }
+        return .asymmetric(
+            insertion: .opacity.combined(with: .offset(y: 12)).combined(with: .modifier(active: BlurModifier(radius: 4), identity: BlurModifier(radius: 0))),
+            removal: .opacity.combined(with: .offset(y: -12)).combined(with: .modifier(active: BlurModifier(radius: 4), identity: BlurModifier(radius: 0))))
+    }
+
+    static var stepAnimation: Animation {
+        reduceMotion ? .easeOut(duration: 0.2) : .spring(duration: 0.4, bounce: 0)
+    }
+
+    /// Changements d'état fréquents : réponse rapide, sans rebond.
+    static let quick = Animation.spring(duration: 0.3, bounce: 0)
+}
+
+struct BlurModifier: ViewModifier {
+    let radius: CGFloat
+    func body(content: Content) -> some View { content.blur(radius: radius) }
 }
 
 /// Note sur 5 affichée en cinq segments (précision, vitesse).

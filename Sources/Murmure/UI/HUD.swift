@@ -91,15 +91,19 @@ struct HUDView: View {
         HStack(spacing: 10) {
             content
         }
-        .padding(.horizontal, 14)
+        .id(phaseKey)
+        .transition(Theme.reduceMotion ? .opacity : .opacity.combined(with: .scale(scale: 0.92)).combined(with: .modifier(active: BlurModifier(radius: 3), identity: BlurModifier(radius: 0))))
+        .padding(.horizontal, 16)
         .frame(height: 40)
         .background(
             Capsule(style: .continuous)
                 .fill(Theme.hudBackground)
-                .shadow(color: .black.opacity(0.28), radius: 14, y: 6)
+                .shadow(color: .black.opacity(0.30), radius: 16, y: 8)
+                .shadow(color: .black.opacity(0.20), radius: 2, y: 1)
         )
         .overlay(Capsule(style: .continuous).strokeBorder(Theme.hudStroke, lineWidth: 1))
-        .animation(Theme.reduceMotion ? nil : .spring(response: 0.32, dampingFraction: 0.86), value: phaseKey)
+        .environment(\.colorScheme, .dark)
+        .animation(Theme.reduceMotion ? .easeOut(duration: 0.15) : .spring(duration: 0.35, bounce: 0), value: phaseKey)
     }
 
     private var phaseKey: String {
@@ -124,6 +128,8 @@ struct HUDView: View {
                     Text(Self.elapsed(from: start, to: ctx.date))
                         .font(.system(size: 12, weight: .medium).monospacedDigit())
                         .foregroundStyle(Theme.hudSecondary)
+                        .contentTransition(.numericText())
+                        .animation(Theme.quick, value: Self.elapsed(from: start, to: ctx.date))
                 }
             }
             if handsFree {
@@ -152,9 +158,9 @@ struct HUDView: View {
                 .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(Theme.hudText)
         case .done(let label):
-            Image(systemName: "checkmark")
-                .font(.system(size: 12, weight: .bold))
-                .foregroundStyle(Theme.hudText)
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(Color.green)
             Text(label)
                 .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(Theme.hudText)

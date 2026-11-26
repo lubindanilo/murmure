@@ -29,31 +29,39 @@ struct ModesSettings: View {
                         .foregroundStyle(.secondary)
                 }
 
-                Section("Nouveau mode") {
-                    Button {
-                        var mode = Mode(name: "Nouveau mode")
-                        mode.cleanup = true
-                        store.update(mode)
-                        editing = mode.id
-                    } label: {
-                        Label("Mode vide", systemImage: "plus")
-                    }
-                    ForEach(ModeTemplates.all, id: \.name) { template in
+                Section {
+                    Menu {
                         Button {
-                            var mode = template
-                            mode.id = UUID()
-                            // Ne pas reprendre un mot déclencheur déjà utilisé.
-                            if store.modes.contains(where: { $0.triggerWord.caseInsensitiveCompare(mode.triggerWord) == .orderedSame && !mode.triggerWord.isEmpty }) {
-                                mode.triggerWord = ""
-                            }
+                            var mode = Mode(name: "Nouveau mode")
+                            mode.cleanup = true
                             store.update(mode)
                             editing = mode.id
                         } label: {
-                            Label(template.name, systemImage: template.symbol)
+                            Label("Mode vide", systemImage: "plus")
                         }
+                        Divider()
+                        ForEach(ModeTemplates.all, id: \.name) { template in
+                            Button {
+                                var mode = template
+                                mode.id = UUID()
+                                // Ne pas reprendre un mot déclencheur déjà utilisé.
+                                if store.modes.contains(where: { $0.triggerWord.caseInsensitiveCompare(mode.triggerWord) == .orderedSame && !mode.triggerWord.isEmpty }) {
+                                    mode.triggerWord = ""
+                                }
+                                store.update(mode)
+                                editing = mode.id
+                            } label: {
+                                Label(template.name, systemImage: template.symbol)
+                            }
+                        }
+                    } label: {
+                        Label("Ajouter un mode", systemImage: "plus.circle.fill")
+                            .foregroundStyle(Theme.voice)
                     }
+                    .menuStyle(.borderlessButton)
+                    .menuIndicator(.hidden)
+                    .fixedSize()
                 }
-                .buttonStyle(.plain)
             }
             .formStyle(.grouped)
             .navigationDestination(item: $editing) { id in
@@ -74,10 +82,7 @@ struct ModeRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: mode.symbol)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(mode.isMain ? Theme.voice : .secondary)
-                .frame(width: 22)
+            SettingsIcon(symbol: mode.symbol, color: mode.isMain ? Theme.voice : Color(white: 0.55), size: 28)
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 6) {
                     Text(mode.name)

@@ -122,6 +122,8 @@ jobs:
           shot() { name=$1; shift; open -n build/Murmure.app --args "$@"; sleep 7; screencapture -x "shots/$name.png"; pkill -x Murmure || true; sleep 2; }
           for s in 0 1 2 3 4 5; do shot "onboarding-$s" -hasCompletedOnboarding NO -demoStep $s; done
           for sec in general modes dictionary history license; do shot "reglages-$sec" -hasCompletedOnboarding YES -demoSettings $sec; done
+          shot "sombre-onboarding-3" -hasCompletedOnboarding NO -demoStep 3 -AppleInterfaceStyle Dark
+          shot "sombre-reglages-license" -hasCompletedOnboarding YES -demoSettings license -AppleInterfaceStyle Dark
           ls -la shots
 
       - uses: actions/upload-artifact@v4

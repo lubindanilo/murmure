@@ -29,12 +29,39 @@ enum SettingsSection: String, CaseIterable, Identifiable {
 
     var symbol: String {
         switch self {
-        case .general: return "gearshape"
-        case .modes: return "square.stack"
-        case .dictionary: return "character.book.closed"
-        case .history: return "clock.arrow.circlepath"
-        case .license: return "key"
+        case .general: return "gearshape.fill"
+        case .modes: return "square.stack.fill"
+        case .dictionary: return "character.book.closed.fill"
+        case .history: return "clock.fill"
+        case .license: return "key.fill"
         }
+    }
+
+    /// Une couleur par section, comme dans Réglages Système.
+    var color: Color {
+        switch self {
+        case .general: return Color(white: 0.55)
+        case .modes: return Theme.voice
+        case .dictionary: return .blue
+        case .history: return .purple
+        case .license: return .green
+        }
+    }
+}
+
+/// Pastille colorée avec un symbole blanc, à la façon de Réglages Système.
+struct SettingsIcon: View {
+    let symbol: String
+    let color: Color
+    var size: CGFloat = 22
+
+    var body: some View {
+        Image(systemName: symbol)
+            .font(.system(size: size * 0.5, weight: .semibold))
+            .foregroundStyle(.white)
+            .frame(width: size, height: size)
+            .background(RoundedRectangle(cornerRadius: size * 0.27, style: .continuous).fill(color.gradient))
+            .accessibilityHidden(true)
     }
 }
 
@@ -49,7 +76,8 @@ struct SettingsView: View {
         NavigationSplitView {
             List(SettingsSection.allCases, selection: Binding(
                 get: { nav.section }, set: { if let s = $0 { nav.section = s } })) { section in
-                Label(section.title, systemImage: section.symbol).tag(section)
+                Label { Text(section.title) } icon: { SettingsIcon(symbol: section.symbol, color: section.color, size: 20) }
+                    .tag(section)
             }
             .navigationSplitViewColumnWidth(min: 180, ideal: 190, max: 220)
         } detail: {
@@ -82,6 +110,26 @@ struct GeneralSettings: View {
 
     var body: some View {
         Form {
+            Section {
+                HStack(spacing: 14) {
+                    Image(nsImage: NSApp.applicationIconImage)
+                        .resizable()
+                        .interpolation(.high)
+                        .frame(width: 52, height: 52)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(needsSetup ? "Encore une étape" : "Murmure est prêt")
+                            .font(.system(size: 15, weight: .semibold))
+                        Text(needsSetup
+                             ? "Autorisez le micro et l'accessibilité pour dicter."
+                             : "Maintenez \(settings.triggerKey.label) et parlez, dans n'importe quelle app.")
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    if !needsSetup { KeyHint(label: settings.triggerKey.label) }
+                }
+                .padding(.vertical, 6)
+            }
+
             SetupSection()
 
             if needsSetup {
@@ -106,19 +154,21 @@ struct GeneralSettings: View {
 
             }
 
-            Section("Raccourci") {
-                Picker("Touche de dictée (mode principal)", selection: $settings.triggerKey) {
+            Section {
+                Picker("Touche de dictée", selection: $settings.triggerKey) {
                     ForEach(TriggerKey.allCases) { Text($0.label).tag($0) }
                 }
                 Picker("Comportement", selection: $settings.triggerMode) {
                     ForEach(TriggerMode.allCases) { Text($0.label).tag($0) }
                 }
+            } header: {
+                Text("Raccourci")
+            } footer: {
                 Text(settings.triggerMode == .hold
                      ? "Un appui bref lance la dictée mains libres. Échap annule."
                      : "Échap annule.")
-                    .font(.callout)
+                    .font(.caption)
                     .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
             }
 
             Section("Dictée") {
@@ -128,7 +178,7 @@ struct GeneralSettings: View {
                 Toggle(isOn: $settings.aiEnabled) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Nettoyer avec l'IA locale")
-                        Text("Retire les « euh », corrige la ponctuation et applique les modes. Sur votre Mac, sans coût.")
+                        Text("Retire les hésitations, corrige la ponctuation et applique les modes. Sur ce Mac, sans coût.")
                             .font(.caption).foregroundStyle(.secondary)
                     }
                 }
@@ -136,7 +186,7 @@ struct GeneralSettings: View {
                 Toggle("Sons de début et de fin", isOn: $settings.playSounds)
             }
 
-            Section {
+            Section("Démarrage") {
                 Toggle("Ouvrir Murmure à l'ouverture de session", isOn: $launchAtLogin)
                     .onChange(of: launchAtLogin) { _, value in LaunchAtLogin.set(value) }
             }
@@ -151,6 +201,25 @@ struct GeneralSettings: View {
     }
 }
 
+/// Petite touche de clavier, pour rappeler le raccourci.
+struct KeyHint: View {
+    let label: String
+
+    var body: some View {
+        Text(label)
+            .font(.system(size: 12, weight: .semibold))
+            .padding(.horizontal, 10)
+            .frame(height: 26)
+            .background(
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .fill(Color(nsColor: .controlBackgroundColor))
+                    .shadow(color: .black.opacity(0.16), radius: 0, y: 1)
+                    .shadow(color: .black.opacity(0.06), radius: 2, y: 1)
+            )
+            .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).strokeBorder(Color.primary.opacity(0.1), lineWidth: 0.5))
+    }
+}
+
 struct PermissionRow: View {
     let title: String
     let granted: Bool
@@ -159,9 +228,7 @@ struct PermissionRow: View {
 
     var body: some View {
         HStack {
-            Image(systemName: granted ? "checkmark.circle.fill" : "circle.dashed")
-                .foregroundStyle(granted ? Color.green : Color.secondary)
-                .font(.system(size: 15))
+            SettingsIcon(symbol: title == "Micro" ? "mic.fill" : "accessibility", color: granted ? .green : .orange)
             VStack(alignment: .leading, spacing: 1) {
                 Text(title)
                 Text(granted ? "Autorisé" : detail)
@@ -172,7 +239,6 @@ struct PermissionRow: View {
             if !granted {
                 Button("Autoriser", action: action)
                     .buttonStyle(.borderedProminent)
-                    .controlSize(.small)
             }
         }
     }

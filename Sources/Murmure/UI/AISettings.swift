@@ -139,28 +139,32 @@ struct LicenseView: View {
     var body: some View {
         Form {
             Section {
-                HStack(alignment: .top, spacing: 14) {
-                    Image(systemName: icon)
-                        .font(.system(size: 22, weight: .medium))
-                        .foregroundStyle(Theme.voice)
-                        .frame(width: 40, height: 40)
-                        .background(RoundedRectangle(cornerRadius: 10).fill(Theme.voiceSoft))
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(title).font(.headline)
-                        Text(detail).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                VStack(spacing: 14) {
+                    SettingsIcon(symbol: icon, color: iconColor, size: 56)
+                    VStack(spacing: 4) {
+                        Text(title).font(.system(size: 17, weight: .semibold))
+                        Text(detail)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
-                    Spacer()
-                }
-                .padding(.vertical, 4)
-
-                switch license.state {
-                case .licensed:
-                    Button("Gérer mon abonnement") { license.openCustomerPortal() }
-                default:
-                    Button("Acheter Murmure") { license.buy() }
+                    if case .trial(let days, _) = license.state {
+                        TrialMeter(daysLeft: days)
+                    }
+                    switch license.state {
+                    case .licensed:
+                        Button("Gérer mon abonnement") { license.openCustomerPortal() }
+                            .controlSize(.large)
+                    default:
+                        Button { license.buy() } label: {
+                            Text("Acheter Murmure").font(.system(size: 13, weight: .semibold)).frame(minWidth: 160)
+                        }
                         .buttonStyle(.borderedProminent)
                         .controlSize(.large)
+                    }
                 }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
             }
 
             if case .licensed = license.state {} else {
@@ -185,9 +189,12 @@ struct LicenseView: View {
                 }
             }
 
-            Section("Aujourd'hui") {
-                LabeledContent("Temps dicté", value: Self.minutes(license.secondsToday))
-                LabeledContent("Identifiant de ce Mac", value: license.deviceID)
+            Section {
+                LabeledContent("Temps dicté aujourd'hui", value: Self.minutes(license.secondsToday))
+            } footer: {
+                Text("Identifiant de ce Mac : \(license.deviceID)")
+                    .font(.caption.monospaced())
+                    .foregroundStyle(.tertiary)
                     .textSelection(.enabled)
             }
         }
@@ -197,9 +204,17 @@ struct LicenseView: View {
 
     private var icon: String {
         switch license.state {
-        case .licensed: return "checkmark.seal"
+        case .licensed: return "checkmark.seal.fill"
         case .trial: return "hourglass"
-        case .expired: return "lock"
+        case .expired: return "lock.fill"
+        }
+    }
+
+    private var iconColor: Color {
+        switch license.state {
+        case .licensed: return .green
+        case .trial: return Theme.voice
+        case .expired: return Color(white: 0.55)
         }
     }
 
@@ -217,7 +232,7 @@ struct LicenseView: View {
             if let expires { return "Abonnement actif jusqu'au \(expires.formatted(date: .long, time: .omitted)), renouvelé automatiquement." }
             return "Licence à vie sur ce Mac. Merci !"
         case .trial(_, let end):
-            return "Toutes les fonctions sont ouvertes jusqu'au \(end.formatted(date: .long, time: .shortened))."
+            return "Tout est ouvert jusqu'au \(end.formatted(.dateTime.day().month(.wide))). Rien n'est prélevé à la fin."
         case .expired:
             return "Vos réglages, modes et historique sont conservés. Activez Murmure pour reprendre la dictée."
         }
@@ -226,5 +241,22 @@ struct LicenseView: View {
     static func minutes(_ seconds: TimeInterval) -> String {
         let m = Int(seconds) / 60, s = Int(seconds) % 60
         return m > 0 ? "\(m) min \(s) s" : "\(s) s"
+    }
+}
+
+/// Sept segments : les jours d'essai qui restent.
+struct TrialMeter: View {
+    let daysLeft: Int
+
+    var body: some View {
+        HStack(spacing: 4) {
+            ForEach(0..<7, id: \.self) { i in
+                Capsule()
+                    .fill(i < 7 - daysLeft ? Color.primary.opacity(0.12) : Theme.voice)
+                    .frame(width: 28, height: 4)
+            }
+        }
+        .accessibilityElement()
+        .accessibilityLabel("\(daysLeft) jours d'essai restants sur 7")
     }
 }

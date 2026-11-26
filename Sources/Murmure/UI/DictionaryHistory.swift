@@ -148,13 +148,11 @@ struct HistoryView: View {
     var body: some View {
         Group {
             if store.entries.isEmpty {
-                VStack(spacing: 8) {
-                    Image(systemName: "waveform").font(.system(size: 28)).foregroundStyle(.tertiary)
-                    Text("Aucune dictée pour l'instant").font(.headline)
-                    Text("Maintenez \(settings.triggerKey.label) et parlez : vos dictées apparaîtront ici.")
-                        .foregroundStyle(.secondary)
+                ContentUnavailableView {
+                    Label("Aucune dictée pour l'instant", systemImage: "waveform")
+                } description: {
+                    Text("Maintenez \(settings.triggerKey.label) et parlez : vos dictées apparaîtront ici, sur ce Mac uniquement.")
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 List {
                     ForEach(filtered) { entry in
@@ -169,7 +167,7 @@ struct HistoryView: View {
                 }
                 .searchable(text: $query, placement: .toolbar, prompt: "Rechercher")
                 .overlay {
-                    if filtered.isEmpty { Text("Aucun résultat").foregroundStyle(.secondary) }
+                    if filtered.isEmpty { ContentUnavailableView.search(text: query) }
                 }
             }
         }
