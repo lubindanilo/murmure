@@ -112,11 +112,11 @@ jobs:
 
       - name: Archive et DMG
         run: |
-          cd build
-          ditto -c -k --keepParent Murmure.app Murmure.zip
-          mkdir dmg && cp -R Murmure.app dmg/ && ln -s /Applications dmg/Applications
-          hdiutil create -volname Murmure -srcfolder dmg -fs HFS+ -format UDZO -ov Murmure.dmg >/dev/null
-          shasum -a 256 Murmure.zip Murmure.dmg
+          ditto -c -k --keepParent build/Murmure.app build/Murmure.zip
+          # DMG mis en page (flèche vers Applications) : Scripts/dmg/settings.py, sans piloter le Finder.
+          python3 -m venv "$RUNNER_TEMP/dmg" && "$RUNNER_TEMP/dmg/bin/pip" install -q "dmgbuild==1.6.5"
+          "$RUNNER_TEMP/dmg/bin/dmgbuild" -s Scripts/dmg/settings.py -D app=build/Murmure.app Murmure build/Murmure.dmg
+          shasum -a 256 build/Murmure.zip build/Murmure.dmg
 
       - name: Test du script d'installation
         run: |
