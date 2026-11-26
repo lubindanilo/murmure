@@ -8,14 +8,9 @@ struct MurmureApp: App {
     @StateObject private var app = AppController.shared
     @StateObject private var settings = Settings.shared
 
+    /// L'icône de la barre des menus et son panneau sont gérés par PanelController.
     var body: some Scene {
-        MenuBarExtra {
-            MenuContent()
-                .environmentObject(app)
-                .environmentObject(settings)
-        } label: {
-            MenuIcon(phase: app.phase)
-        }
+        SwiftUI.Settings { EmptyView() }
     }
 }
 
@@ -30,12 +25,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if UserDefaults.standard.bool(forKey: "demoDark") { NSApp.appearance = NSAppearance(named: .darkAqua) }
         Task { @MainActor in
             AppController.shared.start()
+            PanelController.shared.install()
             if let demo = UserDefaults.standard.string(forKey: "demoSettings") {
-                SettingsWindow.shared.show(SettingsSection(rawValue: demo) ?? .general)
+                PanelController.shared.show(SettingsSection(rawValue: demo) ?? .general)
+                if demo == "mode" { PanelController.shared.router.path = [.mode(ModeStore.shared.main.id)] }
             } else if !Settings.shared.hasCompletedOnboarding {
                 OnboardingWindow.shared.show()
             } else if !HotkeyMonitor.isTrusted || AudioRecorder.permission != .authorized {
-                SettingsWindow.shared.show(.general)
+                PanelController.shared.show(.general)
             }
             Updater.shared.check()
         }
@@ -60,7 +57,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     if let mode = store.mode(id) { store.pinnedModeID = mode.isMain ? nil : mode.id }
                 case "tab":
                     let name = url.pathComponents.dropFirst().first ?? "general"
-                    SettingsWindow.shared.show(SettingsSection(rawValue: name) ?? .general)
+                    PanelController.shared.show(SettingsSection(rawValue: name) ?? .general)
                 default: break
                 }
             }
@@ -68,132 +65,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        Task { @MainActor in SettingsWindow.shared.show(.general) }
+        Task { @MainActor in PanelController.shared.show(.general) }
         return true
-    }
-}
-
-struct MenuIcon: View {
-    let phase: AppController.Phase
-
-    var body: some View {
-        switch phase {
-        case .recording: Image(systemName: "waveform.circle.fill")
-        case .transcribing, .polishing, .translating: Image(systemName: "ellipsis.circle")
-        default: Image(systemName: "waveform")
-        }
-    }
-}
-
-struct MenuContent: View {
-    @EnvironmentObject var app: AppController
-    @EnvironmentObject var settings: Settings
-    @ObservedObject private var store = ModeStore.shared
-    @ObservedObject private var license = LicenseManager.shared
-    @ObservedObject private var setup = Setup.shared
-
-    @ObservedObject private var updater = Updater.shared
-    @ObservedObject private var history = HistoryStore.shared
-
-    var body: some View {
-        Button(recordLabel) { app.toggleFromMenu() }
-            .disabled(!setup.isComplete)
-        if !setup.isComplete {
-            Text("Préparation de la voix…")
-        }
-        switch license.state {
-        case .trial(let days, _) where days <= 3:
-            Button("Essai : \(days) jour\(days > 1 ? "s" : "") restant\(days > 1 ? "s" : "")…") { SettingsWindow.shared.show(.license) }
-        case .expired:
-            Button("Essai terminé : activer Murmure…") { SettingsWindow.shared.show(.license) }
-        default:
-            EmptyView()
-        }
-
-        if store.modes.count > 1 {
-            Divider()
-            Picker("Mode", selection: Binding(
-                get: { store.pinnedModeID ?? store.main.id },
-                set: { id in store.pinnedModeID = (id == store.main.id) ? nil : id })) {
-                ForEach(store.modes) { Text($0.name).tag($0.id) }
-            }
-        }
-
-        // Filet de sécurité : si le collage a raté, la dictée est ici, à un clic.
-        if !history.entries.isEmpty {
-            Divider()
-            Menu("Dernières dictées") {
-                ForEach(Array(history.entries.prefix(5))) { entry in
-                    Button(Self.preview(entry.text)) {
-                        NSPasteboard.general.clearContents()
-                        NSPasteboard.general.setString(entry.text, forType: .string)
-                    }
-                }
-                Divider()
-                Text("Cliquer copie la dictée")
-                Button("Effacer l'historique") { history.clear() }
-            }
-        }
-
-        Divider()
-        if updater.available != nil {
-            Button("Installer la mise à jour…") { updater.install() }
-        }
-        Button("Réglages…") { SettingsWindow.shared.show(.general) }
-            .keyboardShortcut(",")
-        Button("Quitter Murmure") { NSApp.terminate(nil) }
-            .keyboardShortcut("q")
-    }
-
-    static func preview(_ text: String) -> String {
-        let line = text.replacingOccurrences(of: "\n", with: " ")
-        return line.count > 48 ? String(line.prefix(47)) + "…" : line
-    }
-
-    private var recordLabel: String {
-        switch app.phase {
-        case .recording: return "Terminer la dictée"
-        case .transcribing: return "Transcription en cours…"
-        case .polishing, .translating: return "Traitement en cours…"
-        default: return "Démarrer une dictée"
-        }
-    }
-}
-
-/// Fenêtre de réglages gérée en AppKit : une app de barre de menus n'a pas de fenêtre principale.
-@MainActor
-final class SettingsWindow: NSObject, NSWindowDelegate {
-    static let shared = SettingsWindow()
-    private var window: NSWindow?
-    private let navigation = SettingsNavigation()
-
-    func show(_ section: SettingsSection) {
-        navigation.open(section)
-        if window == nil {
-            let root = SettingsView()
-                .environmentObject(AppController.shared)
-                .environmentObject(Settings.shared)
-                .environmentObject(navigation)
-            let window = NSWindow(contentViewController: NSHostingController(rootView: root))
-            window.title = "Murmure"
-            window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
-            window.titlebarAppearsTransparent = true
-            window.toolbarStyle = .unified
-            window.setContentSize(NSSize(width: 560, height: 640))
-            window.minSize = NSSize(width: 500, height: 480)
-            window.isReleasedWhenClosed = false
-            window.delegate = self
-            window.center()
-            self.window = window
-        }
-        NSApp.setActivationPolicy(.regular)
-        NSApp.activate(ignoringOtherApps: true)
-        window?.makeKeyAndOrderFront(nil)
-    }
-
-    func windowWillClose(_ notification: Notification) {
-        // Retour en app de barre de menus, sans icône dans le Dock.
-        NSApp.setActivationPolicy(.accessory)
     }
 }
 

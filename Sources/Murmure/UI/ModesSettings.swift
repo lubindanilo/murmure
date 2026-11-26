@@ -2,116 +2,6 @@ import AppKit
 import SwiftUI
 import UniformTypeIdentifiers
 
-struct ModesSettings: View {
-    @ObservedObject private var store = ModeStore.shared
-    @EnvironmentObject var settings: Settings
-    @State private var editing: Mode.ID?
-
-    var body: some View {
-            Form {
-                Section {
-                    ForEach(store.modes) { mode in
-                        Button { editing = mode.id } label: { ModeRow(mode: mode, mainKey: settings.triggerKey) }
-                            .buttonStyle(.plain)
-                            .contextMenu {
-                                Button("Copier le lien murmure://") { copyLink(mode) }
-                                if !mode.isMain {
-                                    Button("Dupliquer") { editing = store.duplicate(mode).id }
-                                    Divider()
-                                    Button("Supprimer", role: .destructive) { store.delete(mode) }
-                                }
-                            }
-                    }
-                } footer: {
-                    Text("Un mode s'active par un mot dit au début de la dictée ou selon l'app ouverte. Sinon, Dictée s'applique.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-
-                Section {
-                    Menu {
-                        Button {
-                            var mode = Mode(name: "Nouveau mode")
-                            mode.cleanup = true
-                            store.update(mode)
-                            editing = mode.id
-                        } label: {
-                            Label("Mode vide", systemImage: "plus")
-                        }
-                        Divider()
-                        ForEach(ModeTemplates.all, id: \.name) { template in
-                            Button {
-                                var mode = template
-                                mode.id = UUID()
-                                // Ne pas reprendre un mot déclencheur déjà utilisé.
-                                if store.modes.contains(where: { $0.triggerWord.caseInsensitiveCompare(mode.triggerWord) == .orderedSame && !mode.triggerWord.isEmpty }) {
-                                    mode.triggerWord = ""
-                                }
-                                store.update(mode)
-                                editing = mode.id
-                            } label: {
-                                Label(template.name, systemImage: template.symbol)
-                            }
-                        }
-                    } label: {
-                        Label("Ajouter un mode", systemImage: "plus.circle.fill")
-                            .foregroundStyle(Theme.voice)
-                    }
-                    .menuStyle(.borderlessButton)
-                    .menuIndicator(.hidden)
-                    .fixedSize()
-                }
-            }
-            .formStyle(.grouped)
-            .navigationDestination(item: $editing) { id in
-                ModeEditor(modeID: id)
-            }
-    }
-
-    private func copyLink(_ mode: Mode) {
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString("murmure://start?mode_id=\(mode.id.uuidString)", forType: .string)
-    }
-}
-
-struct ModeRow: View {
-    let mode: Mode
-    let mainKey: TriggerKey
-
-    var body: some View {
-        HStack(spacing: 12) {
-            SettingsIcon(symbol: mode.symbol, color: mode.isMain ? Theme.voice : Color(white: 0.55), size: 28)
-            VStack(alignment: .leading, spacing: 3) {
-                HStack(spacing: 6) {
-                    Text(mode.name)
-                    if mode.isMain {
-                        Text("Principal")
-                            .font(.caption2.weight(.medium))
-                            .padding(.horizontal, 6).padding(.vertical, 1)
-                            .background(Capsule().fill(Theme.voiceSoft))
-                            .foregroundStyle(Theme.voice)
-                    }
-                }
-                Text(summary).font(.caption).foregroundStyle(.secondary).lineLimit(1)
-            }
-            Spacer()
-            Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary)
-        }
-        .padding(.vertical, 3)
-        .contentShape(Rectangle())
-    }
-
-    private var summary: String {
-        var parts: [String] = []
-        if mode.isMain { parts.append("Touche \(mainKey.label)") }
-        parts += mode.activationSummary
-        if let t = mode.translateTo { parts.append("→ \(Languages.name(t))") }
-        if !mode.instructions.isEmpty { parts.append("Instructions IA") } else if mode.cleanup { parts.append("Nettoyage") }
-        if !mode.scriptBefore.isEmpty || !mode.scriptAfter.isEmpty { parts.append("Script") }
-        return parts.isEmpty ? "Dictée seule" : parts.joined(separator: " · ")
-    }
-}
-
 // MARK: - Éditeur
 
 struct ModeEditor: View {
@@ -246,19 +136,26 @@ struct ModeEditor: View {
 
             if !isMain {
                 Section {
-                    Button("Supprimer le mode", role: .destructive) { confirmDelete = true }
-                        .buttonStyle(.link)
+                    if confirmDelete {
+                        HStack {
+                            Text("Supprimer « \(mode.wrappedValue.name) » ?")
+                            Spacer()
+                            Button("Annuler") { confirmDelete = false }
+                            Button("Supprimer", role: .destructive) {
+                                store.delete(mode.wrappedValue)
+                                dismiss()
+                            }
+                            .buttonStyle(.borderedProminent)
+                        }
+                    } else {
+                        Button("Supprimer le mode", role: .destructive) { confirmDelete = true }
+                            .buttonStyle(.link)
+                    }
                 }
             }
         }
         .formStyle(.grouped)
-        .subpage(title: mode.wrappedValue.name, back: "Modes") { dismiss() }
-        .confirmationDialog("Supprimer « \(mode.wrappedValue.name) » ?", isPresented: $confirmDelete) {
-            Button("Supprimer", role: .destructive) {
-                store.delete(mode.wrappedValue)
-                dismiss()
-            }
-        }
+        .subpage(title: mode.wrappedValue.name, back: "Murmure") { dismiss() }
     }
 
     private func addWebsite(_ mode: Binding<Mode>) {

@@ -128,7 +128,8 @@ final class Settings: ObservableObject {
         historyLimit = d.object(forKey: "historyLimit") as? Int ?? 500
         dictionary = Self.loadCodable([String].self, "dictionary", d) ?? []
         replacements = Self.loadCodable([WordReplacement].self, "replacements", d) ?? []
-        aiEnabled = d.object(forKey: "aiEnabled") as? Bool ?? true
+        // Le nettoyage est toujours actif : ce n'est plus une option.
+        aiEnabled = true
         aiBackend = AIBackend(rawValue: d.string(forKey: "aiBackend") ?? "") ?? .embedded
         aiLocalModelID = d.string(forKey: "aiLocalModelID") ?? "qwen2.5-1.5b"
         aiServerModel = d.string(forKey: "aiServerModel") ?? ""

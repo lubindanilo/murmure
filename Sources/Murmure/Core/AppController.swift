@@ -141,12 +141,12 @@ final class AppController: ObservableObject {
     private func beginRecording(handsFree: Bool = false) {
         guard Setup.shared.isReady(selectedModel) else {
             fail("Murmure termine l'installation de \(selectedModel.name). Réessayez dans un instant.")
-            SettingsWindow.shared.show(.general)
+            PanelController.shared.show(.general)
             return
         }
         guard license.canDictate else {
             fail("Votre essai gratuit est terminé. Activez Murmure pour continuer à dicter.")
-            SettingsWindow.shared.show(.license)
+            PanelController.shared.show(.license)
             return
         }
         guard AudioRecorder.permission != .denied else {

@@ -38,6 +38,8 @@ final class OnboardingWindow: NSObject, NSWindowDelegate {
         // Une app de dictée doit être là au démarrage du Mac ; désactivable dans les réglages.
         if !LaunchAtLogin.isEnabled { LaunchAtLogin.set(true) }
         window?.close()
+        // Montre où tout se trouve désormais : le panneau sous l'icône de la barre des menus.
+        PanelController.shared.show()
     }
 
     func windowWillClose(_ notification: Notification) {
@@ -193,7 +195,7 @@ struct OnboardingView: View {
                 ? "Maintenez \(settings.triggerKey.label), dites une phrase, puis relâchez."
                 : "Murmure télécharge son modèle de transcription, une seule fois. Ensuite, tout fonctionne hors ligne."
         case .done:
-            return "Murmure vit dans la barre des menus. Maintenez \(settings.triggerKey.label) partout où vous écrivez. Votre essai de 7 jours commence maintenant."
+            return "Maintenez \(settings.triggerKey.label) partout où vous écrivez. Tout le reste se règle en cliquant sur l'icône de Murmure, dans la barre des menus."
         }
     }
 
@@ -553,15 +555,25 @@ private struct MenuBarArt: View {
             .frame(width: 520, height: 30, alignment: .trailing)
             .card(radius: 10)
 
-            VStack(alignment: .leading, spacing: 2) {
-                MenuRow(title: "Dicter", shortcut: key.label, highlighted: true)
-                Divider().padding(.vertical, 3).padding(.horizontal, 10)
-                MenuRow(title: "Réglages…", shortcut: "⌘,")
-                MenuRow(title: "Quitter Murmure", shortcut: "⌘Q")
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(spacing: 8) {
+                    Image(nsImage: NSApp.applicationIconImage).resizable().interpolation(.high).frame(width: 18, height: 18)
+                    Text("Murmure").font(.system(size: 12, weight: .semibold))
+                    Spacer()
+                    Circle().fill(Color.green).frame(width: 6, height: 6)
+                    Text("Prêt").font(.system(size: 11, weight: .medium)).foregroundStyle(.secondary)
+                }
+                VStack(spacing: 8) {
+                    BigKeyCap(key: key, pressed: false)
+                    Text("Maintenez \(key.label) et parlez").font(.system(size: 11))
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Palette.hero))
             }
-            .padding(5)
+            .padding(12)
             .frame(width: 236)
-            .card(radius: 10)
+            .card(radius: 12)
             .padding(.trailing, 12)
         }
         .padding(.top, 20)
