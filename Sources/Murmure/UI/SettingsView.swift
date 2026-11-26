@@ -2,7 +2,7 @@ import AVFoundation
 import SwiftUI
 
 enum SettingsSection: String, CaseIterable, Identifiable {
-    case general, modes, dictionary, history, license
+    case general, modes, dictionary, license
     var id: String { rawValue }
 
     /// Les anciens liens murmure://tab/ai ouvrent Général.
@@ -10,8 +10,8 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         switch rawValue {
         case "general", "ai", "models": self = .general
         case "modes": self = .modes
-        case "dictionary": self = .dictionary
-        case "history": self = .history
+        case "dictionary", "corrections": self = .dictionary
+        case "history": self = .general
         case "license": self = .license
         default: return nil
         }
@@ -21,8 +21,7 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         switch self {
         case .general: return "Général"
         case .modes: return "Modes"
-        case .dictionary: return "Dictionnaire"
-        case .history: return "Historique"
+        case .dictionary: return "Corrections"
         case .license: return "Licence"
         }
     }
@@ -31,8 +30,7 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         switch self {
         case .general: return "gearshape.fill"
         case .modes: return "square.stack.fill"
-        case .dictionary: return "character.book.closed.fill"
-        case .history: return "clock.fill"
+        case .dictionary: return "text.badge.checkmark"
         case .license: return "key.fill"
         }
     }
@@ -43,7 +41,6 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         case .general: return Color(white: 0.55)
         case .modes: return Theme.voice
         case .dictionary: return .blue
-        case .history: return .purple
         case .license: return .green
         }
     }
@@ -87,8 +84,7 @@ struct SettingsView: View {
                         switch section {
                         case .general: GeneralSettings()
                         case .modes: ModesSettings()
-                        case .dictionary: DictionarySettings()
-                        case .history: HistoryView()
+                        case .dictionary: CorrectionsSettings()
                         case .license: LicenseView()
                         }
                     }
@@ -107,9 +103,7 @@ struct GeneralSettings: View {
     @EnvironmentObject var app: AppController
     @State private var micStatus = AudioRecorder.permission
     @State private var axTrusted = HotkeyMonitor.isTrusted
-    @State private var launchAtLogin = LaunchAtLogin.isEnabled
     @ObservedObject private var modes = ModeStore.shared
-    @ObservedObject private var history = HistoryStore.shared
     private let poll = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     private var needsSetup: Bool { micStatus != .authorized || !axTrusted }
@@ -165,9 +159,6 @@ struct GeneralSettings: View {
                 Picker("Touche de dictée", selection: $settings.triggerKey) {
                     ForEach(TriggerKey.allCases) { Text($0.label).tag($0) }
                 }
-                Picker("Langue", selection: $settings.language) {
-                    ForEach(Languages.all, id: \.code) { Text($0.name).tag($0.code) }
-                }
                 Toggle(isOn: $settings.aiEnabled) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Nettoyer le texte")
@@ -187,17 +178,8 @@ struct GeneralSettings: View {
                     SettingsRow(section: .modes, value: "\(modes.modes.count)")
                 }
                 NavigationLink(value: SettingsSection.dictionary) {
-                    SettingsRow(section: .dictionary, value: settings.dictionary.isEmpty && settings.replacements.isEmpty
-                                ? "" : "\(settings.dictionary.count + settings.replacements.count)")
+                    SettingsRow(section: .dictionary, value: settings.replacements.isEmpty ? "" : "\(settings.replacements.count)")
                 }
-                NavigationLink(value: SettingsSection.history) {
-                    SettingsRow(section: .history, value: history.entries.isEmpty ? "" : "\(history.entries.count)")
-                }
-            }
-
-            Section {
-                Toggle("Ouvrir au démarrage du Mac", isOn: $launchAtLogin)
-                    .onChange(of: launchAtLogin) { _, value in LaunchAtLogin.set(value) }
             }
         }
         .formStyle(.grouped)

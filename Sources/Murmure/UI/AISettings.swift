@@ -135,6 +135,7 @@ struct LicenseView: View {
     @ObservedObject private var license = LicenseManager.shared
     @State private var transactionID = ""
     @State private var email = ""
+    @State private var showRestore = false
 
     var body: some View {
         Form {
@@ -169,33 +170,30 @@ struct LicenseView: View {
 
             if case .licensed = license.state {} else {
                 Section {
-                    TextField("Numéro de transaction", text: $transactionID, prompt: Text("txn_…"))
-                    TextField("E-mail d'achat", text: $email, prompt: Text("vous@exemple.fr"))
-                    HStack {
-                        Button("Activer sur ce Mac") {
-                            Task { await license.restore(transactionID: transactionID, email: email) }
+                    if showRestore {
+                        TextField("Numéro de transaction", text: $transactionID, prompt: Text("txn_…"))
+                        TextField("E-mail d'achat", text: $email, prompt: Text("vous@exemple.fr"))
+                        HStack {
+                            Button("Activer sur ce Mac") {
+                                Task { await license.restore(transactionID: transactionID, email: email) }
+                            }
+                            .disabled(transactionID.isEmpty || email.isEmpty || license.isWorking)
+                            if license.isWorking { ProgressView().controlSize(.small) }
                         }
-                        .disabled(transactionID.isEmpty || email.isEmpty || license.isWorking)
-                        if license.isWorking { ProgressView().controlSize(.small) }
+                        if let error = license.lastError {
+                            Text(error).font(.caption).foregroundStyle(Theme.voice)
+                        }
+                    } else {
+                        Button("Déjà acheté ? Restaurer un achat") { showRestore = true }
+                            .buttonStyle(.link)
+                            .frame(maxWidth: .infinity)
                     }
-                    if let error = license.lastError {
-                        Text(error).font(.caption).foregroundStyle(Theme.voice)
-                    }
-                } header: {
-                    Text("Déjà acheté ?")
                 } footer: {
-                    Text("Le numéro de transaction figure dans le reçu envoyé par Paddle après l'achat.")
-                        .font(.caption).foregroundStyle(.secondary)
+                    if showRestore {
+                        Text("Le numéro de transaction figure dans le reçu envoyé par Paddle après l'achat.")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
                 }
-            }
-
-            Section {
-                LabeledContent("Temps dicté aujourd'hui", value: Self.minutes(license.secondsToday))
-            } footer: {
-                Text("Identifiant de ce Mac : \(license.deviceID)")
-                    .font(.caption.monospaced())
-                    .foregroundStyle(.tertiary)
-                    .textSelection(.enabled)
             }
         }
         .formStyle(.grouped)

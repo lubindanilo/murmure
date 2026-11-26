@@ -1,3 +1,4 @@
+import NaturalLanguage
 import AppKit
 import SwiftUI
 import Translation
@@ -16,7 +17,9 @@ final class Translator: ObservableObject {
     private var window: NSWindow?
 
     func translate(_ text: String, from source: String?, to target: String) async throws -> String {
-        let src = source.flatMap { $0 == "auto" ? nil : Locale.Language(identifier: $0) }
+        // La langue parlée est détectée sur le texte ; le réglage ne sert que si la détection échoue.
+        let detected = NLLanguageRecognizer.dominantLanguage(for: text)?.rawValue
+        let src = (detected ?? source).flatMap { $0 == "auto" ? nil : Locale.Language(identifier: $0) }
         let dst = Locale.Language(identifier: target)
         if let src, src.languageCode == dst.languageCode { return text }
 

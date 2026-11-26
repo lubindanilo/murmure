@@ -72,8 +72,10 @@ final class PostProcessor: ObservableObject {
             system = (custom.isEmpty ? Self.baseSystemPrompt : Self.fill(custom, values))
                 + "\n\nConsignes :\n" + Self.fill(mode.instructions, values)
         }
-        if !settings.dictionary.isEmpty {
-            system += "\n\nOrthographe à respecter pour ces mots : \(settings.dictionary.joined(separator: ", "))."
+        // Orthographe de référence : les mots du dictionnaire (anciennes versions) et le résultat des corrections.
+        let spellings = Array(Set(settings.dictionary + settings.replacements.map(\.to).filter { !$0.isEmpty })).sorted()
+        if !spellings.isEmpty {
+            system += "\n\nOrthographe à respecter pour ces mots : \(spellings.joined(separator: ", "))."
         }
         // Contexte activé mais pas cité dans les consignes : on le joint à la fin.
         let referenced = (mode.instructions + custom).contains("{{CONTEXT")

@@ -93,6 +93,7 @@ struct MenuContent: View {
     @ObservedObject private var setup = Setup.shared
 
     @ObservedObject private var updater = Updater.shared
+    @ObservedObject private var history = HistoryStore.shared
 
     var body: some View {
         Button(recordLabel) { app.toggleFromMenu() }
@@ -118,6 +119,22 @@ struct MenuContent: View {
             }
         }
 
+        // Filet de sécurité : si le collage a raté, la dictée est ici, à un clic.
+        if !history.entries.isEmpty {
+            Divider()
+            Menu("Dernières dictées") {
+                ForEach(Array(history.entries.prefix(5))) { entry in
+                    Button(Self.preview(entry.text)) {
+                        NSPasteboard.general.clearContents()
+                        NSPasteboard.general.setString(entry.text, forType: .string)
+                    }
+                }
+                Divider()
+                Text("Cliquer copie la dictée")
+                Button("Effacer l'historique") { history.clear() }
+            }
+        }
+
         Divider()
         if updater.available != nil {
             Button("Installer la mise à jour…") { updater.install() }
@@ -126,6 +143,11 @@ struct MenuContent: View {
             .keyboardShortcut(",")
         Button("Quitter Murmure") { NSApp.terminate(nil) }
             .keyboardShortcut("q")
+    }
+
+    static func preview(_ text: String) -> String {
+        let line = text.replacingOccurrences(of: "\n", with: " ")
+        return line.count > 48 ? String(line.prefix(47)) + "…" : line
     }
 
     private var recordLabel: String {

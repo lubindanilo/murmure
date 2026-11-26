@@ -23,7 +23,7 @@ struct ModesSettings: View {
                             }
                     }
                 } footer: {
-                    Text("Un mode s'active par son mot déclencheur (dit au début de la dictée), sa touche, le site ou l'app au premier plan. Sinon, le mode principal s'applique.")
+                    Text("Un mode s'active par un mot dit au début de la dictée ou selon l'app ouverte. Sinon, Dictée s'applique.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -129,6 +129,7 @@ struct ModeEditor: View {
 
     var body: some View {
         let mode = binding
+        let isMain = mode.wrappedValue.isMain
         Form {
             Section {
                 HStack(spacing: 10) {
@@ -141,17 +142,14 @@ struct ModeEditor: View {
 
             Section {
                 InstructionsEditor(text: mode.instructions)
-                if mode.wrappedValue.instructions.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    Toggle("Nettoyer la dictée (hésitations, répétitions, ponctuation)", isOn: mode.cleanup)
-                }
             } header: {
-                Text("Instructions IA")
+                Text("Ce que fait ce mode")
             } footer: {
-                Text("Sans instructions, le mode dicte tel quel, nettoyé si l'option est cochée. Exécuté par le modèle de langage local, sans coût.")
+                Text("Par exemple : « Rédige un mail poli et concis ». Laissez vide pour dicter tel quel.")
                     .font(.caption).foregroundStyle(.secondary)
             }
 
-            Section("Traduction") {
+            Section {
                 Picker("Traduire vers", selection: mode.translateTo) {
                     Text("Ne pas traduire").tag(String?.none)
                     ForEach(Languages.all.filter { $0.code != "auto" }, id: \.code) { lang in
@@ -163,33 +161,66 @@ struct ModeEditor: View {
                 }
             }
 
-            Section("Sortie") {
-                Picker("Après la dictée", selection: mode.outputMode) {
-                    ForEach(OutputMode.allCases) { Text($0.label).tag($0) }
+            if !isMain {
+                Section {
+                    TextField("Mot déclencheur", text: mode.triggerWord, prompt: Text("mail, anglais, prompt…"))
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            Text("Apps")
+                            Spacer()
+                            AppPickerButton { app in
+                                if !mode.wrappedValue.apps.contains(app) { mode.wrappedValue.apps.append(app) }
+                            }
+                        }
+                        if !mode.wrappedValue.apps.isEmpty {
+                            WrapLayout(spacing: 6) {
+                                ForEach(mode.wrappedValue.apps) { app in
+                                    Chip(text: app.name) { mode.wrappedValue.apps.removeAll { $0 == app } }
+                                }
+                            }
+                        }
+                    }
+                } header: {
+                    Text("S'active")
+                } footer: {
+                    Text("Dites le mot au début de la dictée, ou ouvrez l'une de ces apps. Le mot est retiré du texte.")
+                        .font(.caption).foregroundStyle(.secondary)
                 }
-                Text("Coller au curseur remplace le texte sélectionné.")
-                    .font(.caption).foregroundStyle(.secondary)
-            }
-
-            if !mode.wrappedValue.isMain {
-                activationSection(mode)
             }
 
             Section {
-                Toggle("Presse-papiers", isOn: mode.includeClipboard)
-                Toggle("Nom de l'app active", isOn: mode.includeActiveApp)
-                Toggle("Texte sélectionné et texte autour du curseur", isOn: mode.includeCursorContext)
-                Toggle("URL de l'onglet actif (Safari, Chrome, Arc…)", isOn: mode.includeBrowserURL)
-            } header: {
-                Text("Contexte donné à l'IA")
-            } footer: {
-                Text("Capturé au début de la dictée. Citez-le dans les instructions avec {{CONTEXT}} ou {{CONTEXT.CLIPBOARD}}, {{CONTEXT.SELECTED_TEXT}}, {{CONTEXT.APP}}, {{CONTEXT.URL}}. Sinon il est joint automatiquement.")
-                    .font(.caption).foregroundStyle(.secondary)
-            }
-
-            Section {
-                DisclosureGroup("Réglages avancés", isExpanded: $showAdvanced) {
-                    Picker("Remplacements de mots", selection: mode.replacementTiming) {
+                DisclosureGroup("Avancé", isExpanded: $showAdvanced) {
+                    if !isMain {
+                        Picker("Touche dédiée", selection: mode.shortcut) {
+                            Text("Aucune").tag(TriggerKey?.none)
+                            ForEach(TriggerKey.allCases.filter { $0 != settings.triggerKey }) { key in
+                                let usedBy = store.modes.first { $0.shortcut == key && $0.id != modeID }
+                                Text(usedBy == nil ? key.label : "\(key.label) (\(usedBy!.name))").tag(TriggerKey?.some(key))
+                            }
+                        }
+                        VStack(alignment: .leading, spacing: 6) {
+                            HStack {
+                                TextField("Sites", text: $newWebsite, prompt: Text("mail.google.com"))
+                                    .onSubmit { addWebsite(mode) }
+                                Button("Ajouter") { addWebsite(mode) }.disabled(newWebsite.isEmpty)
+                            }
+                            if !mode.wrappedValue.websites.isEmpty {
+                                WrapLayout(spacing: 6) {
+                                    ForEach(mode.wrappedValue.websites, id: \.self) { site in
+                                        Chip(text: site) { mode.wrappedValue.websites.removeAll { $0 == site } }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    Picker("Après la dictée", selection: mode.outputMode) {
+                        ForEach(OutputMode.allCases) { Text($0.label).tag($0) }
+                    }
+                    Toggle("Joindre le presse-papiers", isOn: mode.includeClipboard)
+                    Toggle("Joindre le nom de l'app active", isOn: mode.includeActiveApp)
+                    Toggle("Joindre le texte sélectionné", isOn: mode.includeCursorContext)
+                    Toggle("Joindre l'URL de l'onglet actif", isOn: mode.includeBrowserURL)
+                    Picker("Corrections appliquées", selection: mode.replacementTiming) {
                         ForEach(ReplacementTiming.allCases) { Text($0.label).tag($0) }
                     }
                     VStack(alignment: .leading, spacing: 4) {
@@ -204,25 +235,20 @@ struct ModeEditor: View {
                     }
                     ScriptField(title: "Script avant l'IA", script: mode.scriptBefore, mode: mode.wrappedValue)
                     ScriptField(title: "Script après l'IA", script: mode.scriptAfter, mode: mode.wrappedValue)
-                }
-            }
-
-            Section("Essayer ce mode") {
-                ModeTester(mode: mode.wrappedValue)
-            }
-
-            Section {
-                HStack {
+                    ModeTester(mode: mode.wrappedValue)
                     Button("Copier le lien murmure://") {
                         NSPasteboard.general.clearContents()
                         NSPasteboard.general.setString("murmure://start?mode_id=\(modeID.uuidString)", forType: .string)
                     }
-                    Spacer()
-                    if !mode.wrappedValue.isMain {
-                        Button("Supprimer le mode", role: .destructive) { confirmDelete = true }
-                    }
+                    .buttonStyle(.link)
                 }
-                .buttonStyle(.link)
+            }
+
+            if !isMain {
+                Section {
+                    Button("Supprimer le mode", role: .destructive) { confirmDelete = true }
+                        .buttonStyle(.link)
+                }
             }
         }
         .formStyle(.grouped)
@@ -232,55 +258,6 @@ struct ModeEditor: View {
                 store.delete(mode.wrappedValue)
                 dismiss()
             }
-        }
-    }
-
-    @ViewBuilder
-    private func activationSection(_ mode: Binding<Mode>) -> some View {
-        Section {
-            Picker("Touche dédiée", selection: mode.shortcut) {
-                Text("Aucune").tag(TriggerKey?.none)
-                ForEach(TriggerKey.allCases.filter { $0 != settings.triggerKey }) { key in
-                    let usedBy = store.modes.first { $0.shortcut == key && $0.id != modeID }
-                    Text(usedBy == nil ? key.label : "\(key.label) (\(usedBy!.name))").tag(TriggerKey?.some(key))
-                }
-            }
-            TextField("Mot déclencheur", text: mode.triggerWord, prompt: Text("mail, anglais, prompt…"))
-            VStack(alignment: .leading, spacing: 6) {
-                HStack {
-                    Text("Apps")
-                    Spacer()
-                    AppPickerButton { app in
-                        if !mode.wrappedValue.apps.contains(app) { mode.wrappedValue.apps.append(app) }
-                    }
-                }
-                if !mode.wrappedValue.apps.isEmpty {
-                    WrapLayout(spacing: 6) {
-                        ForEach(mode.wrappedValue.apps) { app in
-                            Chip(text: app.name) { mode.wrappedValue.apps.removeAll { $0 == app } }
-                        }
-                    }
-                }
-            }
-            VStack(alignment: .leading, spacing: 6) {
-                HStack {
-                    TextField("Sites", text: $newWebsite, prompt: Text("mail.google.com"))
-                        .onSubmit { addWebsite(mode) }
-                    Button("Ajouter") { addWebsite(mode) }.disabled(newWebsite.isEmpty)
-                }
-                if !mode.wrappedValue.websites.isEmpty {
-                    WrapLayout(spacing: 6) {
-                        ForEach(mode.wrappedValue.websites, id: \.self) { site in
-                            Chip(text: site) { mode.wrappedValue.websites.removeAll { $0 == site } }
-                        }
-                    }
-                }
-            }
-        } header: {
-            Text("Activation")
-        } footer: {
-            Text("Priorité : mot déclencheur, puis touche, site, app. Le mot déclencheur est retiré du texte. Les sites demandent l'autorisation de piloter le navigateur.")
-                .font(.caption).foregroundStyle(.secondary)
         }
     }
 
