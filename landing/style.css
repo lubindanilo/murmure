@@ -124,7 +124,7 @@ img { display: block; }
 .mb-left, .mb-right { display: flex; align-items: center; gap: 16px; }
 .mb-right i { font-size: 14px; }
 .mb-icon { display: grid; place-items: center; width: 28px; height: 20px; border-radius: 5px; background: rgb(30 36 51 / 0.1); }
-.mb-icon canvas { width: 20px; height: 16px; }
+.mb-icon canvas { width: 22px; height: 14px; }
 
 /* Encoche de MacBook : bas arrondi, raccords incurvés en haut, caméra au centre. */
 .notch {
@@ -162,7 +162,7 @@ img { display: block; }
 .notch-state.on { opacity: 1; filter: blur(0); scale: 1; }
 .notch-state i.ph, .notch-state i.ph-bold { font-size: 10px; }
 .notch-state[data-state="done"] i { color: #6bd590; }
-.voice { width: 13px; height: 10px; }
+.voice { width: 16px; height: 10px; }
 
 .win {
   position: absolute; left: 50%; top: 17%; width: 70%; transform: translateX(-50%);

@@ -294,26 +294,10 @@ struct OnboardingView: View {
 
 // MARK: - Illustrations
 
-/// Le ruban irisé de Murmure, qui oscille doucement.
+/// Le ruban de Murmure, qui se plie en boucle.
 private struct RibbonArt: View {
-    @State private var drift = false
-
     var body: some View {
-        Group {
-            if let ribbon = Theme.ribbon {
-                Image(nsImage: ribbon)
-                    .resizable()
-                    .interpolation(.high)
-                    .scaledToFit()
-                    .frame(height: 172)
-                    .rotationEffect(.degrees(drift ? 4 : -4))
-                    .scaleEffect(drift ? 1.02 : 0.98)
-                    .animation(Theme.reduceMotion ? nil : .easeInOut(duration: 6).repeatForever(autoreverses: true), value: drift)
-                    .onAppear { drift = true }
-            } else {
-                RibbonMark(height: 150)
-            }
-        }
+        RibbonMark(height: 150, animated: true)
     }
 }
 

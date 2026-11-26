@@ -102,7 +102,7 @@ final class PanelController: NSObject {
         // Les modes ne sont plus choisis à la main : on oublie un ancien choix devenu invisible.
         ModeStore.shared.pinnedModeID = nil
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        item.button?.image = Ribbon.templateImage()
+        item.button?.image = Self.restingIcon
         item.button?.target = self
         item.button?.action = #selector(toggle(_:))
         statusItem = item
@@ -111,31 +111,38 @@ final class PanelController: NSObject {
             .sink { [weak self] phase in self?.animateIcon(for: phase) }
     }
 
-    /// Le ruban de la barre des menus ondule avec la voix pendant la dictée,
-    /// tourne lentement pendant la mise au propre, et reste immobile le reste du temps.
+    /// Le ruban de la barre des menus se plie en boucle pendant la dictée (plus vite quand la voix monte),
+    /// plus lentement pendant la mise au propre, et reste immobile le reste du temps.
     private func animateIcon(for phase: AppController.Phase) {
         iconTimer?.invalidate()
         iconTimer = nil
         let busy: Double?
         switch phase {
         case .recording: busy = nil
-        case .transcribing, .polishing, .translating: busy = 0.3
+        case .transcribing, .polishing, .translating: busy = 0.6
         default:
-            statusItem?.button?.image = Ribbon.templateImage()
+            statusItem?.button?.image = Self.restingIcon
             return
         }
         if Theme.reduceMotion {
-            statusItem?.button?.image = Ribbon.templateImage(level: 0.6)
+            // Sans animation, le ruban replié signale la dictée.
+            statusItem?.button?.image = RibbonMotion.templateImage(phase: 0.5) ?? Self.restingIcon
             return
         }
+        let clock = RibbonClock()
         let tick = { [weak self] in
-            let level = busy ?? Double(AppController.shared.level)
-            self?.statusItem?.button?.image = Ribbon.templateImage(t: Date.timeIntervalSinceReferenceDate, level: level)
+            let speed = busy ?? RibbonMotion.speed(level: AppController.shared.level)
+            let phase = clock.advance(to: Date.timeIntervalSinceReferenceDate, speed: speed)
+            if let image = RibbonMotion.templateImage(phase: phase) { self?.statusItem?.button?.image = image }
         }
         tick()
-        let timer = Timer(timeInterval: 1 / 20, repeats: true) { _ in tick() }
+        let timer = Timer(timeInterval: 1 / RibbonMotion.fps, repeats: true) { _ in tick() }
         RunLoop.main.add(timer, forMode: .common)
         iconTimer = timer
+    }
+
+    private static var restingIcon: NSImage? {
+        RibbonMotion.templateImage() ?? NSImage(named: NSImage.applicationIconName)
     }
 
     @objc private func toggle(_ sender: Any?) {

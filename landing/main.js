@@ -114,12 +114,34 @@ const states = [...hud.querySelectorAll(".notch-state")];
 const voice = $("voice");
 const mbRibbon = $("mb-ribbon");
 const menubarInk = "#1e2433";
-// Le ruban de la barre des menus et celui de l'encoche, immobiles au repos.
+// Le ruban en mouvement : les 45 images d'une boucle de 1,5 s, rendues en 3D avec HyperFrames
+// (motion/ruban-frames) et rangées en grille 9 × 5. Il se plie, plus vite quand la voix monte.
+const ribbonSheet = new Image();
+ribbonSheet.src = "/ribbon-motion.webp";
+const RIBBON = { frames: 45, cols: 9, loop: 1.5 };
+function drawRibbon(canvas, phase = 0, ink = null) {
+  if (!ribbonSheet.naturalWidth) return;
+  const rows = Math.ceil(RIBBON.frames / RIBBON.cols);
+  const fw = ribbonSheet.naturalWidth / RIBBON.cols, fh = ribbonSheet.naturalHeight / rows;
+  const i = Math.floor((phase - Math.floor(phase)) * RIBBON.frames) % RIBBON.frames;
+  const ctx = canvas.getContext("2d");
+  ctx.globalCompositeOperation = "source-over";
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(ribbonSheet, (i % RIBBON.cols) * fw, Math.floor(i / RIBBON.cols) * fh, fw, fh, 0, 0, canvas.width, canvas.height);
+  if (ink) {
+    // Silhouette d'une seule couleur, comme une icône de barre des menus.
+    ctx.globalCompositeOperation = "source-in";
+    ctx.fillStyle = ink;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.globalCompositeOperation = "source-over";
+  }
+}
+// Immobiles au repos.
 function restRibbons() {
-  drawRibbon(mbRibbon, { mono: menubarInk });
+  drawRibbon(mbRibbon, 0, menubarInk);
   drawRibbon(voice);
 }
-restRibbons();
+ribbonSheet.decode().then(restRibbons).catch(() => {});
 const scenes = [
   { app: "Notes", title: "Notes", h: "Au fil des idées", prev: "Reprendre le fil du projet.", text: "Je t'envoie le brouillon demain matin." },
   { app: "Mail", title: "Nouveau message", h: "Réunion de demain", prev: "Salut Axel,", text: "la réunion est décalée à 15 h. Tu peux prévenir Louis ?" },
@@ -143,15 +165,20 @@ async function demo() {
     $("win-h").textContent = s.h;
     $("prev").textContent = s.prev;
     typed.textContent = "";
-    setState("idle");    await sleep(1000);
+    setState("idle");
+    await sleep(1000);
     await sleep(350);
-    setState("listen");    const start = performance.now();
+    setState("listen");
+    const start = performance.now();
+    let phase = 0, last = start;
     while (performance.now() - start < 2600) {
-      const t = performance.now() / 1000;
+      const now = performance.now(), t = now / 1000;
       const level = 0.3 + 0.7 * Math.abs(Math.sin(t * 3.1) * Math.sin(t * 1.7));
-      drawRibbon(voice, { t, level });
-      drawRibbon(mbRibbon, { t, level, mono: menubarInk });
-      await sleep(40);
+      phase += ((now - last) / 1000) * (0.75 + 1.25 * level) / RIBBON.loop;
+      last = now;
+      drawRibbon(voice, phase);
+      drawRibbon(mbRibbon, phase, menubarInk);
+      await sleep(33);
     }
     restRibbons();
     setState("clean");

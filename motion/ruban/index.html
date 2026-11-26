@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1080" />
+    <title>Ruban Murmure</title>
+    <style>
+      html, body { margin: 0; background: transparent; }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; }
+      #ribbon { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+    </style>
+  </head>
+  <body>
+    <!-- Boucle du logo : le ruban, modélisé en 3D, respire. Sa torsion oscille et une onde le parcourt.
+         Tout est fonction périodique du temps (période = data-duration) : la fin rejoint le début. -->
+    <div id="root" data-composition-id="ruban" data-start="0" data-width="1080" data-height="1080" data-duration="1.5" data-no-timeline>
+      <canvas id="ribbon" width="1080" height="1080"></canvas>
+    </div>
+    <script type="module">
+      import { createRibbon } from "./ribbon3d.js";
+      const renderAt = createRibbon(document.getElementById("ribbon"), { width: 1080, height: 1080, camZ: 9 });
+      window.addEventListener("hf-seek", (e) => renderAt(e.detail.time));
+      renderAt(window.__hfThreeTime || 0);
+    </script>
+  </body>
+</html>

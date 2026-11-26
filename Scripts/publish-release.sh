@@ -13,7 +13,8 @@ run=${1:-$(gh run list -R "$REPO" -w build.yml -b main -s success -L 1 --json da
 sha=$(gh run view "$run" -R "$REPO" --json headSha -q .headSha)
 work=$(mktemp -d); trap 'rm -rf "$work"' EXIT
 gh run download "$run" -R "$REPO" -D "$work"
-dir=$(find "$work" -name Murmure.zip -printf '%h\n' | head -1)
+zip=$(find "$work" -name Murmure.zip | head -1)
+dir=$(dirname "${zip:-$work/none}")
 [ -f "$dir/Murmure.zip" ] && [ -f "$dir/Murmure.dmg" ] || { echo "Artefacts manquants" >&2; exit 1; }
 
 tag="v$VERSION"

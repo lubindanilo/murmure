@@ -26,8 +26,9 @@ for bundle in "$BIN"/*.bundle; do
   [ -e "$bundle" ] && cp -R "$bundle" "$APP/Contents/Resources/"
 done
 install_name_tool -add_rpath "@executable_path/../Frameworks" "$APP/Contents/MacOS/Murmure" 2>/dev/null || true
-# Illustrations de l'interface (ruban de l'onboarding).
+# Illustrations de l'interface : le ruban fixe et ses images en mouvement.
 cp "$ROOT/Resources/Ribbon.png" "$APP/Contents/Resources/Ribbon.png"
+cp "$ROOT/Resources/RibbonMotion.webp" "$APP/Contents/Resources/RibbonMotion.webp"
 
 if [ -f "$ROOT/Resources/AppIcon.png" ] && command -v iconutil >/dev/null; then
   ICONSET="$ROOT/build/AppIcon.iconset"; rm -rf "$ICONSET"; mkdir -p "$ICONSET"

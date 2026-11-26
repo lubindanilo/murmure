@@ -12,7 +12,9 @@
 <meta property="og:image" content="https://murmure-ai.com/og.png">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico?v=ruban" sizes="48x48">
+<link rel="icon" href="/favicon-32.png?v=ruban" sizes="32x32" type="image/png">
+<link rel="icon" href="/favicon.svg?v=ruban" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -46,11 +48,11 @@
     <figure class="screen enter" style="--i:2" id="demo" aria-label="Démonstration : une dictée qui s'écrit dans Notes">
       <div class="menubar" aria-hidden="true">
         <span class="mb-left"><strong id="mb-app">Notes</strong><span>Fichier</span><span>Édition</span></span>
-        <span class="mb-right"><span class="mb-icon" id="mb-icon"><canvas id="mb-ribbon" width="40" height="32"></canvas></span><i class="ph ph-wifi-high"></i><i class="ph ph-battery-high"></i><span>Jeu. 26 nov.</span><span>09:41</span></span>
+        <span class="mb-right"><span class="mb-icon" id="mb-icon"><canvas id="mb-ribbon" width="70" height="44"></canvas></span><i class="ph ph-wifi-high"></i><i class="ph ph-battery-high"></i><span>Jeu. 26 nov.</span><span>09:41</span></span>
       </div>
       <div class="island" id="hud" aria-hidden="true">
         <span class="notch-state on" data-state="idle"></span>
-        <span class="notch-state" data-state="listen"><canvas class="voice" id="voice" width="56" height="44"></canvas>J'écoute</span>
+        <span class="notch-state" data-state="listen"><canvas class="voice" id="voice" width="64" height="40"></canvas>J'écoute</span>
         <span class="notch-state" data-state="clean">Mise au propre</span>
         <span class="notch-state" data-state="done"><i class="ph-bold ph-check"></i>Collé</span>
       </div>
@@ -212,7 +214,6 @@
 </dialog>
 
 <script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
-<script src="/ribbon.js" defer></script>
 <script src="/main.js" defer></script>
 </body>
 </html>

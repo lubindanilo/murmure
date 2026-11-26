@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>Bande de dictée Murmure</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Inter"; src: url("assets/fonts/Inter-500.woff2") format("woff2"); font-weight: 500; }
+      @font-face { font-family: "Inter"; src: url("assets/fonts/Inter-600.woff2") format("woff2"); font-weight: 600; }
+      html, body { margin: 0; background: #0b0d14; }
+      /* Le haut d'un écran de MacBook, zoomé 3 fois : 1 pt = 3 px. Encoche de 185 × 32 pt,
+         bande de dictée de la largeur de l'encoche et 22 pt de haut, comme dans l'app. */
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; font-family: "Inter", sans-serif; }
+      .wall {
+        position: absolute; inset: 0;
+        background:
+          radial-gradient(120% 90% at 18% 0%, #f3b07a 0%, rgba(243, 176, 122, 0) 55%),
+          radial-gradient(110% 120% at 85% 10%, #e9a6a0 0%, rgba(233, 166, 160, 0) 50%),
+          linear-gradient(180deg, #c9a6c8 0%, #6d7fd6 55%, #2f4fc4 100%);
+      }
+      .menubar { position: absolute; left: 0; right: 0; top: 0; height: 96px; background: rgba(243, 245, 250, 0.78); }
+      .menubar .left, .menubar .right { position: absolute; top: 0; height: 96px; display: flex; align-items: center; gap: 54px;
+        font-size: 39px; font-weight: 500; color: #1e2433; }
+      .menubar .left { left: 60px; } .menubar .left b { font-weight: 600; }
+      .menubar .right { right: 60px; }
+      .notch, .band { position: absolute; top: 0; left: 50%; width: 555px; margin-left: -277.5px; background: #000; }
+      .notch { height: 96px; border-radius: 0 0 24px 24px; z-index: 3; }
+      .notch::before, .notch::after, .band::before, .band::after { content: ""; position: absolute; top: 0; width: 12px; height: 12px; }
+      .notch::before, .band::before { left: -12px; background: radial-gradient(circle at 0 100%, transparent 11.5px, #000 12px); }
+      .notch::after, .band::after { right: -12px; background: radial-gradient(circle at 100% 100%, transparent 11.5px, #000 12px); }
+      .cam { position: absolute; top: 36px; left: 50%; width: 22px; height: 22px; margin-left: -11px; border-radius: 50%;
+        background: radial-gradient(circle at 35% 35%, #2c3550 0, #0b0d14 60%); box-shadow: 0 0 0 4px #101218; }
+      .band { height: 162px; border-radius: 0 0 30px 30px; z-index: 2; transform-origin: 50% 0;
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.22); }
+      .row { position: absolute; left: 18px; right: 18px; bottom: 0; height: 66px; display: grid; place-items: center; }
+      .state { grid-area: 1 / 1; display: flex; align-items: center; gap: 18px; white-space: nowrap;
+        color: #fff; font-size: 33px; font-weight: 500; letter-spacing: -0.2px; }
+      #ribbon { width: 60px; height: 33px; display: block; }
+      .check { width: 30px; height: 30px; display: block; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="encoche" data-start="0" data-width="1920" data-height="1080" data-duration="6.5">
+      <div class="wall"></div>
+      <div class="menubar">
+        <div class="left"><b>Notes</b><span>Fichier</span><span>Édition</span></div>
+        <div class="right"><span>Jeu. 26 nov.</span><span>09:41</span></div>
+      </div>
+      <div class="band" id="band">
+        <div class="row">
+          <div class="state" id="s-listen"><canvas id="ribbon" width="240" height="132"></canvas><span>J'écoute</span></div>
+          <div class="state" id="s-clean"><span>Mise au propre</span></div>
+          <div class="state" id="s-done">
+            <svg class="check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="#6bd590" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>Collé</span>
+          </div>
+        </div>
+      </div>
+      <div class="notch"><span class="cam"></span></div>
+    </div>
+    <script>
+      // Entrée et sortie comme dans l'app : la bande descend de l'encoche (ressort de 0,35 s sans rebond),
+      // les états se croisent en fondu avec un léger flou.
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#band", { scaleY: 0.4, opacity: 0 }, { scaleY: 1, opacity: 1, duration: 0.35, ease: "expo.out" }, 0.5);
+      tl.fromTo("#s-listen", { opacity: 0, filter: "blur(9px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.3, ease: "power2.out" }, 0.55);
+      tl.to("#s-listen", { opacity: 0, filter: "blur(9px)", duration: 0.25, ease: "power2.in" }, 4.4);
+      tl.fromTo("#s-clean", { opacity: 0, filter: "blur(9px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.3, ease: "power2.out" }, 4.55);
+      tl.to("#s-clean", { opacity: 0, filter: "blur(9px)", duration: 0.25, ease: "power2.in" }, 5.15);
+      tl.fromTo("#s-done", { opacity: 0, filter: "blur(9px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.3, ease: "power2.out" }, 5.3);
+      tl.to("#band", { scaleY: 0.4, opacity: 0, duration: 0.25, ease: "power2.in" }, 5.95);
+      window.__timelines["encoche"] = tl;
+    </script>
+    <script type="module">
+      import { createRibbon } from "./ribbon3d.js";
+      // Le ruban parle : niveau de voix moyen pendant « J'écoute ».
+      const renderAt = createRibbon(document.getElementById("ribbon"), { width: 240, height: 132, camZ: 4.7, VOICE: 0.5 });
+      window.addEventListener("hf-seek", (e) => renderAt(e.detail.time));
+      renderAt(window.__hfThreeTime || 0);
+    </script>
+  </body>
+</html>

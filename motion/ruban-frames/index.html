@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=480, height=300" />
+    <title>Ruban Murmure, images de l'app</title>
+    <style>
+      html, body { margin: 0; background: transparent; }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; }
+      #ribbon { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+    </style>
+  </head>
+  <body>
+    <!-- La boucle du ruban cadrée serré (480 × 300, fond transparent), rendue en images pour l'app et le site. -->
+    <div id="root" data-composition-id="ruban-frames" data-start="0" data-width="480" data-height="300" data-duration="1.5" data-no-timeline>
+      <canvas id="ribbon" width="480" height="300"></canvas>
+    </div>
+    <script type="module">
+      import { createRibbon } from "./ribbon3d.js";
+      const renderAt = createRibbon(document.getElementById("ribbon"), { width: 480, height: 300, camZ: 5.4, VOICE: 0.3 });
+      window.addEventListener("hf-seek", (e) => renderAt(e.detail.time));
+      renderAt(window.__hfThreeTime || 0);
+    </script>
+  </body>
+</html>
