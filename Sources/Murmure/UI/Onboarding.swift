@@ -168,10 +168,10 @@ struct OnboardingView: View {
     private var title: String {
         switch step {
         case .welcome: return "Bienvenue dans Murmure"
-        case .microphone: return "Autorisez le micro"
-        case .accessibility: return "Autorisez l'accessibilité"
-        case .key: return "Choisissez votre touche"
-        case .tryIt: return asrReady ? "Essayez dans cette note" : "Préparation de la voix"
+        case .microphone: return "Le micro"
+        case .accessibility: return "L'accès au clavier"
+        case .key: return "Votre touche"
+        case .tryIt: return asrReady ? "Essayez" : "Préparation"
         case .done: return "C'est prêt"
         }
     }
@@ -179,19 +179,19 @@ struct OnboardingView: View {
     private var message: String {
         switch step {
         case .welcome:
-            return "Maintenez une touche, parlez, puis relâchez. Vos mots apparaissent au curseur."
+            return "Maintenez une touche, parlez, relâchez."
         case .microphone:
-            return "Murmure écoute pendant l'appui. Votre voix reste sur ce Mac."
+            return "Cliquez sur « Autoriser »."
         case .accessibility:
-            return "macOS demande cet accès pour détecter la touche et coller le texte."
+            return "Activez Murmure dans la liste. On revient ici tout seuls."
         case .key:
-            return "Appuyez sur la touche à maintenir pour dicter."
+            return "Appuyez sur la touche de votre choix."
         case .tryIt:
             return asrReady
-                ? "Maintenez \(settings.triggerKey.label), dites une phrase, puis relâchez."
-                : "Murmure télécharge son modèle de transcription, une seule fois. Ensuite, tout fonctionne hors ligne."
+                ? "Maintenez \(settings.triggerKey.label) et parlez."
+                : "Une seule fois. Ensuite, tout marche hors ligne."
         case .done:
-            return "Retrouvez Murmure en haut de votre écran, dans la barre des menus."
+            return "Murmure vit dans la barre des menus."
         }
     }
 
@@ -200,10 +200,8 @@ struct OnboardingView: View {
         switch step {
         case .microphone:
             if AudioRecorder.permission == .denied {
-                Caption("Le micro a été refusé : activez Murmure dans Réglages Système, Confidentialité et sécurité, Micro.", accent: true)
+                Caption("Refusé : activez-le dans les Réglages.", accent: true)
             }
-        case .accessibility:
-            Caption("Activez Murmure dans la liste. Cette fenêtre continue toute seule.")
         case .tryIt:
             if asrReady { tryStatus } else { DownloadList() }
         default:
@@ -214,11 +212,11 @@ struct OnboardingView: View {
     @ViewBuilder
     private var tryStatus: some View {
         switch app.phase {
-        case .recording: Caption("J'écoute… relâchez quand vous avez fini.", accent: true)
+        case .recording: Caption("J'écoute… relâchez.", accent: true)
         case .transcribing, .polishing, .translating: Caption("Mise au propre…")
         case .failed(let message): Caption(message, accent: true)
         default:
-            if !tryText.isEmpty { Caption("Parfait. C'est aussi simple que ça, dans toutes vos apps.") }
+            if !tryText.isEmpty { Caption("Parfait. Pareil dans toutes vos apps.") }
         }
     }
 
@@ -226,8 +224,8 @@ struct OnboardingView: View {
     private var illustration: some View {
         switch step {
         case .welcome: RibbonArt()
-        case .microphone: MicrophoneArt()
-        case .accessibility: AccessibilityArt()
+        case .microphone: MicrophoneAlertDemo(granted: micGranted)
+        case .accessibility: SettingsToggleDemo(granted: axGranted).frame(width: 300)
         case .key: KeyboardArt(selected: settings.triggerKey, pressed: keyFlash)
         case .tryIt: NoteArt(text: $tryText, ready: asrReady)
         case .done: ScreenArt()
@@ -259,17 +257,14 @@ struct OnboardingView: View {
             PrimaryButton("Commencer", action: advance)
         case .microphone:
             if AudioRecorder.permission == .denied {
-                PrimaryButton("Ouvrir les réglages") { HotkeyMonitor.openMicrophoneSettings() }
+                PrimaryButton("Ouvrir les réglages") { PermissionGuide.shared.start(.microphone) }
             } else {
                 PrimaryButton("Autoriser le micro") {
                     Task { micGranted = await AudioRecorder.requestPermission() }
                 }
             }
         case .accessibility:
-            PrimaryButton("Ouvrir les réglages") {
-                HotkeyMonitor.promptForAccessibility()
-                HotkeyMonitor.openAccessibilitySettings()
-            }
+            PrimaryButton("Ouvrir les réglages") { PermissionGuide.shared.start(.accessibility) }
         case .key:
             PrimaryButton("Continuer", action: advance)
         case .tryIt:
@@ -298,46 +293,6 @@ struct OnboardingView: View {
 private struct RibbonArt: View {
     var body: some View {
         RibbonMark(height: 150, animated: true)
-    }
-}
-
-/// Une touche de micro au centre d'ondes concentriques.
-private struct MicrophoneArt: View {
-    var body: some View {
-        ZStack {
-            Circle().strokeBorder(Theme.voice.opacity(0.14), lineWidth: 1).frame(width: 140, height: 140)
-            Circle().strokeBorder(Theme.voice.opacity(0.22), lineWidth: 1).frame(width: 112, height: 112)
-            Tile(width: 72, height: 72) {
-                Image(systemName: "mic").font(.system(size: 30, weight: .regular)).foregroundStyle(Theme.voice)
-            }
-        }
-    }
-}
-
-/// La touche relie le texte : ⌘ ··· Aa.
-private struct AccessibilityArt: View {
-    var body: some View {
-        HStack(spacing: 14) {
-            Tile(width: 62, height: 58) {
-                Text("⌘").font(.system(size: 26, weight: .medium)).foregroundStyle(Theme.voice)
-            }
-            .rotationEffect(.degrees(-5))
-            Line()
-                .stroke(Theme.voice.opacity(0.7), style: StrokeStyle(lineWidth: 1.5, dash: [2, 3]))
-                .frame(width: 54, height: 1)
-            ZStack(alignment: .bottomTrailing) {
-                Tile(width: 62, height: 74) {
-                    VStack(spacing: 6) {
-                        Text("Aa").font(.system(size: 22, weight: .regular, design: .serif)).italic().foregroundStyle(Theme.voice)
-                        Capsule().fill(Palette.hairline).frame(width: 30, height: 2)
-                        Capsule().fill(Palette.hairline).frame(width: 22, height: 2)
-                    }
-                }
-                Image(systemName: "cursorarrow").font(.system(size: 20)).foregroundStyle(Palette.ink)
-                    .offset(x: -6, y: 10)
-            }
-            .rotationEffect(.degrees(4))
-        }
     }
 }
 
@@ -496,15 +451,6 @@ private struct Tile<Content: View>: View {
                 .shadow(color: .black.opacity(0.14), radius: 0, y: 2)
                 .shadow(color: .black.opacity(0.10), radius: 10, y: 5))
             .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Palette.hairline, lineWidth: 0.5))
-    }
-}
-
-private struct Line: Shape {
-    func path(in rect: CGRect) -> Path {
-        var p = Path()
-        p.move(to: CGPoint(x: rect.minX, y: rect.midY))
-        p.addLine(to: CGPoint(x: rect.maxX, y: rect.midY))
-        return p
     }
 }
 

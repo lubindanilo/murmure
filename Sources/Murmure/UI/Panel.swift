@@ -402,14 +402,13 @@ struct HomePage: View {
                 if micStatus == .notDetermined {
                     Task { _ = await AudioRecorder.requestPermission(); micStatus = AudioRecorder.permission }
                 } else {
-                    HotkeyMonitor.openMicrophoneSettings()
+                    PermissionGuide.shared.start(.microphone)
                 }
             }
         } else if !axTrusted {
             Callout(title: "Autorisez l'accessibilité", detail: "Pour détecter la touche et coller le texte.",
                     action: "Ouvrir les réglages") {
-                HotkeyMonitor.promptForAccessibility()
-                HotkeyMonitor.openAccessibilitySettings()
+                PermissionGuide.shared.start(.accessibility)
             }
         }
         ForEach(setup.items.filter { $0.progress != nil || $0.error != nil }) { item in
