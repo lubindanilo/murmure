@@ -156,19 +156,21 @@ final class PanelController: NSObject {
     }
 
     /// Sous l'icône de la barre des menus, sans dépasser de l'écran.
+    /// La hauteur se cale sur le bas de la barre des menus ; l'icône ne sert qu'à l'alignement horizontal,
+    /// car sa position n'est pas encore connue juste après le lancement.
     private func position(_ panel: NSPanel) {
         let size = Self.size
-        guard let button = statusItem?.button, let window = button.window else {
-            if let frame = NSScreen.main?.visibleFrame {
-                panel.setFrame(NSRect(x: frame.maxX - size.width - 12, y: frame.maxY - size.height - 6, width: size.width, height: size.height), display: true)
+        let buttonWindow = statusItem?.button?.window
+        let screen = (buttonWindow?.screen ?? NSScreen.main)?.visibleFrame ?? .zero
+        var x = screen.maxX - size.width - 8
+        if let button = statusItem?.button, let window = buttonWindow {
+            let anchor = window.convertToScreen(button.convert(button.bounds, to: nil))
+            if anchor.width > 0, screen.minX...screen.maxX ~= anchor.midX {
+                x = anchor.midX - size.width / 2
             }
-            return
         }
-        let anchor = window.convertToScreen(button.convert(button.bounds, to: nil))
-        let screen = window.screen?.visibleFrame ?? NSScreen.main?.visibleFrame ?? .zero
-        var x = anchor.midX - size.width / 2
         x = min(max(x, screen.minX + 8), screen.maxX - size.width - 8)
-        let y = anchor.minY - size.height - 6
+        let y = screen.maxY - size.height - 6
         panel.setFrame(NSRect(x: x, y: y, width: size.width, height: size.height), display: true)
     }
 }
