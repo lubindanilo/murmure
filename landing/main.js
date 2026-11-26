@@ -112,7 +112,6 @@ const typed = $("typed");
 const hud = $("hud");
 const states = [...hud.querySelectorAll(".notch-state")];
 const bars = [...hud.querySelectorAll(".bars i")];
-const steps = { hold: $("g-hold"), talk: $("g-talk"), release: $("g-release") };
 const scenes = [
   { app: "Notes", title: "Notes", h: "Au fil des idées", prev: "Reprendre le fil du projet.", text: "Je t'envoie le brouillon demain matin." },
   { app: "Mail", title: "Nouveau message", h: "Réunion de demain", prev: "Salut Axel,", text: "la réunion est décalée à 15 h. Tu peux prévenir Louis ?" },
@@ -124,9 +123,6 @@ let visible = true;
 function setState(name) {
   states.forEach((el) => el.classList.toggle("on", el.dataset.state === name));
   hud.classList.toggle("open", name !== "idle");
-}
-function setStep(name) {
-  Object.entries(steps).forEach(([k, el]) => el && el.classList.toggle("on", k === name));
 }
 
 async function demo() {
@@ -140,19 +136,15 @@ async function demo() {
     $("win-h").textContent = s.h;
     $("prev").textContent = s.prev;
     typed.textContent = "";
-    setState("idle"); setStep(null);
-    await sleep(1000);
-    setStep("hold");
+    setState("idle");    await sleep(1000);
     await sleep(350);
-    setState("listen"); setStep("talk");
-    const start = performance.now();
+    setState("listen");    const start = performance.now();
     while (performance.now() - start < 2600) {
       const t = performance.now() / 1000;
       const level = 0.3 + 0.7 * Math.abs(Math.sin(t * 3.1) * Math.sin(t * 1.7));
       bars.forEach((b, k) => { b.style.scale = `1 ${Math.max(0.25, level * profile[k] * (0.75 + 0.25 * Math.sin(t * 13 + k)))}`; });
       await sleep(70);
     }
-    setStep("release");
     setState("clean");
     await sleep(800);
     setState("done");

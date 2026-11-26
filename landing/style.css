@@ -91,6 +91,7 @@ img { display: block; }
 .button i { font-size: 18px; }
 @media (hover: hover) { .button:hover { opacity: 0.9; } }
 .button:active { scale: 0.96; }
+.note { max-width: 520px; margin: 32px auto 0; text-align: center; color: var(--muted); }
 .fine { margin-top: 12px; font-size: 12px; line-height: 16px; color: var(--muted); }
 
 /* Hero */
@@ -129,21 +130,21 @@ img { display: block; }
 /* Encoche de MacBook : bas arrondi, raccords incurvés en haut, caméra au centre. */
 .notch {
   position: absolute; z-index: 4; top: 0; left: 50%; transform: translateX(-50%);
-  width: 19%; height: 28px; background: #000; border-radius: 0 0 9px 9px;
+  width: 12%; aspect-ratio: 6.2 / 1; background: #000; border-radius: 0 0 6px 6px;
 }
 .notch::before, .notch::after {
-  content: ""; position: absolute; top: 0; width: 7px; height: 7px;
+  content: ""; position: absolute; top: 0; width: 4px; height: 4px;
 }
-.notch::before { left: -7px; background: radial-gradient(circle at 0 100%, transparent 6.5px, #000 7px); }
-.notch::after { right: -7px; background: radial-gradient(circle at 100% 100%, transparent 6.5px, #000 7px); }
-.cam { position: absolute; top: 10px; left: 50%; width: 7px; height: 7px; margin-left: -3.5px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #2c3550 0, #0b0d14 60%); box-shadow: 0 0 0 1.5px #101218; }
+.notch::before { left: -4px; background: radial-gradient(circle at 0 100%, transparent 3.5px, #000 4px); }
+.notch::after { right: -4px; background: radial-gradient(circle at 100% 100%, transparent 3.5px, #000 4px); }
+.cam { position: absolute; top: 50%; left: 50%; width: 4px; height: 4px; margin: -2px 0 0 -2px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #2c3550 0, #0b0d14 60%); box-shadow: 0 0 0 1px #101218; }
 
 /* Île : elle sort de l'encoche et affiche l'état sous la caméra. */
 .island {
   position: absolute; z-index: 3; top: 0; left: 50%; translate: -50% 0;
-  display: grid; place-items: end center; width: 25%; min-width: 180px; height: 62px; padding-bottom: 9px;
-  background: #000; color: #fff; border-radius: 0 0 22px 22px;
-  font-size: 13px; line-height: 16px; font-weight: 500;
+  display: grid; place-items: end center; width: 18%; min-width: 150px; height: 44px; padding-bottom: 8px;
+  background: #000; color: #fff; border-radius: 0 0 18px 18px;
+  font-size: 12px; line-height: 16px; font-weight: 500;
   box-shadow: 0 10px 24px rgb(0 0 0 / 0.3);
   transform-origin: 50% 0;
   transition-property: scale, opacity; transition-duration: 350ms; transition-timing-function: var(--ease);
@@ -192,14 +193,6 @@ img { display: block; }
 }
 .dock i { display: block; width: 28px; height: 28px; border-radius: 7px; background: rgb(255 255 255 / 0.55); }
 
-.gesture {
-  max-width: 1200px; margin: 48px auto 0; padding: 0 32px;
-  display: flex; align-items: center; justify-content: flex-end; gap: 16px;
-  font-family: "Geist Mono", ui-monospace, monospace; font-size: 12px; line-height: 16px; color: var(--faint);
-}
-.gesture i { width: 48px; height: 1px; background: var(--line); }
-.gesture span { transition: color 300ms var(--ease-ui); }
-.gesture span.on { color: var(--voice); }
 
 /* Phrase */
 .tagline { padding: 192px 32px; }
@@ -214,7 +207,6 @@ img { display: block; }
 .h2 { font-size: 48px; line-height: 1; font-weight: 500; letter-spacing: -0.05em; }
 .h2 span { color: var(--faint); }
 .label { font-size: 12px; line-height: 16px; font-weight: 500; color: var(--faint); margin-bottom: 12px; }
-.note { max-width: 520px; margin: 32px auto 0; text-align: center; color: var(--muted); }
 
 .compare {
   margin-top: 64px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 24px;
@@ -263,9 +255,9 @@ img { display: block; }
 .private-lead { margin-top: 24px; max-width: 400px; font-size: 18px; line-height: 28px; color: rgb(232 235 243 / 0.6); }
 .private-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 32px; }
 .private-list li { display: grid; grid-template-columns: 32px 1fr; column-gap: 16px; }
-.private-list i { grid-row: span 2; font-size: 24px; color: var(--lavender); margin-top: 2px; }
+.private-list li { align-items: center; }
+.private-list i { font-size: 24px; color: var(--lavender); margin-top: 2px; }
 .private-list strong { font-size: 18px; line-height: 28px; font-weight: 500; }
-.private-list span { color: rgb(232 235 243 / 0.6); }
 
 /* FAQ */
 .faq { max-width: 760px; margin: 0 auto; padding: 0 32px 192px; }
@@ -370,8 +362,7 @@ kbd {
 
 @media (max-width: 1000px) {
   .hero { grid-template-columns: 1fr; gap: 48px; padding-top: 64px; }
-  .gesture { justify-content: center; }
-  .compare { grid-template-columns: 1fr; padding: 24px; }
+    .compare { grid-template-columns: 1fr; padding: 24px; }
   .compare-arrow { margin: 0 auto; rotate: 90deg; }
   .private-inner { grid-template-columns: 1fr; padding: 64px 40px; gap: 48px; }
 }
@@ -382,15 +373,13 @@ kbd {
   .lead { font-size: 16px; line-height: 24px; margin-top: 24px; }
   .screen { aspect-ratio: 4 / 3.6; border-width: 4px; border-radius: 12px; }
   .mb-left span, .mb-right > i, .mb-right > span:not(.mb-icon) { display: none; }
-  .notch { width: 26%; }
-  .island { width: 52%; min-width: 0; font-size: 12px; }
+  .notch { width: 18%; }
+  .island { width: 50%; min-width: 0; height: 40px; padding-bottom: 6px; }
   .win { top: 15%; width: 86%; }
   .win-body { padding: 8px 16px 24px; min-height: 150px; }
   .win-h { font-size: 18px; line-height: 24px; }
   .dock i { width: 20px; height: 20px; border-radius: 5px; }
-  .gesture { margin-top: 32px; padding: 0 16px; gap: 8px; }
-  .gesture i { width: 24px; }
-  .tagline { padding: 128px 16px; }
+      .tagline { padding: 128px 16px; }
   .tagline p { font-size: 36px; line-height: 40px; }
   .h2 { font-size: 36px; line-height: 40px; }
   .section, .faq, .final, .private { padding: 0 16px 128px; }
