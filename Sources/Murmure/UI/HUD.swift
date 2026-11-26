@@ -19,6 +19,15 @@ final class HUDController {
 
     init(controller: AppController) { self.controller = controller }
 
+    /// Crée la fenêtre et sa vue à l'avance : le premier appui n'a plus à les construire.
+    func prepare() {
+        guard panel == nil else { return }
+        let panel = makePanel()
+        self.panel = panel
+        position(panel)
+        panel.contentView?.layoutSubtreeIfNeeded()
+    }
+
     func show() {
         hideWork?.cancel()
         let panel = self.panel ?? makePanel()
@@ -26,7 +35,7 @@ final class HUDController {
         position(panel)
         panel.alphaValue = 1
         if !panel.isVisible { panel.orderFrontRegardless() }
-        withAnimation(Theme.reduceMotion ? .easeOut(duration: 0.15) : .spring(duration: 0.35, bounce: 0)) {
+        withAnimation(Theme.reduceMotion ? .easeOut(duration: 0.1) : .spring(duration: 0.22, bounce: 0)) {
             model.visible = true
         }
     }

@@ -26,7 +26,17 @@ struct DictationContext {
         "com.operasoftware.Opera": "chrome",
     ]
 
-    /// Capture synchrone et rapide : app au premier plan, sélection, presse-papiers.
+    /// Instantané : seulement l'app au premier plan (sert à choisir le mode dès l'appui).
+    static func frontmost() -> DictationContext {
+        var ctx = DictationContext()
+        let app = NSWorkspace.shared.frontmostApplication
+        ctx.appName = app?.localizedName
+        ctx.appBundleID = app?.bundleIdentifier
+        return ctx
+    }
+
+    /// Capture complète : app au premier plan, sélection, presse-papiers. Peut prendre du temps
+    /// (accessibilité) : appelée hors du fil principal pendant la dictée.
     static func capture() -> DictationContext {
         var ctx = DictationContext()
         let app = NSWorkspace.shared.frontmostApplication

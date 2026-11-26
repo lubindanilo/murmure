@@ -380,3 +380,78 @@ kbd {
 /* Sur téléphone ou tablette tactile : la fenêtre d'installation propose de s'envoyer le lien. */
 @media (hover: none) and (pointer: coarse) {
 }
+
+/* Guide d'installation (Mac) : reste dans un coin pendant qu'on passe au Finder. */
+.guide {
+  position: fixed; z-index: 30; right: 24px; bottom: 24px; width: min(400px, calc(100vw - 32px));
+  padding: 24px; border-radius: 20px; background: var(--surface); color: var(--fg);
+  box-shadow: var(--shadow-lg);
+  opacity: 0; translate: 0 16px; filter: blur(4px);
+  transition-property: opacity, translate, filter; transition-duration: 500ms; transition-timing-function: var(--ease);
+}
+.guide.in { opacity: 1; translate: 0 0; filter: none; }
+.guide .sheet-close { top: 14px; right: 14px; width: 28px; height: 28px; font-size: 14px; }
+.guide h2 { display: flex; align-items: center; gap: 8px; font-size: 16px; line-height: 24px; font-weight: 600; letter-spacing: -0.01em; }
+.guide h2 i { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--ok); color: #fff; font-size: 11px; }
+.steps { list-style: none; margin: 16px 0 0; padding: 0; display: grid; gap: 8px; }
+.step {
+  display: grid; grid-template-columns: 104px 1fr; gap: 16px; align-items: center;
+  padding: 8px; border-radius: 14px; opacity: 0.45;
+  transition-property: opacity, background-color; transition-duration: 400ms; transition-timing-function: var(--ease-ui);
+}
+.step.on { opacity: 1; background: var(--voice-soft); }
+.step p { display: grid; gap: 2px; }
+.step strong { font-size: 15px; line-height: 20px; font-weight: 600; letter-spacing: -0.01em; }
+.step p > span { font-size: 13px; line-height: 18px; color: var(--muted); }
+.step kbd { height: 18px; min-width: 18px; padding: 0 4px; margin: 0 1px; font-size: 11px; border-radius: 4px; background: var(--surface); }
+
+/* Illustrations : un mini Finder bleuté, toujours clair comme dans le DMG. */
+.art {
+  position: relative; height: 64px; border-radius: 10px; overflow: hidden;
+  background: linear-gradient(#f8f9fd, #eaedf6); box-shadow: inset 0 0 0 1px rgb(30 36 51 / 0.08);
+  color: #4a5099;
+}
+.art img { border-radius: 22%; }
+.art-open .file { position: absolute; left: 50%; top: 9px; translate: -50% 0; display: grid; justify-items: center; gap: 3px; }
+.art-open .file span { font-family: "Geist Mono", ui-monospace, monospace; font-size: 8px; line-height: 10px; color: #5b6478; padding: 1px 3px; border-radius: 3px; }
+.art-open .cursor { position: absolute; left: 70%; top: 70%; font-size: 15px; color: #1e2433; filter: drop-shadow(0 1px 0 #fff); }
+.art-drag .app { position: absolute; left: 14px; top: 20px; }
+.art-drag .folder { position: absolute; right: 12px; top: 14px; font-size: 34px; color: #5f8fe8; }
+.art-drag::before {
+  content: ""; position: absolute; left: 42px; right: 50px; top: 32px; height: 2px;
+  background: linear-gradient(90deg, #4a5099 40%, transparent 0) 0 0 / 8px 2px repeat-x; opacity: 0.5;
+}
+.art-launch .spot {
+  position: absolute; left: 8px; right: 8px; top: 12px; height: 22px; padding: 0 6px; border-radius: 7px;
+  display: flex; align-items: center; gap: 4px; background: #fff; box-shadow: 0 1px 3px rgb(30 36 51 / 0.15); color: #5b6478; font-size: 11px;
+}
+.art-launch .typed { display: inline-block; overflow: hidden; white-space: nowrap; color: #1e2433; font-size: 10px; line-height: 12px; font-weight: 500; width: 7ch; }
+.art-launch .hit { position: absolute; left: 50%; bottom: 6px; translate: -50% 0; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .step.on .art-open .cursor { animation: cursor-go 2800ms var(--ease) both; }
+  .step.on .art-open .file img { animation: dbl 2800ms var(--ease-ui) both; }
+  .step.on .art-open .file span { animation: select 2800ms linear both; }
+  .step.on .art-drag .app { animation: drag 2800ms var(--ease) both; }
+  .step.on .art-drag .folder { animation: bump 2800ms var(--ease-ui) both; }
+  .step.on .art-launch .typed { animation: type 2800ms steps(7) both; }
+  .step.on .art-launch .hit { animation: launch 2800ms var(--ease) both; }
+}
+@keyframes cursor-go { 0% { translate: 18px 14px; } 35%, 100% { translate: -18px -26px; } }
+@keyframes dbl { 0%, 40% { scale: 1; } 45% { scale: 0.9; } 50% { scale: 1; } 55% { scale: 0.9; } 60%, 100% { scale: 1; } }
+@keyframes select { 0%, 40% { background: transparent; color: #5b6478; } 42%, 100% { background: #4a5099; color: #fff; } }
+@keyframes drag {
+  0%, 10% { translate: 0 0; scale: 1; opacity: 1; }
+  15% { scale: 1.1; }
+  60% { translate: 46px 0; scale: 1.1; opacity: 1; }
+  70%, 85% { translate: 52px 2px; scale: 0.4; opacity: 0; }
+  100% { translate: 0 0; scale: 1; opacity: 0; }
+}
+@keyframes bump { 0%, 62% { scale: 1; } 70% { scale: 1.15; } 80%, 100% { scale: 1; } }
+@keyframes type { 0%, 10% { width: 0; } 50%, 100% { width: 7ch; } }
+@keyframes launch { 0%, 55% { opacity: 0; translate: -50% 6px; } 65% { opacity: 1; translate: -50% 0; } 75% { scale: 0.88; } 82%, 100% { scale: 1; opacity: 1; translate: -50% 0; } }
+
+.guide-retry { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 13px; line-height: 18px; color: var(--faint); }
+.guide-retry a { color: var(--voice); }
+@media (prefers-reduced-motion: reduce) { .guide { transition: opacity 200ms linear; translate: none; filter: none; } }
+@media (max-width: 720px) { .guide { right: 16px; bottom: 16px; padding: 20px; } .step { grid-template-columns: 88px 1fr; gap: 12px; } }

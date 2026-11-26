@@ -36,6 +36,9 @@ final class AppController: ObservableObject {
     private var pressDate: Date?
     private var pressedKey: TriggerKey?
     private var context = DictationContext()
+    /// Lecture du texte autour du curseur : faite en arrière-plan (lente dans Chrome, Slack…),
+    /// la dictée l'attend seulement à la fin, pour ne pas retarder le bandeau.
+    private var contextTask: Task<Void, Never>?
     /// Mode imposé pour cette dictée (choisi dans le panneau ou par un lien murmure://).
     private var forcedModeID: UUID?
     private var bag = Set<AnyCancellable>()
@@ -71,6 +74,10 @@ final class AppController: ObservableObject {
 
         Setup.shared.start()
         license.refresh()
+        // Tout ce que le premier appui coûterait : fenêtre du bandeau, images du ruban, micro.
+        hud.prepare()
+        DispatchQueue.global(qos: .userInitiated).async { _ = RibbonMotion.frames }
+        recorder.prewarm()
     }
 
     private func refreshKeys() {
@@ -153,24 +160,32 @@ final class AppController: ObservableObject {
             fail("Murmure n'a pas accès au micro. Autorisez-le dans Réglages Système > Confidentialité > Micro.")
             return
         }
-        context = DictationContext.capture()
+        // Le bandeau d'abord : il doit apparaître à l'instant où la touche est enfoncée.
+        recordingStart = Date()
+        phase = .recording(handsFree: handsFree || settings.triggerMode == .toggle)
+        hud.show()
+        let started = recordingStart
+        // Le son, lui, attend un souffle : ⌘C fait avec ⌘ droite annule avant, sans bip.
+        DispatchQueue.main.asyncAfter(deadline: .now() + (handsFree ? 0 : 0.12)) { [weak self] in
+            guard let self, case .recording = self.phase, self.recordingStart == started else { return }
+            self.play("Tink")
+        }
+
+        context = DictationContext.frontmost()
+        currentMode = resolvedMode()
         do {
             try recorder.start()
         } catch {
             fail(error.localizedDescription)
             return
         }
-        recordingStart = Date()
-        phase = .recording(handsFree: handsFree || settings.triggerMode == .toggle)
-        currentMode = resolvedMode()
-        // Retour visuel et sonore un peu différé : un raccourci clavier fait avec la touche de dictée
-        // (⌘C avec ⌘ droite) annule l'enregistrement avant, sans bip ni panneau.
-        let started = recordingStart
-        let delay: TimeInterval = handsFree ? 0 : 0.2
-        DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-            guard let self, case .recording = self.phase, self.recordingStart == started else { return }
-            self.play("Tink")
-            self.hud.show()
+        contextTask = Task { [weak self] in
+            let details = await Task.detached(priority: .userInitiated) { DictationContext.capture() }.value
+            guard let self, self.recordingStart == started else { return }
+            let url = self.context.browserURL
+            self.context = details
+            self.context.browserURL = url
+            self.currentMode = self.resolvedMode()
         }
 
         // L'URL du navigateur arrive un peu plus tard (AppleScript) : le mode peut alors changer.
@@ -207,6 +222,7 @@ final class AppController: ObservableObject {
         play("Pop")
         let duration = Double(samples.count) / AudioRecorder.sampleRate
         let mode = resolvedMode()
+        let forced = forcedModeID != nil
         forcedModeID = nil
         guard duration > 0.35 else {
             phase = .idle
@@ -214,9 +230,13 @@ final class AppController: ObservableObject {
             return
         }
         phase = .transcribing
-        let context = self.context
+        let pending = contextTask
+        contextTask = nil
         Task { [weak self] in
-            await self?.run(samples: samples, duration: duration, mode: mode, context: context)
+            await pending?.value
+            guard let self else { return }
+            let final = forced || !mode.isMain ? mode : self.resolvedMode()
+            await self.run(samples: samples, duration: duration, mode: final, context: self.context)
         }
     }
 
@@ -264,7 +284,12 @@ final class AppController: ObservableObject {
 
             // Ton automatique : seulement pour le mode principal, sans consignes personnalisées.
             let tone = settings.autoTone && mode.isMain ? AutoTone.detect(bundleID: context.appBundleID) : nil
-            if settings.aiEnabled, mode.usesAI, !skipAI {
+            // La dictée simple ne passe plus par le LLM : Parakeet ponctue déjà, et le nettoyage par règles
+            // retire hésitations et répétitions en quelques millisecondes (le LLM prenait 0,7 à 3 s, et
+            // réécrivait parfois des mots). Le LLM reste pour les modes qui ont des consignes.
+            let hasInstructions = !mode.instructions.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            if let tone, !hasInstructions { text = tone.applyLight(text) }
+            if settings.aiEnabled, hasInstructions, !skipAI {
                 phase = .polishing(tone?.label ?? mode.name)
                 do {
                     text = try await ai.process(text, mode: mode, context: context, settings: settings, tone: tone)

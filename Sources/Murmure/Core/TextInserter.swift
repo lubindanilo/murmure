@@ -94,11 +94,21 @@ enum TextProcessing {
         if let regex = try? NSRegularExpression(pattern: "(?i)(?<![\\p{L}\\p{N}])(?!(?:nous|vous)\\b)(\\p{L}+)(\\s+\\1)+(?![\\p{L}\\p{N}])") {
             out = regex.stringByReplacingMatches(in: out, range: NSRange(out.startIndex..., in: out), withTemplate: "$1")
         }
+        // Répétitions de deux ou trois mots : « on peut on peut » → « on peut ».
+        if let regex = try? NSRegularExpression(pattern: "(?i)(?<![\\p{L}\\p{N}])(\\p{L}+(?:['’\\s]+\\p{L}+){1,2})(\\s+\\1)+(?![\\p{L}\\p{N}])") {
+            out = regex.stringByReplacingMatches(in: out, range: NSRange(out.startIndex..., in: out), withTemplate: "$1")
+        }
         out = out.replacingOccurrences(of: "\\s+([,.])", with: "$1", options: .regularExpression)
         out = out.replacingOccurrences(of: "\\s{2,}", with: " ", options: .regularExpression)
         out = out.trimmingCharacters(in: CharacterSet(charactersIn: " ,"))
         if let first = out.first, first.isLowercase, text.first?.isUppercase == true {
             out = first.uppercased() + out.dropFirst()
+        }
+        // Une hésitation retirée en début de phrase laissait la phrase sans majuscule.
+        if let regex = try? NSRegularExpression(pattern: "([.!?…]\\s+)(\\p{Ll})") {
+            for m in regex.matches(in: out, range: NSRange(out.startIndex..., in: out)).reversed() {
+                if let r = Range(m.range(at: 2), in: out) { out.replaceSubrange(r, with: out[r].uppercased()) }
+            }
         }
         return out
     }

@@ -15,6 +15,9 @@ final class Setup: ObservableObject {
     private let settings = Settings.shared
     private var bag = Set<AnyCancellable>()
     private var started = false
+    /// Le LLM attend la fin de la transcription : les deux en même temps se partagent la connexion,
+    /// et le modèle de transcription (le seul qui bloque la première dictée) mettait trois fois plus longtemps.
+    private var llmQueued = false
 
     struct Item: Identifiable {
         let id: String
@@ -52,7 +55,7 @@ final class Setup: ObservableObject {
             if LocalLLM.model(settings.aiLocalModelID) == nil { settings.aiLocalModelID = Self.defaultLLM }
             if let llm = LocalLLM.model(settings.aiLocalModelID), !ai.installed.contains(llm.id),
                ai.downloadProgress[llm.id] == nil {
-                ai.download(llm)
+                if models.isReady(model) { ai.download(llm) } else { llmQueued = true }
             } else {
                 ai.warmUp(settings: settings)
             }
@@ -60,7 +63,18 @@ final class Setup: ObservableObject {
         refresh()
     }
 
+    /// Transcription prête : le LLM en attente démarre.
+    private func startQueuedLLM() {
+        guard llmQueued, models.isReady(speechModel) else { return }
+        llmQueued = false
+        if let llm = LocalLLM.model(settings.aiLocalModelID), !ai.installed.contains(llm.id),
+           ai.downloadProgress[llm.id] == nil {
+            ai.download(llm)
+        }
+    }
+
     private func refresh() {
+        startQueuedLLM()
         var list: [Item] = []
         let model = speechModel
         switch models.status(model) {
@@ -76,6 +90,8 @@ final class Setup: ObservableObject {
         if settings.aiEnabled, settings.aiBackend == .embedded, let llm = LocalLLM.model(settings.aiLocalModelID) {
             if let p = ai.downloadProgress[llm.id] {
                 list.append(Item(id: "llm", title: llm.name, detail: "Nettoyage et modes, \(llm.sizeLabel)", progress: p, error: nil))
+            } else if llmQueued {
+                list.append(Item(id: "llm", title: llm.name, detail: "En attente de la transcription", progress: 0, error: nil))
             } else if ai.installed.contains(llm.id) {
                 list.append(Item(id: "llm", title: llm.name, detail: "Nettoyage et modes", progress: nil, error: nil))
             } else {

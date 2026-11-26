@@ -30,14 +30,17 @@ struct CorrectionsSettings: View {
                 .help(adding ? "Annuler" : "Ajouter une correction")
             }
             VStack(spacing: 0) {
-                HStack {
-                    Text("Entendu").frame(maxWidth: .infinity, alignment: .leading)
-                    Text("Écrit").frame(maxWidth: .infinity, alignment: .leading).padding(.leading, 30)
+                // Titres de colonnes seulement quand il y a quelque chose à aligner dessous.
+                if !settings.replacements.isEmpty || adding {
+                    HStack {
+                        Text("Entendu").frame(maxWidth: .infinity, alignment: .leading)
+                        Text("Écrit").frame(maxWidth: .infinity, alignment: .leading).padding(.leading, 30)
+                    }
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(Palette.muted)
+                    .padding(.top, 12)
+                    .padding(.bottom, 6)
                 }
-                .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(Palette.muted)
-                .padding(.top, 12)
-                .padding(.bottom, 6)
 
                 if adding {
                     HStack(spacing: 8) {

@@ -84,16 +84,20 @@ struct OnboardingView: View {
 
             ZStack(alignment: .topLeading) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text(title)
-                        .font(.system(size: 24, weight: .medium))
-                        .tracking(-0.5)
-                    Text(message)
-                        .font(.system(size: 13))
-                        .foregroundStyle(Palette.muted)
-                        .lineSpacing(2)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .frame(maxWidth: 360, alignment: .leading)
-                    extra.padding(.top, 4)
+                    if !title.isEmpty {
+                        Text(title)
+                            .font(.system(size: 24, weight: .medium))
+                            .tracking(-0.5)
+                    }
+                    if !message.isEmpty {
+                        Text(message)
+                            .font(.system(size: 13))
+                            .foregroundStyle(Palette.muted)
+                            .lineSpacing(2)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .frame(maxWidth: 360, alignment: .leading)
+                    }
+                    extra.padding(.top, title.isEmpty ? 0 : 4)
                 }
                 .id(step)
                 .transition(Theme.stepTransition)
@@ -171,7 +175,7 @@ struct OnboardingView: View {
         case .microphone: return "Le micro"
         case .accessibility: return "L'accès au clavier"
         case .key: return "Votre touche"
-        case .tryIt: return asrReady ? "Essayez" : "Préparation"
+        case .tryIt: return asrReady ? "Essayez" : ""  // pendant le téléchargement, la barre suffit
         case .done: return "C'est prêt"
         }
     }
@@ -187,9 +191,7 @@ struct OnboardingView: View {
         case .key:
             return "Appuyez sur la touche de votre choix."
         case .tryIt:
-            return asrReady
-                ? "Maintenez \(settings.triggerKey.label) et parlez."
-                : "Une seule fois. Ensuite, tout marche hors ligne."
+            return asrReady ? "Maintenez \(settings.triggerKey.label) et parlez." : ""
         case .done:
             return "Murmure vit dans la barre des menus."
         }
@@ -203,7 +205,7 @@ struct OnboardingView: View {
                 Caption("Refusé : activez-le dans les Réglages.", accent: true)
             }
         case .tryIt:
-            if asrReady { tryStatus } else { DownloadList() }
+            if asrReady { tryStatus } else { ModelDownload() }
         default:
             EmptyView()
         }
@@ -380,11 +382,9 @@ private struct NoteArt: View {
                     }
                 }
             } else {
-                HStack(spacing: 8) {
-                    ProgressView().controlSize(.small)
-                    Text("Téléchargement du modèle…").font(.system(size: 13)).foregroundStyle(Palette.muted)
-                }
-                .padding(.top, 8)
+                Text("Votre dictée s'écrira ici.")
+                    .font(.system(size: 17))
+                    .foregroundStyle(Palette.muted.opacity(0.6))
             }
         }
         .padding(.horizontal, 16)
@@ -395,7 +395,6 @@ private struct NoteArt: View {
         .overlay(alignment: .top) { Rectangle().fill(Theme.voice).frame(height: 3) }
         .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
         .shadow(color: .black.opacity(0.12), radius: 10, y: 5)
-        .rotationEffect(.degrees(-1.2))
     }
 }
 
@@ -454,36 +453,50 @@ private struct Tile<Content: View>: View {
     }
 }
 
-private struct DownloadList: View {
+/// Une seule barre : le modèle de transcription, le seul qui fait attendre la première dictée.
+/// Le modèle de nettoyage se télécharge ensuite, en silence.
+private struct ModelDownload: View {
     @ObservedObject private var setup = Setup.shared
 
+    private var asr: Setup.Item? { setup.items.first { $0.id == "asr" } }
+
     var body: some View {
-        VStack(spacing: 8) {
-            ForEach(setup.items) { item in
-                VStack(alignment: .leading, spacing: 5) {
-                    HStack {
-                        Text(item.title).font(.system(size: 12, weight: .medium))
-                        Spacer()
-                        if let p = item.progress {
-                            Text(p.formatted(.percent.precision(.fractionLength(0))))
-                                .font(.system(size: 12).monospacedDigit())
-                                .foregroundStyle(Palette.muted)
-                        } else if item.error == nil {
-                            Image(systemName: "checkmark").foregroundStyle(Palette.ok)
-                        }
-                    }
-                    if let p = item.progress { ProgressView(value: p).progressViewStyle(.linear).controlSize(.small) }
-                    if let error = item.error {
-                        HStack {
-                            Text(error).font(.caption).foregroundStyle(Theme.warn).lineLimit(2)
-                            Spacer()
-                            Button("Réessayer") { setup.install() }.controlSize(.small)
-                        }
-                    }
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("Téléchargement du modèle de transcription")
+                    .font(.system(size: 13, weight: .medium))
+                Spacer()
+                if let p = asr?.progress {
+                    Text(p.formatted(.percent.precision(.fractionLength(0))))
+                        .font(.system(size: 13).monospacedDigit())
+                        .foregroundStyle(Palette.muted)
                 }
             }
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(Palette.muted.opacity(0.18))
+                    Capsule().fill(Theme.voice)
+                        .frame(width: max(6, geo.size.width * (asr?.progress ?? 0)))
+                        .animation(.easeOut(duration: 0.4), value: asr?.progress)
+                }
+            }
+            .frame(height: 6)
+            .accessibilityElement()
+            .accessibilityLabel("Téléchargement du modèle de transcription")
+            .accessibilityValue((asr?.progress ?? 0).formatted(.percent.precision(.fractionLength(0))))
+            if let error = asr?.error {
+                HStack {
+                    Text(error).font(.system(size: 12)).foregroundStyle(Theme.warn).lineLimit(2)
+                    Spacer()
+                    Button("Réessayer") { setup.install() }.controlSize(.small)
+                }
+            } else {
+                Text("Cela peut prendre jusqu'à 5 minutes.")
+                    .font(.system(size: 12))
+                    .foregroundStyle(Palette.muted)
+            }
         }
-        .frame(width: 320)
+        .frame(width: 400)
     }
 }
 

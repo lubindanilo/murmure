@@ -23,7 +23,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         // Captures d'écran en CI : `-demoDark YES` force l'apparence sombre.
         if UserDefaults.standard.bool(forKey: "demoDark") { NSApp.appearance = NSAppearance(named: .darkAqua) }
+        // Lancé depuis le DMG : déjà installé, on ouvre la copie d'Applications ; sinon, on propose de s'y ranger.
+        if Installer.runsFromDownload {
+            Task { @MainActor in
+                if Installer.installedCopyIsCurrent && !UserDefaults.standard.bool(forKey: "demoInstall") {
+                    await Installer.openInstalledCopy()
+                } else {
+                    InstallWindow.shared.show()
+                }
+            }
+            return
+        }
         Task { @MainActor in
+            Installer.ejectDiskImages()
             AppController.shared.start()
             PanelController.shared.install()
             if let hud = UserDefaults.standard.string(forKey: "demoHUD") {

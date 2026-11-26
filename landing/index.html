@@ -143,7 +143,7 @@
     <div class="reveal">
       <details>
         <summary>Comment l'installer ?</summary>
-        <p>Cliquez sur « Installer sur Mac » : le fichier Murmure.dmg se télécharge. Ouvrez-le, glissez Murmure dans Applications, puis lancez l'app : elle vous guide en une minute.</p>
+        <p>Cliquez sur « Installer sur Mac » : le fichier Murmure.dmg se télécharge. Ouvrez-le, glissez Murmure dans Applications, puis ouvrez Murmure depuis Applications (ou avec ⌘ Espace, en tapant Murmure). L'app vous guide ensuite en une minute.</p>
       </details>
       <details>
         <summary>Le Mac refuse de l'ouvrir ?</summary>
@@ -183,6 +183,36 @@
   <span class="brand"><img class="mark" src="/favicon.svg" alt="" width="22" height="22">Murmure</span>
   <nav aria-label="Informations légales"><a href="/confidentialite">Confidentialité</a><a href="/conditions">Conditions</a></nav>
 </footer>
+
+<!-- Sur Mac : le DMG se télécharge et ce guide reste dans un coin pendant qu'on passe au Finder -->
+<aside class="guide" id="guide" aria-labelledby="guide-title" hidden>
+  <button class="sheet-close" type="button" data-guide-close aria-label="Fermer le guide"><i class="ph ph-x" aria-hidden="true"></i></button>
+  <h2 id="guide-title"><i class="ph-bold ph-check" aria-hidden="true"></i>Téléchargement lancé</h2>
+  <ol class="steps">
+    <li class="step" data-step="0">
+      <div class="art art-open" aria-hidden="true">
+        <span class="file"><img src="/icon.png" alt="" width="28" height="28"><span>Murmure.dmg</span></span>
+        <i class="ph-fill ph-cursor cursor"></i>
+      </div>
+      <p><strong>Ouvrez Murmure.dmg</strong><span>Dans vos téléchargements</span></p>
+    </li>
+    <li class="step" data-step="1">
+      <div class="art art-drag" aria-hidden="true">
+        <img class="app" src="/icon.png" alt="" width="24" height="24">
+        <i class="ph-fill ph-folder-simple folder"></i>
+      </div>
+      <p><strong>Glissez-le dans Applications</strong><span>Dans la fenêtre qui s'ouvre</span></p>
+    </li>
+    <li class="step" data-step="2">
+      <div class="art art-launch" aria-hidden="true">
+        <span class="spot"><i class="ph ph-magnifying-glass"></i><span class="typed">Murmure</span></span>
+        <img class="hit" src="/icon.png" alt="" width="20" height="20">
+      </div>
+      <p><strong>Ouvrez Murmure</strong><span><kbd>⌘</kbd><kbd>Espace</kbd>, tapez Murmure, Entrée</span></p>
+    </li>
+  </ol>
+  <p class="guide-retry">Rien ne se télécharge ? <a href="https://github.com/lubindanilo/murmure-releases/releases/latest/download/Murmure.dmg">Réessayer</a></p>
+</aside>
 
 <!-- Sur téléphone : le DMG ne sert à rien, on propose de s'envoyer le lien -->
 <dialog class="sheet" id="install" aria-labelledby="install-title">

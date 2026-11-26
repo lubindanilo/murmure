@@ -24,6 +24,13 @@ final class AudioRecorder {
         await AVCaptureDevice.requestAccess(for: .audio)
     }
 
+    /// Prépare l'unité audio du micro sans l'ouvrir (pas de voyant orange) : le premier
+    /// démarrage d'AVAudioEngine coûte sinon quelques centaines de millisecondes.
+    func prewarm() {
+        guard Self.permission == .authorized else { return }
+        _ = engine.inputNode.outputFormat(forBus: 0)
+    }
+
     func start() throws {
         guard !isRecording else { return }
         lock.lock(); samples.removeAll(keepingCapacity: true); lock.unlock()

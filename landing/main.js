@@ -22,11 +22,33 @@ async function copyText(text, fallbackNode) {
 const sheet = $("install");
 document.querySelectorAll("[data-install]").forEach((btn) =>
   btn.addEventListener("click", (e) => {
-    if (!touch) return;
-    e.preventDefault();
-    sheet.showModal();
+    if (touch) { e.preventDefault(); sheet.showModal(); return; }
+    showGuide();
   }),
 );
+
+// Guide d'installation : trois gestes, chacun s'anime à son tour.
+const guide = $("guide");
+const steps = guide.querySelectorAll(".step");
+let stepTimer = 0;
+function showStep(i) {
+  steps.forEach((s, k) => s.classList.toggle("on", k === i));
+}
+function showGuide() {
+  guide.hidden = false;
+  guide.classList.remove("in");
+  requestAnimationFrame(() => guide.classList.add("in"));
+  clearInterval(stepTimer);
+  if (reduce) { steps.forEach((s) => s.classList.add("on")); return; }
+  let i = 0;
+  showStep(i);
+  stepTimer = setInterval(() => showStep(i = (i + 1) % steps.length), 2800);
+}
+guide.querySelector("[data-guide-close]").addEventListener("click", () => {
+  clearInterval(stepTimer);
+  guide.hidden = true;
+});
+addEventListener("keydown", (e) => { if (e.key === "Escape" && !guide.hidden) guide.querySelector("[data-guide-close]").click(); });
 sheet.querySelector("[data-close]").addEventListener("click", () => sheet.close());
 sheet.addEventListener("click", (e) => { if (e.target === sheet) sheet.close(); });
 

@@ -240,6 +240,14 @@ enum AutoTone: String {
         }
     }
 
+    /// Ton sans IA, comme le font les claviers : on touche la ponctuation finale, jamais les mots.
+    /// Messagerie : une phrase courte se passe de point final.
+    func applyLight(_ text: String) -> String {
+        guard self == .chat, text.hasSuffix("."), !text.hasSuffix("..."),
+              text.dropLast().rangeOfCharacter(from: CharacterSet(charactersIn: ".!?")) == nil else { return text }
+        return String(text.dropLast())
+    }
+
     static func detect(bundleID: String?) -> AutoTone? {
         guard let id = bundleID?.lowercased() else { return nil }
         if mailApps.contains(where: { id.hasPrefix($0) }) { return .mail }

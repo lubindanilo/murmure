@@ -65,6 +65,18 @@ func render(scale: CGFloat) -> Data {
     head.lineJoinStyle = .round
     head.stroke()
 
+    // Étape suivante, en une ligne sous les icônes : sans elle, on ne sait pas quoi faire après le glisser.
+    let para = NSMutableParagraphStyle(); para.alignment = .center
+    let hint = NSMutableAttributedString(string: "Puis ouvrez Murmure depuis Applications", attributes: [
+        .font: NSFont.systemFont(ofSize: 14, weight: .medium),
+        .foregroundColor: NSColor(srgbRed: 0.357, green: 0.392, blue: 0.471, alpha: 1),
+        .paragraphStyle: para])
+    // Le repère est retourné : on remet le texte à l'endroit le temps de le dessiner.
+    cg.saveGState()
+    cg.translateBy(x: 0, y: size.height); cg.scaleBy(x: 1, y: -1)
+    hint.draw(in: CGRect(x: 0, y: 34, width: size.width, height: 20))
+    cg.restoreGState()
+
     NSGraphicsContext.restoreGraphicsState()
     return rep.representation(using: .png, properties: [:])!
 }
