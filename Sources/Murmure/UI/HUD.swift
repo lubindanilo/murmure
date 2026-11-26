@@ -107,8 +107,9 @@ struct HUDView: View {
                         : .opacity.combined(with: .modifier(active: BlurModifier(radius: 3), identity: BlurModifier(radius: 0))))
             .font(.system(size: 11, weight: .medium))
             .foregroundStyle(Color.white)
-            .padding(.horizontal, 10)
-            .frame(minWidth: notchWidth > 0 ? notchWidth + 8 : 0)
+            .padding(.horizontal, 6)
+            .lineLimit(1)
+            .frame(width: notchWidth > 0 ? notchWidth - 2 * NotchShape.defaultEar : nil)
             .frame(height: row)
             .padding(.top, notchHeight)
             .padding(.horizontal, NotchShape.defaultEar)
@@ -118,7 +119,7 @@ struct HUDView: View {
                     .shadow(color: .black.opacity(0.22), radius: 8, y: 4)
             )
             .opacity(model.visible ? 1 : 0)
-            .scaleEffect(x: model.visible ? 1 : 0.7, y: model.visible ? 1 : 0.4, anchor: .top)
+            .scaleEffect(x: 1, y: model.visible ? 1 : 0.4, anchor: .top)
             .animation(Theme.reduceMotion ? .easeOut(duration: 0.15) : .spring(duration: 0.35, bounce: 0), value: phaseKey)
             Spacer(minLength: 0)
         }
@@ -156,7 +157,7 @@ struct HUDView: View {
             Image(systemName: "exclamationmark.circle").font(.system(size: 11, weight: .semibold)).foregroundStyle(Theme.wave)
             Text("Erreur")
             Rectangle().fill(Color.white.opacity(0.25)).frame(width: 1, height: 14)
-            Text(message).foregroundStyle(Color.white.opacity(0.65)).lineLimit(1).fixedSize()
+            Text(message).foregroundStyle(Color.white.opacity(0.65)).lineLimit(1).truncationMode(.tail)
         case .idle:
             EmptyView()
         }
