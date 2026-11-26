@@ -72,11 +72,12 @@ if (tagline) {
 
 // Modes : la même dictée, quatre résultats
 const outputs = {
-  mail: ["Dans Mail", "Bonjour Claire,\n\nLa démo est prête. Nous pouvons la faire jeudi à 14 h, si cela vous convient.\n\nBien à vous"],
-  message: ["Dans Messages", "La démo est prête ! On la fait jeudi à 14 h si ça te va ?"],
-  prompt: ["Dans un assistant IA", "Rédige un message court à Claire : la démo est prête, propose jeudi à 14 h et demande si ce créneau lui convient."],
-  english: ["Mode anglais", "Let Claire know the demo is ready and we can do it Thursday at 2 pm if that works for her."],
+  mail: ["Dans Mail", "« euh Claire la démo est prête on peut la faire jeudi à 14 h si ça te va »", "Claire, la démo est prête. On peut la faire jeudi à 14 h, si ça te va."],
+  message: ["Dans Slack ou Messages", "« euh Claire la démo est prête on peut la faire jeudi à 14 h si ça te va »", "Claire, la démo est prête, on peut la faire jeudi à 14 h si ça te va"],
+  prompt: ["Dans ChatGPT, Claude ou Cursor", "« résume le mail du client et euh propose trois réponses courtes et ajoute un objet »", "Résume le mail du client, puis :\n- propose trois réponses courtes ;\n- ajoute un objet."],
+  english: ["Avec « Écrire en anglais »", "« euh Claire la démo est prête on peut la faire jeudi à 14 h si ça te va »", "Claire, the demo is ready. We can do it Thursday at 2 pm if that works for you."],
 };
+const modeIn = $("mode-in");
 const tabs = [...document.querySelectorAll(".tabs button")];
 const modeOut = $("mode-out");
 const modeLabel = $("mode-label");
@@ -85,10 +86,11 @@ let modeIndex = 0, modeTimer, userPicked = false;
 function showMode(i) {
   modeIndex = i;
   tabs.forEach((t, k) => t.setAttribute("aria-selected", String(k === i)));
-  const [label, text] = outputs[tabs[i].dataset.mode];
+  const [label, said, text] = outputs[tabs[i].dataset.mode];
   modeOut.classList.add("swap");
   requestAnimationFrame(() => {
     modeLabel.textContent = label;
+    modeIn.textContent = said;
     modeOut.textContent = text;
     requestAnimationFrame(() => modeOut.classList.remove("swap"));
   });

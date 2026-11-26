@@ -60,7 +60,8 @@ final class PostProcessor: ObservableObject {
 
     static func wrap(_ text: String) -> String { "<dictée>\(text)</dictée>" }
 
-    func process(_ text: String, mode: Mode, context: DictationContext, settings: Settings) async throws -> String {
+    func process(_ text: String, mode: Mode, context: DictationContext, settings: Settings,
+                 tone: AutoTone? = nil) async throws -> String {
         let isCleanup = mode.instructions.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         let values = context.values(for: mode)
         let custom = mode.systemPrompt.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -68,6 +69,7 @@ final class PostProcessor: ObservableObject {
         var messages: [(role: String, content: String)] = []
         if isCleanup {
             system = custom.isEmpty ? Self.cleanupSystemPrompt : Self.fill(custom, values)
+            if let tone { system += "\n\n" + tone.rule }
         } else {
             system = (custom.isEmpty ? Self.baseSystemPrompt : Self.fill(custom, values))
                 + "\n\nConsignes :\n" + Self.fill(mode.instructions, values)
@@ -84,7 +86,7 @@ final class PostProcessor: ObservableObject {
         }
         messages.append(("system", system))
         if isCleanup {
-            for (input, output) in Self.cleanupShots {
+            for (input, output) in Self.cleanupShots + (tone?.shots ?? []) {
                 messages.append(("user", Self.wrap(input)))
                 messages.append(("assistant", output))
             }

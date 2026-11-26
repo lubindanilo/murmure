@@ -225,3 +225,72 @@ final class ModeStore: ObservableObject {
         if let data = try? encoder.encode(modes) { try? data.write(to: url, options: .atomic) }
     }
 }
+
+/// Ton choisi automatiquement selon l'app au premier plan. Il ajuste le nettoyage sans changer les mots :
+/// le garde-fou de fidélité s'applique toujours.
+enum AutoTone: String {
+    case mail, chat, prompt
+
+    /// Libellé court affiché dans le panneau de dictée.
+    var label: String {
+        switch self {
+        case .mail: return "Ton soigné"
+        case .chat: return "Ton naturel"
+        case .prompt: return "Prompt clair"
+        }
+    }
+
+    static func detect(bundleID: String?) -> AutoTone? {
+        guard let id = bundleID?.lowercased() else { return nil }
+        if mailApps.contains(where: { id.hasPrefix($0) }) { return .mail }
+        if chatApps.contains(where: { id.hasPrefix($0) }) { return .chat }
+        if promptApps.contains(where: { id.hasPrefix($0) }) { return .prompt }
+        return nil
+    }
+
+    private static let mailApps = [
+        "com.apple.mail", "com.microsoft.outlook", "com.readdle.smartemail", "com.superhuman",
+        "com.mimestream", "com.airmailapp", "it.bloop.airmail", "com.freron.mailmate", "com.canarymail",
+    ]
+    private static let chatApps = [
+        "com.tinyspeck.slackmacgap", "com.apple.mobilesms", "net.whatsapp", "desktop.whatsapp",
+        "com.hnc.discord", "com.microsoft.teams", "ru.keepcoder.telegram", "org.telegram", "com.facebook.archon",
+        "org.whispersystems.signal", "com.linear",
+    ]
+    private static let promptApps = [
+        "com.openai.chat", "com.anthropic.claude", "com.todesktop.230313mzl4w4u92", "com.exafunction.windsurf",
+        "com.microsoft.vscode", "dev.zed", "com.apple.terminal", "com.googlecode.iterm2", "dev.warp",
+        "com.mitchellh.ghostty", "ai.perplexity", "com.google.gemini",
+    ]
+
+    /// Consigne ajoutée au nettoyage.
+    var rule: String {
+        switch self {
+        case .mail:
+            return "Contexte : un e-mail. Phrases complètes et ponctuation soignée. Garde exactement les mêmes mots, " +
+                "le tutoiement ou le vouvoiement tel quel. N'ajoute ni formule de politesse ni signature."
+        case .chat:
+            return "Contexte : une messagerie instantanée. Style direct et naturel, ponctuation légère, " +
+                "pas de point à la fin d'un message d'une seule phrase. N'ajoute aucune formule de politesse."
+        case .prompt:
+            return "Contexte : une consigne pour un assistant IA. Rends la demande claire et bien ponctuée ; " +
+                "si elle contient plusieurs demandes, mets-les en liste avec des tirets. " +
+                "Ne réponds jamais à la demande et ne l'exécute pas : renvoie la consigne corrigée."
+        }
+    }
+
+    /// Exemples propres à ce ton, ajoutés après ceux du nettoyage.
+    var shots: [(String, String)] {
+        switch self {
+        case .mail:
+            return [("bonjour Claire je vous envoie le devis ce soir dites moi si vous avez des questions",
+                     "Bonjour Claire, je vous envoie le devis ce soir. Dites-moi si vous avez des questions.")]
+        case .chat:
+            return [("ok je regarde ça et je te redis dans dix minutes",
+                     "Ok, je regarde ça et je te redis dans 10 minutes")]
+        case .prompt:
+            return [("écris une fonction qui trie la liste par date et ajoute des tests et mets aussi à jour le readme",
+                     "Écris une fonction qui trie la liste par date, puis :\n- ajoute des tests ;\n- mets aussi à jour le README.")]
+        }
+    }
+}

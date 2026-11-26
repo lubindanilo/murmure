@@ -262,17 +262,19 @@ final class AppController: ObservableObject {
                 if let o = r.outputMode { output = o }
             }
 
+            // Ton automatique : seulement pour le mode principal, sans consignes personnalisées.
+            let tone = settings.autoTone && mode.isMain ? AutoTone.detect(bundleID: context.appBundleID) : nil
             if settings.aiEnabled, mode.usesAI, !skipAI {
-                phase = .polishing(mode.name)
+                phase = .polishing(tone?.label ?? mode.name)
                 do {
-                    text = try await ai.process(text, mode: mode, context: context, settings: settings)
+                    text = try await ai.process(text, mode: mode, context: context, settings: settings, tone: tone)
                 } catch {
                     // L'IA n'est pas disponible : on insère quand même la transcription.
                     NSLog("Murmure IA : \(error.localizedDescription)")
                 }
             }
 
-            if let target = mode.translateTo {
+            if let target = mode.translateTo ?? (settings.writeInEnglish ? "en" : nil) {
                 phase = .translating(Languages.name(target))
                 text = try await Translator.shared.translate(text, from: settings.language, to: target)
             }

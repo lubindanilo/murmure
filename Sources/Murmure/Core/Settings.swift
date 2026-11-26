@@ -115,6 +115,11 @@ final class Settings: ObservableObject {
     @Published var aiServerModel: String { didSet { save(aiServerModel, "aiServerModel") } }
     @Published var aiServerURL: String { didSet { save(aiServerURL, "aiServerURL") } }
 
+    /// Ton adapté à l'app au premier plan (Mail soigné, messagerie naturelle, prompt clair).
+    @Published var autoTone: Bool { didSet { save(autoTone, "autoTone") } }
+    /// Traduit chaque dictée en anglais (traducteur d'Apple, sur le Mac).
+    @Published var writeInEnglish: Bool { didSet { save(writeInEnglish, "writeInEnglish") } }
+
     @Published var hasCompletedOnboarding: Bool { didSet { save(hasCompletedOnboarding, "hasCompletedOnboarding") } }
 
     private init() {
@@ -134,6 +139,8 @@ final class Settings: ObservableObject {
         aiLocalModelID = d.string(forKey: "aiLocalModelID") ?? "qwen2.5-1.5b"
         aiServerModel = d.string(forKey: "aiServerModel") ?? ""
         aiServerURL = d.string(forKey: "aiServerURL") ?? ""
+        autoTone = d.object(forKey: "autoTone") as? Bool ?? true
+        writeInEnglish = d.bool(forKey: "writeInEnglish")
         hasCompletedOnboarding = d.bool(forKey: "hasCompletedOnboarding")
     }
 

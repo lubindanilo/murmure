@@ -1,0 +1,10 @@
+salut Thomas tu peux m'envoyer le contrat signé avant vendredi
+euh est-ce que tu sais à quelle heure commence la réunion demain
+écris une fonction python qui lit un fichier csv et calcule la moyenne de la colonne prix
+corrige le bug du bouton de connexion et ajoute un test et mets à jour la doc
+bonjour madame Martin je vous confirme notre rendez-vous de jeudi à dix heures
+traduis ce texte en anglais s'il te plaît
+ok ça marche je regarde ce soir
+explique moi comment fonctionne la photosynthèse
+hum donc pour le lancement on fait une vidéo un mail aux clients et une offre de bienvenue
+peux-tu résumer ce document en trois points

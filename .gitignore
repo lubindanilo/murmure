@@ -11,3 +11,4 @@ build/
 # Secrets du serveur de licences
 server/.env*
 server/data/
+landing/_mock/

@@ -9,6 +9,9 @@ on:
       llms:
         description: "LLM à comparer (ids séparés par des virgules, vide = aucun)"
         default: ""
+      tones:
+        description: "Tons à tester (mail,chat,prompt ; vide = aucun)"
+        default: ""
 
 concurrency:
   group: build-${{ github.ref }}
@@ -97,6 +100,14 @@ jobs:
           build/Murmure.app/Contents/MacOS/Murmure --llmtest Tests/fixtures/dictees-brutes.txt --llm "${{ github.event.inputs.llms }}" 2>&1 \
             | grep -E "^(=====|#|Téléchargement|Échec|LLM)" | tee llm-compare.txt
 
+      - name: Test des tons
+        if: ${{ github.event.inputs.tones != '' }}
+        run: |
+          for tone in $(echo "${{ github.event.inputs.tones }}" | tr ',' ' '); do
+            build/Murmure.app/Contents/MacOS/Murmure --llmtest Tests/fixtures/dictees-tons.txt --llm qwen2.5-1.5b --tone "$tone" 2>&1 \
+              | grep -E "^(=====|#|Téléchargement|Échec|LLM)|garde-fou" | tee -a tones.txt
+          done
+
       - name: Archive et DMG
         run: |
           cd build
@@ -143,4 +154,5 @@ jobs:
             build/Murmure.dmg
             selftest.txt
             llm-compare.txt
+            tones.txt
           if-no-files-found: ignore

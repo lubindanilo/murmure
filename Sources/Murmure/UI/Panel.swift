@@ -66,6 +66,8 @@ final class PanelController: NSObject {
     var isVisible: Bool { panel?.isVisible == true }
 
     func install() {
+        // Les modes ne sont plus choisis à la main : on oublie un ancien choix devenu invisible.
+        ModeStore.shared.pinnedModeID = nil
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         item.button?.image = Self.icon(for: .idle)
         item.button?.target = self
@@ -239,7 +241,7 @@ struct HomePage: View {
             header
             VStack(alignment: .leading, spacing: 16) {
                 if needsSetup { setupCard } else { keyCard }
-                modes
+                writing
                 if let last = history.entries.first { lastDictation(last) }
             }
             .padding(.horizontal, 12)
@@ -363,67 +365,19 @@ struct HomePage: View {
         .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Palette.hero))
     }
 
-    // MARK: Modes
+    // MARK: Écriture
 
-    private var modes: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                SectionLabel("Mode")
-                Spacer()
-                Button("Modifier") { router.path = [.mode(currentModeID)] }
-                    .buttonStyle(.plain)
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(Theme.voice)
-            }
-            WrapLayout(spacing: 6) {
-                ForEach(store.modes) { mode in
-                    ModeChipButton(mode: mode, selected: mode.id == currentModeID) {
-                        store.pinnedModeID = mode.isMain ? nil : mode.id
-                    }
-                    .contextMenu {
-                        Button("Modifier") { router.path = [.mode(mode.id)] }
-                        if !mode.isMain {
-                            Button("Supprimer", role: .destructive) { store.delete(mode) }
-                        }
-                    }
-                }
-                addModeMenu
-            }
+    /// Deux interrupteurs remplacent les modes : le ton suit l'app, et l'anglais en option.
+    private var writing: some View {
+        VStack(spacing: 0) {
+            ToggleRow(symbol: "wand.and.stars", title: "Adapter le ton à l'app",
+                      detail: "Mail soigné · Messages naturels · Prompts clairs", isOn: $settings.autoTone)
+            Divider().padding(.leading, 44)
+            ToggleRow(symbol: "globe", title: "Écrire en anglais",
+                      detail: "Vous parlez français, Murmure écrit en anglais", isOn: $settings.writeInEnglish)
         }
-        .padding(.horizontal, 4)
-    }
-
-    private var addModeMenu: some View {
-        Menu {
-            Button("Mode vide") {
-                var mode = Mode(name: "Nouveau mode")
-                mode.cleanup = true
-                store.update(mode)
-                router.path = [.mode(mode.id)]
-            }
-            Divider()
-            ForEach(ModeTemplates.all, id: \.name) { template in
-                Button {
-                    var mode = template
-                    mode.id = UUID()
-                    if store.modes.contains(where: { !mode.triggerWord.isEmpty && $0.triggerWord.caseInsensitiveCompare(mode.triggerWord) == .orderedSame }) {
-                        mode.triggerWord = ""
-                    }
-                    store.update(mode)
-                    router.path = [.mode(mode.id)]
-                } label: {
-                    Label(template.name, systemImage: template.symbol)
-                }
-            }
-        } label: {
-            Image(systemName: "plus")
-        }
-        .menuStyle(.borderlessButton)
-        .menuIndicator(.hidden)
-        .fixedSize()
-        .frame(width: 30, height: 28)
-        .background(Capsule().strokeBorder(Color.primary.opacity(0.15), lineWidth: 1))
-        .help("Ajouter un mode")
+        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Palette.card))
+        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Palette.hairline, lineWidth: 0.5))
     }
 
     // MARK: Dernière dictée
@@ -503,6 +457,33 @@ struct HomePage: View {
 }
 
 // MARK: - Composants
+
+struct ToggleRow: View {
+    let symbol: String
+    let title: String
+    let detail: String
+    @Binding var isOn: Bool
+
+    var body: some View {
+        Toggle(isOn: $isOn) {
+            HStack(spacing: 10) {
+                Image(systemName: symbol)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(isOn ? Theme.voice : Color.secondary)
+                    .frame(width: 22)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(title).font(.system(size: 13))
+                    Text(detail).font(.system(size: 11)).foregroundStyle(.secondary)
+                }
+            }
+        }
+        .toggleStyle(.switch)
+        .controlSize(.small)
+        .tint(Theme.voice)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+    }
+}
 
 struct SectionLabel: View {
     let text: String

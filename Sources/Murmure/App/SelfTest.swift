@@ -13,7 +13,10 @@ enum SelfTest {
         }
         let settings = Settings.shared
         if args.contains("--licensetest") { return await licenseTest() }
-        if let textsPath = value("--llmtest") { return await llmTest(textsPath, llms: value("--llm") ?? "", settings: settings) }
+        if let textsPath = value("--llmtest") {
+            return await llmTest(textsPath, llms: value("--llm") ?? "", settings: settings,
+                                 tone: value("--tone").flatMap(AutoTone.init(rawValue:)))
+        }
         guard let path = value("--selftest") else { return 2 }
         let modelID = value("--model") ?? settings.selectedModelID
         guard let model = ModelCatalog.model(modelID) else {
@@ -81,7 +84,7 @@ enum SelfTest {
 extension SelfTest {
     /// Compare des LLM sur des transcriptions brutes (une par ligne) :
     ///   Murmure --llmtest textes.txt --llm qwen2.5-1.5b,gemma-3-1b
-    static func llmTest(_ path: String, llms: String, settings: Settings) async -> Int32 {
+    static func llmTest(_ path: String, llms: String, settings: Settings, tone: AutoTone? = nil) async -> Int32 {
         guard let content = try? String(contentsOfFile: path, encoding: .utf8) else { print("Fichier illisible"); return 2 }
         let texts = content.split(separator: "\n").map(String.init).filter { !$0.isEmpty }
         let ai = PostProcessor.shared
@@ -98,11 +101,12 @@ extension SelfTest {
             }
             settings.aiBackend = .embedded
             settings.aiLocalModelID = llm.id
-            print("\n===== \(llm.name) =====")
+            print("\n===== \(llm.name)\(tone.map { " · ton \($0.rawValue)" } ?? "") =====")
             for (i, text) in texts.enumerated() {
                 let t = Date()
                 do {
-                    let out = try await ai.process(TextProcessing.removeFillers(text), mode: mode, context: DictationContext(), settings: settings)
+                    let out = try await ai.process(TextProcessing.removeFillers(text), mode: mode, context: DictationContext(),
+                                                   settings: settings, tone: tone)
                     print("#\(i + 1) [\(String(format: "%.2f", Date().timeIntervalSince(t))) s] \(out)")
                 } catch {
                     print("#\(i + 1) ERREUR \(error.localizedDescription)")
