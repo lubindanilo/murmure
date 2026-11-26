@@ -16,42 +16,34 @@ struct LicenseView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Spacer(minLength: 24)
-            Text(title)
-                .font(.system(size: 22, weight: .semibold))
-                .tracking(-0.3)
-                .multilineTextAlignment(.center)
-            Text(detail)
-                .font(.system(size: 13))
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.top, 6)
-
-            if isLicensed {
-                Button("Gérer mon abonnement") { license.openCustomerPortal() }
-                    .buttonStyle(.plain)
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(Theme.voice)
-                    .padding(.top, 20)
-            } else {
-                Button { license.buy() } label: {
-                    Text("Acheter Murmure")
-                        .font(.system(size: 13, weight: .semibold))
-                        .frame(maxWidth: .infinity)
+            PanelSubpageBar(title: "Licence", back: { PanelController.shared.router.path.removeAll() }) { EmptyView() }
+            VStack(spacing: 14) {
+                BarsGlyph(height: 22, color: Theme.voice)
+                    .frame(width: 52, height: 48)
+                    .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .strokeBorder(Theme.voice.opacity(0.4), style: StrokeStyle(lineWidth: 1, dash: [3, 3])))
+                    .padding(.top, 8)
+                VStack(spacing: 4) {
+                    Text(title).font(.system(size: 17, weight: .semibold))
+                    if !detail.isEmpty {
+                        Text(detail).font(.system(size: 12)).foregroundStyle(Palette.muted)
+                            .multilineTextAlignment(.center)
+                    }
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-                .tint(Theme.voice)
-                .padding(.top, 24)
+                if isLicensed {
+                    Button("Gérer mon abonnement") { license.openCustomerPortal() }
+                        .buttonStyle(.plain)
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(Theme.voice)
+                } else {
+                    Button("Acheter Murmure") { license.buy() }
+                        .buttonStyle(AccentButtonStyle())
+                    restore
+                }
             }
-            Spacer(minLength: 24)
-
-            if !isLicensed { restore }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 18)
         }
-        .padding(.horizontal, 28)
-        .padding(.bottom, 20)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .animation(Theme.quick, value: showRestore)
         .onAppear { license.refresh() }
     }
@@ -81,7 +73,7 @@ struct LicenseView: View {
             Button("Déjà acheté ?") { showRestore = true }
                 .buttonStyle(.plain)
                 .font(.system(size: 12))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Theme.voice)
         }
     }
 
@@ -99,9 +91,9 @@ struct LicenseView: View {
             if let expires { return "Renouvelé le \(expires.formatted(.dateTime.day().month(.wide)))." }
             return "Merci."
         case .trial:
-            return "Rien n'est prélevé à la fin de l'essai."
+            return ""
         case .expired:
-            return "Vos modes et corrections sont conservés."
+            return "Vos corrections et votre historique sont conservés."
         }
     }
 }

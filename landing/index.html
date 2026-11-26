@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Murmure · La dictée locale pour Mac</title>
 <meta name="description" content="Maintenez une touche, parlez, relâchez : un texte propre arrive là où se trouve votre curseur. Transcription et nettoyage sur votre Mac, hors ligne. 7 jours d'essai.">
-<meta name="theme-color" content="#fbfaf7" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#131209" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f3f5fa" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#161a24" media="(prefers-color-scheme: dark)">
 <meta property="og:title" content="Murmure · La dictée locale pour Mac">
 <meta property="og:description" content="Parlez, Murmure écrit. Votre voix ne quitte jamais votre Mac.">
 <meta property="og:image" content="https://murmure-mac.vercel.app/og.png">
@@ -16,7 +16,7 @@
 <link rel="apple-touch-icon" href="/icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/style.css">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
@@ -29,51 +29,50 @@
 <a class="skip" href="#main">Aller au contenu</a>
 
 <header class="nav">
-  <a class="brand" href="/" aria-current="page"><img src="/favicon.svg" alt="" width="22" height="22">Murmure</a>
-  <button class="nav-cta" type="button" data-install>Installer</button>
+  <a class="brand" href="/" aria-current="page"><svg class="mark" viewBox="0 0 20 18" aria-hidden="true"><rect x="0" y="5" width="2.4" height="8" rx="1.2"/><rect x="4.4" y="2" width="2.4" height="14" rx="1.2"/><rect x="8.8" y="0" width="2.4" height="18" rx="1.2"/><rect x="13.2" y="3" width="2.4" height="12" rx="1.2"/><rect x="17.6" y="6" width="2.4" height="6" rx="1.2"/></svg>Murmure</a>
+  <span class="nav-meta">Dictée pour Mac</span>
 </header>
 
 <main id="main">
   <!-- Hero -->
   <section class="hero">
-    <img class="hero-icon enter" style="--i:0" src="/icon.png" srcset="/icon.png 1x, /icon@2x.png 2x" alt="Icône de Murmure" width="96" height="96">
-    <h1 class="title enter" style="--i:1">Parlez.<br>Murmure écrit.</h1>
-    <p class="lead enter" style="--i:2">Maintenez une touche, parlez, relâchez. Un texte propre s'écrit là où se trouve votre curseur, dans toutes vos apps.</p>
-    <div class="cta enter" style="--i:3">
-      <button class="button" type="button" data-install><i class="ph-fill ph-apple-logo" aria-hidden="true"></i>Installer sur Mac</button>
-      <a class="button-ghost" href="#demo">Voir la démo<i class="ph ph-arrow-down" aria-hidden="true"></i></a>
+    <div class="hero-copy">
+      <h1 class="title enter" style="--i:0">Parlez.<br>Le texte suit.</h1>
+      <p class="lead enter" style="--i:1">Maintenez ⌘ droite, dictez, puis relâchez. Vos mots se posent au curseur, dans l'app ouverte. Tout reste sur votre Mac.</p>
+      <div class="cta enter" style="--i:2">
+        <button class="button" type="button" data-install><i class="ph ph-download-simple" aria-hidden="true"></i>Installer sur Mac</button>
+      </div>
+      <p class="fine enter" style="--i:3">Essai gratuit 7 jours · macOS 15 · Puce Apple</p>
     </div>
-    <p class="fine enter" style="--i:4">Gratuit pendant 7 jours, sans carte. Mac avec puce Apple, macOS 15 ou plus récent.</p>
-  </section>
 
-  <!-- Écran de démonstration -->
-  <section class="showcase enter" style="--i:5" id="demo" aria-label="Démonstration">
-    <figure class="screen">
+    <figure class="screen enter" style="--i:2" id="demo" aria-label="Démonstration : une dictée qui s'écrit dans Notes">
       <div class="menubar" aria-hidden="true">
-        <span class="mb-left"><strong id="mb-app">Mail</strong><span>Fichier</span><span>Édition</span><span>Présentation</span></span>
-        <span class="mb-right"><span class="mb-icon" id="mb-icon"><span class="mini-bars"><i></i><i></i><i></i><i></i><i></i></span></span><i class="ph ph-wifi-high"></i><span>jeu. 9:41</span></span>
+        <span class="mb-left"><strong id="mb-app">Notes</strong><span>Fichier</span><span>Édition</span></span>
+        <span class="mb-right"><span class="mb-icon" id="mb-icon"><svg class="mark" viewBox="0 0 20 18" aria-hidden="true"><rect x="0" y="5" width="2.4" height="8" rx="1.2"/><rect x="4.4" y="2" width="2.4" height="14" rx="1.2"/><rect x="8.8" y="0" width="2.4" height="18" rx="1.2"/><rect x="13.2" y="3" width="2.4" height="12" rx="1.2"/><rect x="17.6" y="6" width="2.4" height="6" rx="1.2"/></svg></span><i class="ph ph-wifi-high"></i><i class="ph ph-battery-high"></i><span>Jeu. 26 nov.</span><span>09:41</span></span>
+      </div>
+      <div class="notch" id="hud" aria-hidden="true">
+        <span class="notch-state on" data-state="idle"></span>
+        <span class="notch-state" data-state="listen"><span class="bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>J'écoute</span>
+        <span class="notch-state" data-state="clean"><i class="ph ph-text-align-left"></i>Mise au propre</span>
+        <span class="notch-state" data-state="done"><i class="ph-bold ph-check"></i>Collé</span>
       </div>
       <div class="win">
         <div class="win-bar">
           <span class="lights" aria-hidden="true"><i></i><i></i><i></i></span>
-          <span class="win-title" id="win-title">Nouveau message</span>
+          <span class="win-title" id="win-title">Notes</span>
         </div>
         <div class="win-body">
-          <p class="win-meta" id="win-meta">À : Axel Moreau</p>
-          <p class="win-text"><span id="typed"></span><span class="caret" aria-hidden="true"></span></p>
+          <p class="win-meta" id="win-meta">Aujourd'hui à 09:41</p>
+          <p class="win-h" id="win-h">Au fil des idées</p>
+          <p class="win-text"><span id="prev">Reprendre le fil du projet.</span> <span id="typed"></span><span class="caret" aria-hidden="true"></span></p>
         </div>
       </div>
-      <div class="dock" aria-hidden="true"><i></i><i></i><i></i><i class="dock-me"><img src="/favicon.svg" alt=""></i><i></i><i></i><i></i></div>
-      <div class="hud hidden" id="hud" aria-hidden="true">
-        <span class="bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
-      </div>
-      <figcaption class="sr">Démonstration : on maintient la touche ⌘ droite, on dicte, et Murmure écrit « Salut Axel, la réunion de demain est décalée à 15 h. Tu peux prévenir Louis ? » dans un message.</figcaption>
+      <div class="dock" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <figcaption class="sr">Démonstration : on maintient ⌘ droite, on dicte, et la phrase « Je t'envoie le brouillon demain matin. » s'écrit dans Notes.</figcaption>
     </figure>
-    <p class="screen-caption" aria-hidden="true">
-      <span class="key" id="key">⌘</span>
-      <span id="stage-hint">Maintenez ⌘ droite et parlez</span>
-    </p>
   </section>
+
+  <p class="gesture" aria-hidden="true"><span id="g-hold">Maintenir</span><i></i><span id="g-talk">Parler</span><i></i><span id="g-release">Relâcher</span></p>
 
   <!-- Phrase -->
   <section class="tagline" aria-label="En une phrase">
@@ -173,18 +172,18 @@
 
   <!-- Final -->
   <section class="final reveal" aria-labelledby="final-title">
-    <img src="/icon.png" srcset="/icon.png 1x, /icon@2x.png 2x" alt="" width="80" height="80">
+    <img class="ribbon" src="/ribbon.png" alt="" width="360" height="302" loading="lazy">
     <h2 id="final-title" class="h2">Essayez Murmure.</h2>
     <p class="final-lead">Deux minutes pour l'installer. Le reste, vous le dictez.</p>
     <div class="cta">
-      <button class="button" type="button" data-install><i class="ph-fill ph-apple-logo" aria-hidden="true"></i>Installer sur Mac</button>
+      <button class="button" type="button" data-install><i class="ph ph-download-simple" aria-hidden="true"></i>Installer sur Mac</button>
     </div>
     <p class="fine">Gratuit pendant 7 jours, sans carte.</p>
   </section>
 </main>
 
 <footer class="footer">
-  <span class="brand"><img src="/favicon.svg" alt="" width="18" height="18">Murmure</span>
+  <span class="brand"><svg class="mark" viewBox="0 0 20 18" aria-hidden="true"><rect x="0" y="5" width="2.4" height="8" rx="1.2"/><rect x="4.4" y="2" width="2.4" height="14" rx="1.2"/><rect x="8.8" y="0" width="2.4" height="18" rx="1.2"/><rect x="13.2" y="3" width="2.4" height="12" rx="1.2"/><rect x="17.6" y="6" width="2.4" height="6" rx="1.2"/></svg>Murmure</span>
   <nav aria-label="Informations légales"><a href="/confidentialite">Confidentialité</a><a href="/conditions">Conditions</a></nav>
 </footer>
 

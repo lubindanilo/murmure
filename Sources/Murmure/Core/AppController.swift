@@ -297,7 +297,7 @@ final class AppController: ObservableObject {
                                      modelName: model.name, modeName: mode.isMain ? nil : mode.name,
                                      duration: duration, processingTime: Date().timeIntervalSince(started)),
                         limit: settings.historyLimit)
-            phase = .done(output == .copy ? "Copié" : output == .historyOnly ? "Enregistré" : "Inséré")
+            phase = .done(output == .copy ? "Copié" : output == .historyOnly ? "Enregistré" : "Collé")
             hud.hide(after: output == .copy || output == .historyOnly ? 1.4 : 0.5)
         } catch {
             fail(error.localizedDescription)
@@ -318,6 +318,17 @@ final class AppController: ObservableObject {
         phase = .failed(message)
         hud.show()
         hud.hide(after: 4)
+    }
+
+    /// Captures d'écran en CI : affiche l'indicateur dans un état donné, sans enregistrer.
+    func showDemoHUD(_ state: String) {
+        switch state {
+        case "polishing": phase = .polishing("Ton soigné")
+        case "done": phase = .done("Collé")
+        case "failed": phase = .failed("Micro indisponible")
+        default: phase = .recording(handsFree: false); level = 0.7
+        }
+        hud.show()
     }
 
     func resetIfFinished() {

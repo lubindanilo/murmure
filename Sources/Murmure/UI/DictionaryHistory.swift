@@ -4,8 +4,10 @@ import SwiftUI
 /// Appliquées mot pour mot à chaque dictée, et données à l'IA comme orthographe de référence.
 struct CorrectionsSettings: View {
     @EnvironmentObject var settings: Settings
+    @State private var adding = false
     @State private var heard = ""
     @State private var written = ""
+    @State private var hovered: UUID?
     @FocusState private var focus: Field?
 
     private enum Field { case heard, written }
@@ -15,56 +17,90 @@ struct CorrectionsSettings: View {
     }
 
     var body: some View {
-        Form {
-            Section {
-                HStack(spacing: 8) {
-                    TextField("Entendu", text: $heard, prompt: Text("cloud code"))
-                        .labelsHidden()
-                        .focused($focus, equals: .heard)
-                        .onSubmit { focus = .written }
-                    Image(systemName: "arrow.right").foregroundStyle(.tertiary)
-                    TextField("Écrit", text: $written, prompt: Text("Claude Code"))
-                        .labelsHidden()
-                        .focused($focus, equals: .written)
-                        .onSubmit(add)
-                    Button("Ajouter", action: add).disabled(!canAdd)
+        VStack(spacing: 0) {
+            PanelSubpageBar(title: "Corrections", back: { PanelController.shared.router.path.removeAll() }) {
+                Button {
+                    adding.toggle()
+                    if adding { focus = .heard }
+                } label: {
+                    Image(systemName: adding ? "xmark" : "plus").font(.system(size: 13, weight: .semibold))
+                        .frame(width: 28, height: 28).contentShape(Rectangle())
                 }
-            } footer: {
-                Text("Noms propres, marques, jargon : écrivez ce que Murmure entend, puis ce qu'il doit écrire.")
-                    .font(.caption).foregroundStyle(.secondary)
+                .buttonStyle(.plain)
+                .help(adding ? "Annuler" : "Ajouter une correction")
             }
+            VStack(spacing: 0) {
+                HStack {
+                    Text("Entendu").frame(maxWidth: .infinity, alignment: .leading)
+                    Text("Écrit").frame(maxWidth: .infinity, alignment: .leading).padding(.leading, 30)
+                }
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(Palette.muted)
+                .padding(.top, 12)
+                .padding(.bottom, 6)
 
-            if !settings.replacements.isEmpty {
-                Section {
-                    ForEach(settings.replacements) { r in
-                        HStack(spacing: 8) {
-                            Text(r.from).foregroundStyle(.secondary)
-                            Image(systemName: "arrow.right").font(.caption).foregroundStyle(.tertiary)
-                            Text(r.to.isEmpty ? "(supprimé)" : r.to)
-                            Spacer()
-                            Button {
-                                settings.replacements.removeAll { $0.id == r.id }
-                            } label: {
-                                Image(systemName: "xmark.circle.fill").foregroundStyle(.tertiary)
-                            }
-                            .buttonStyle(.plain)
-                            .help("Supprimer cette correction")
-                            .accessibilityLabel("Supprimer \(r.from)")
-                        }
+                if adding {
+                    HStack(spacing: 8) {
+                        TextField("cloud code", text: $heard)
+                            .textFieldStyle(.roundedBorder)
+                            .focused($focus, equals: .heard)
+                            .onSubmit { focus = .written }
+                        Image(systemName: "arrow.right").font(.system(size: 11)).foregroundStyle(Palette.muted)
+                        TextField("Claude Code", text: $written)
+                            .textFieldStyle(.roundedBorder)
+                            .focused($focus, equals: .written)
+                            .onSubmit(add)
                     }
+                    .font(.system(size: 13))
+                    .padding(.vertical, 8)
+                    .transition(.opacity)
+                }
+
+                if settings.replacements.isEmpty && !adding {
+                    Text("Ajoutez les mots que Murmure écrit de travers : noms propres, marques, jargon.")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Palette.muted)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.vertical, 14)
+                }
+
+                ForEach(settings.replacements) { r in
+                    HStack(spacing: 8) {
+                        Text(r.from).frame(maxWidth: .infinity, alignment: .leading)
+                        Image(systemName: "arrow.right").font(.system(size: 11)).foregroundStyle(Palette.muted)
+                        Text(r.to.isEmpty ? "(supprimé)" : r.to).fontWeight(.medium)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        Button {
+                            settings.replacements.removeAll { $0.id == r.id }
+                        } label: {
+                            Image(systemName: "xmark.circle.fill").foregroundStyle(Palette.muted)
+                        }
+                        .buttonStyle(.plain)
+                        .opacity(hovered == r.id ? 1 : 0)
+                        .help("Supprimer")
+                        .accessibilityLabel("Supprimer \(r.from)")
+                    }
+                    .font(.system(size: 13))
+                    .frame(height: 40)
+                    .contentShape(Rectangle())
+                    .onHover { hovered = $0 ? r.id : (hovered == r.id ? nil : hovered) }
+                    .contextMenu { Button("Supprimer", role: .destructive) { settings.replacements.removeAll { $0.id == r.id } } }
+                    .overlay(alignment: .top) { Divider().overlay(Palette.hairline) }
                 }
             }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 12)
         }
-        .formStyle(.grouped)
+        .animation(Theme.quick, value: adding)
     }
 
     private func add() {
         guard canAdd else { return }
-        settings.replacements.append(WordReplacement(
+        settings.replacements.insert(WordReplacement(
             from: heard.trimmingCharacters(in: .whitespaces),
-            to: written.trimmingCharacters(in: .whitespaces)))
+            to: written.trimmingCharacters(in: .whitespaces)), at: 0)
         heard = ""; written = ""
-        focus = .heard
+        adding = false
     }
 }
 

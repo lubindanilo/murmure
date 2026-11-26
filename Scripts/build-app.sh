@@ -26,6 +26,8 @@ for bundle in "$BIN"/*.bundle; do
   [ -e "$bundle" ] && cp -R "$bundle" "$APP/Contents/Resources/"
 done
 install_name_tool -add_rpath "@executable_path/../Frameworks" "$APP/Contents/MacOS/Murmure" 2>/dev/null || true
+# Illustrations de l'interface (ruban de l'onboarding).
+cp "$ROOT/Resources/Ribbon.png" "$APP/Contents/Resources/Ribbon.png"
 
 if [ -f "$ROOT/Resources/AppIcon.png" ] && command -v iconutil >/dev/null; then
   ICONSET="$ROOT/build/AppIcon.iconset"; rm -rf "$ICONSET"; mkdir -p "$ICONSET"

@@ -3,9 +3,19 @@ import SwiftUI
 /// Une seule couleur d'accent, réservée à la voix : enregistrement, sélection, actions principales.
 /// Tout le reste utilise les couleurs système pour suivre le mode clair/sombre et le contraste augmenté.
 enum Theme {
-    /// Vermillon : lisible sur fond clair comme sur le panneau sombre.
-    static let voice = Color(red: 0.89, green: 0.30, blue: 0.20)
+    /// Bleu iris (direction « Sillage ») : profond en clair, lavande en sombre.
+    static let voice = Color.dynamic(light: NSColor(red: 0.290, green: 0.314, blue: 0.600, alpha: 1),
+                                     dark: NSColor(red: 0.706, green: 0.733, blue: 1.0, alpha: 1))
     static let voiceSoft = voice.opacity(0.14)
+    /// Texte posé sur l'accent : blanc en clair, encre en sombre (l'accent y est clair).
+    static let onAccent = Color.dynamic(light: .white, dark: NSColor(red: 0.118, green: 0.141, blue: 0.200, alpha: 1))
+    /// Alerte douce (autorisations manquantes, erreurs).
+    static let warn = Color.dynamic(light: NSColor(red: 0.761, green: 0.333, blue: 0.227, alpha: 1),
+                                    dark: NSColor(red: 0.941, green: 0.541, blue: 0.431, alpha: 1))
+    /// Ondes du ruban, pour la gélule de dictée (toujours sur fond noir).
+    static let wave = Color(red: 0.706, green: 0.733, blue: 1.0)
+    /// Ruban irisé de l'onboarding (Resources/Ribbon.png).
+    static let ribbon: NSImage? = Bundle.main.image(forResource: "Ribbon")
 
     static let hudBackground = Color(white: 0.09)
     static let hudStroke = Color.white.opacity(0.10)

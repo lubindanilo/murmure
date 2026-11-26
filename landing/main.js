@@ -107,19 +107,26 @@ if (!reduce) new IntersectionObserver(([e]) => {
   if (e.isIntersecting && !userPicked) modeTimer = setInterval(() => showMode((modeIndex + 1) % tabs.length), 3500);
 }).observe(document.querySelector(".modes"));
 
-// Démonstration : touche maintenue, voix, texte propre collé dans l'app
+// Démonstration : touche maintenue, la voix s'affiche dans l'encoche, le texte se colle dans Notes
 const typed = $("typed");
 const hud = $("hud");
-const key = $("key");
-const hint = $("stage-hint");
+const states = [...hud.querySelectorAll(".notch-state")];
 const bars = [...hud.querySelectorAll(".bars i")];
+const steps = { hold: $("g-hold"), talk: $("g-talk"), release: $("g-release") };
 const scenes = [
-  { app: "Mail", title: "Nouveau message", meta: "À : Axel Moreau", text: "Salut Axel, la réunion de demain est décalée à 15 h. Tu peux prévenir Louis ?" },
-  { app: "Notes", title: "Lancement", meta: "Aujourd'hui, 9:42", text: "Idées pour le lancement : une vidéo de 30 secondes, un mail aux premiers clients et une offre de bienvenue." },
-  { app: "Slack", title: "# produit", meta: "Message à l'équipe", text: "Bonne nouvelle : la version 2 part en recette ce soir. Merci à tous pour le sprint." },
+  { app: "Notes", title: "Notes", h: "Au fil des idées", prev: "Reprendre le fil du projet.", text: "Je t'envoie le brouillon demain matin." },
+  { app: "Mail", title: "Nouveau message", h: "Réunion de demain", prev: "Salut Axel,", text: "la réunion est décalée à 15 h. Tu peux prévenir Louis ?" },
+  { app: "Slack", title: "# produit", h: "Lancement", prev: "Bonne nouvelle :", text: "la version 2 part en recette ce soir. Merci à tous pour le sprint" },
 ];
 const profile = [0.45, 0.7, 0.9, 1, 0.9, 0.7, 0.45];
 let visible = true;
+
+function setState(name) {
+  states.forEach((el) => el.classList.toggle("on", el.dataset.state === name));
+}
+function setStep(name) {
+  Object.entries(steps).forEach(([k, el]) => el && el.classList.toggle("on", k === name));
+}
 
 async function demo() {
   if (reduce) { typed.textContent = scenes[0].text; return; }
@@ -129,32 +136,31 @@ async function demo() {
     const s = scenes[i % scenes.length];
     $("mb-app").textContent = s.app;
     $("win-title").textContent = s.title;
-    $("win-meta").textContent = s.meta;
+    $("win-h").textContent = s.h;
+    $("prev").textContent = s.prev;
     typed.textContent = "";
-    await sleep(900);
-    key.classList.add("down");
-    $("mb-icon").classList.add("on");
-    hint.textContent = "Vous parlez…";
-    hud.classList.remove("hidden", "thinking");
+    setState("idle"); setStep(null);
+    await sleep(1000);
+    setStep("hold");
+    await sleep(350);
+    setState("listen"); setStep("talk");
     const start = performance.now();
     while (performance.now() - start < 2600) {
       const t = performance.now() / 1000;
       const level = 0.3 + 0.7 * Math.abs(Math.sin(t * 3.1) * Math.sin(t * 1.7));
-      bars.forEach((b, k) => { b.style.scale = `1 ${Math.max(0.2, level * profile[k] * (0.75 + 0.25 * Math.sin(t * 13 + k)))}`; });
+      bars.forEach((b, k) => { b.style.scale = `1 ${Math.max(0.25, level * profile[k] * (0.75 + 0.25 * Math.sin(t * 13 + k)))}`; });
       await sleep(70);
     }
-    key.classList.remove("down");
-    hint.textContent = "Relâchez : c'est écrit";
-    hud.classList.add("thinking");
-    bars.forEach((b) => { b.style.scale = "1 0.2"; });
-    await sleep(600);
-    hud.classList.add("hidden");
-    $("mb-icon").classList.remove("on");
+    setStep("release");
+    setState("clean");
+    await sleep(800);
+    setState("done");
     typed.textContent = s.text;
     typed.classList.add("fresh");
     requestAnimationFrame(() => requestAnimationFrame(() => typed.classList.remove("fresh")));
-    await sleep(3400);
-    hint.textContent = "Maintenez ⌘ droite et parlez";
+    await sleep(1200);
+    setState("idle");
+    await sleep(2600);
     i++;
   }
 }

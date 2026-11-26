@@ -26,7 +26,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Task { @MainActor in
             AppController.shared.start()
             PanelController.shared.install()
-            if let demo = UserDefaults.standard.string(forKey: "demoSettings") {
+            if let hud = UserDefaults.standard.string(forKey: "demoHUD") {
+                AppController.shared.showDemoHUD(hud)
+            } else if let demo = UserDefaults.standard.string(forKey: "demoSettings") {
                 PanelController.shared.show(SettingsSection(rawValue: demo) ?? .general)
                 if demo == "mode" { PanelController.shared.router.path = [.mode(ModeStore.shared.main.id)] }
             } else if !Settings.shared.hasCompletedOnboarding {

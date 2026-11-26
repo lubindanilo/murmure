@@ -13,13 +13,45 @@ extension Color {
     }
 }
 
-/// Neutres nets et un seul accent, le vermillon de la voix.
+/// Direction « Sillage » : verre dépoli bleuté, encre marine, un seul accent bleu iris.
 enum Palette {
-    static let panel = Color.dynamic(light: NSColor(white: 0.972, alpha: 1), dark: NSColor(red: 0.110, green: 0.110, blue: 0.118, alpha: 1))
-    static let card = Color.dynamic(light: .white, dark: NSColor(white: 0.165, alpha: 1))
-    static let chip = Color.dynamic(light: NSColor(white: 0.918, alpha: 1), dark: NSColor(white: 0.235, alpha: 1))
-    static let hero = Color.dynamic(light: NSColor(red: 1, green: 0.949, blue: 0.933, alpha: 1), dark: NSColor(red: 0.235, green: 0.137, blue: 0.118, alpha: 1))
-    static let hairline = Color.primary.opacity(0.08)
+    /// Voile posé sur le flou du panneau.
+    static let panel = Color.dynamic(light: NSColor(red: 0.969, green: 0.973, blue: 0.988, alpha: 0.80),
+                                     dark: NSColor(red: 0.145, green: 0.169, blue: 0.231, alpha: 0.82))
+    /// Fond opaque des fenêtres (onboarding).
+    static let window = Color.dynamic(light: NSColor(red: 0.961, green: 0.969, blue: 0.984, alpha: 1),
+                                      dark: NSColor(red: 0.137, green: 0.157, blue: 0.216, alpha: 1))
+    /// Carte en retrait : dernière dictée, zones d'illustration.
+    static let card = Color.dynamic(light: NSColor(red: 0.918, green: 0.933, blue: 0.965, alpha: 1),
+                                    dark: NSColor(red: 0.180, green: 0.208, blue: 0.282, alpha: 1))
+    /// Pastille sélectionnée d'un sélecteur.
+    static let raised = Color.dynamic(light: .white, dark: NSColor(red: 0.255, green: 0.290, blue: 0.384, alpha: 1))
+    static let ink = Color.dynamic(light: NSColor(red: 0.118, green: 0.141, blue: 0.200, alpha: 1),
+                                   dark: NSColor(red: 0.910, green: 0.922, blue: 0.953, alpha: 1))
+    static let muted = Color.dynamic(light: NSColor(red: 0.357, green: 0.392, blue: 0.471, alpha: 1),
+                                     dark: NSColor(red: 0.604, green: 0.639, blue: 0.722, alpha: 1))
+    static let hairline = Color.dynamic(light: NSColor(red: 0.118, green: 0.141, blue: 0.200, alpha: 0.10),
+                                        dark: NSColor(white: 1, alpha: 0.10))
+    static let ok = Color.dynamic(light: NSColor(red: 0.180, green: 0.608, blue: 0.369, alpha: 1),
+                                  dark: NSColor(red: 0.420, green: 0.835, blue: 0.565, alpha: 1))
+    // Anciens noms, gardés pour les vues qui les utilisent encore.
+    static let hero = card
+    static let chip = card
+}
+
+/// Flou d'arrière-plan natif de macOS (verre dépoli).
+struct VisualEffect: NSViewRepresentable {
+    var material: NSVisualEffectView.Material = .popover
+
+    func makeNSView(context: Context) -> NSVisualEffectView {
+        let view = NSVisualEffectView()
+        view.material = material
+        view.blendingMode = .behindWindow
+        view.state = .active
+        return view
+    }
+
+    func updateNSView(_ view: NSVisualEffectView, context: Context) { view.material = material }
 }
 
 // MARK: - Navigation
@@ -54,7 +86,7 @@ final class KeyPanel: NSPanel {
 @MainActor
 final class PanelController: NSObject {
     static let shared = PanelController()
-    static let size = NSSize(width: 360, height: 548)
+    static let size = NSSize(width: 336, height: 480)
 
     let router = PanelRouter()
     private var statusItem: NSStatusItem?
@@ -194,23 +226,26 @@ struct PanelView: View {
         Group {
             switch router.path.last {
             case .none:
-                HomePage().fixedSize(horizontal: false, vertical: true)
+                HomePage()
             case .mode(let id):
                 ModeEditor(modeID: id).frame(height: PanelController.size.height)
             case .corrections:
                 CorrectionsSettings()
-                    .subpage(title: "Corrections", back: "Murmure") { router.path.removeAll() }
-                    .frame(height: 380)
             case .license:
                 LicenseView()
-                    .subpage(title: "Licence", back: "Murmure") { router.path.removeAll() }
-                    .frame(height: 300)
             }
         }
+        .fixedSize(horizontal: false, vertical: true)
         .frame(width: PanelController.size.width)
-        .background(Palette.panel)
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Color.primary.opacity(0.12), lineWidth: 0.5))
+        .foregroundStyle(Palette.ink)
+        .background {
+            ZStack {
+                VisualEffect(material: .popover)
+                Palette.panel
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Palette.hairline, lineWidth: 0.5))
         .tint(Theme.voice)
         .onGeometryChange(for: CGFloat.self, of: { $0.size.height }) { height in
             PanelController.shared.resize(height: height)
@@ -218,12 +253,39 @@ struct PanelView: View {
     }
 }
 
-/// La page du panneau : état, touche, mode, dernière dictée, corrections, licence.
+/// Marque : cinq barres et le nom.
+struct Wordmark: View {
+    var size: CGFloat = 15
+
+    var body: some View {
+        HStack(spacing: size * 0.4) {
+            BarsGlyph(height: size * 1.05)
+            Text("Murmure").font(.system(size: size, weight: .semibold)).tracking(-0.3)
+        }
+    }
+}
+
+struct BarsGlyph: View {
+    var height: CGFloat = 16
+    var color: Color = Palette.ink
+    private let profile: [CGFloat] = [0.45, 0.8, 1, 0.7, 0.4]
+
+    var body: some View {
+        HStack(alignment: .center, spacing: height * 0.13) {
+            ForEach(0..<5, id: \.self) { i in
+                Capsule().fill(color).frame(width: height * 0.12, height: height * profile[i])
+            }
+        }
+        .frame(height: height)
+        .accessibilityHidden(true)
+    }
+}
+
+/// Le panneau : état, touche, langue, ton, dernière dictée, corrections, essai.
 struct HomePage: View {
     @EnvironmentObject var app: AppController
     @EnvironmentObject var settings: Settings
     @EnvironmentObject var router: PanelRouter
-    @ObservedObject private var store = ModeStore.shared
     @ObservedObject private var license = LicenseManager.shared
     @ObservedObject private var setup = Setup.shared
     @ObservedObject private var history = HistoryStore.shared
@@ -233,29 +295,41 @@ struct HomePage: View {
     private let poll = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     private var needsPermission: Bool { micStatus != .authorized || !axTrusted }
-    private var needsSetup: Bool { needsPermission || !setup.isComplete }
-    private var currentModeID: UUID { store.pinnedModeID ?? store.main.id }
 
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(alignment: .leading, spacing: 0) {
             header
-            VStack(alignment: .leading, spacing: 16) {
-                if needsSetup { setupCard } else { keyCard }
-                writing
-                if let last = history.entries.first { lastDictation(last) }
-            }
-            .padding(.horizontal, 12)
-            VStack(spacing: 2) {
-                if updater.available != nil {
-                    PanelRow(title: "Nouvelle version disponible", value: "Installer", accent: true) { updater.install() }
+            Divider().overlay(Palette.hairline).padding(.horizontal, 16)
+            VStack(alignment: .leading, spacing: 0) {
+                callouts
+                row("Touche de dictée") { KeyPickerChip() }
+                row("Écrire en") {
+                    Segmented(options: ["Français", "English"],
+                              selection: Binding(get: { settings.writeInEnglish ? 1 : 0 },
+                                                 set: { settings.writeInEnglish = $0 == 1 }))
                 }
-                PanelRow(title: "Corrections", value: settings.replacements.isEmpty ? "" : "\(settings.replacements.count)") {
-                    router.path = [.corrections]
+                row("Adapter le ton à l'app") {
+                    Toggle("", isOn: $settings.autoTone).labelsHidden().toggleStyle(.switch).controlSize(.small)
                 }
+                .help("Mail : soigné · Slack, Messages : naturel · ChatGPT, Claude, Cursor : prompt clair")
+                if let last = history.entries.first {
+                    LastDictationCard(text: last.text).padding(.top, 6).padding(.bottom, 4)
+                }
+                Button { router.path = [.corrections] } label: {
+                    HStack {
+                        Text("Corrections")
+                        Spacer()
+                        Image(systemName: "chevron.right").font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.muted)
+                    }
+                    .frame(height: 38)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
             }
-            .padding(.horizontal, 6)
-            .padding(.top, 14)
-            Divider().padding(.horizontal, 12).padding(.top, 6)
+            .font(.system(size: 13))
+            .padding(.horizontal, 16)
+            .padding(.top, 6)
+            Divider().overlay(Palette.hairline).padding(.horizontal, 16)
             footer
         }
         .onReceive(poll) { _ in
@@ -266,234 +340,259 @@ struct HomePage: View {
         }
     }
 
+    private func row<Trailing: View>(_ title: String, @ViewBuilder trailing: () -> Trailing) -> some View {
+        HStack {
+            Text(title)
+            Spacer(minLength: 12)
+            trailing()
+        }
+        .frame(height: 38)
+    }
+
     // MARK: En-tête
 
     private var header: some View {
-        HStack(spacing: 10) {
-            Image(nsImage: NSApp.applicationIconImage).resizable().interpolation(.high).frame(width: 24, height: 24)
-            Text("Murmure").font(.system(size: 13, weight: .semibold))
+        HStack {
+            Wordmark()
             Spacer()
-            HStack(spacing: 6) {
-                Circle().fill(status.color).frame(width: 6, height: 6)
-                Text(status.label).font(.system(size: 12, weight: .medium)).foregroundStyle(.secondary)
-            }
+            statusView
         }
         .padding(.horizontal, 16)
-        .frame(height: 48)
+        .frame(height: 50)
     }
 
-    private var status: (label: String, color: Color) {
+    @ViewBuilder
+    private var statusView: some View {
         switch app.phase {
-        case .recording: return ("J'écoute", Theme.voice)
-        case .transcribing, .polishing, .translating: return ("Transcription", .orange)
-        default: break
-        }
-        if needsPermission { return ("À configurer", .orange) }
-        if !setup.isComplete { return ("Préparation", .orange) }
-        if !license.canDictate { return ("Essai terminé", Theme.voice) }
-        return ("Prêt", .green)
-    }
-
-    // MARK: Touche
-
-    private var keyCard: some View {
-        VStack(spacing: 12) {
-            BigKeyCap(key: settings.triggerKey, pressed: { if case .recording = app.phase { return true }; return false }())
-            VStack(spacing: 3) {
-                (Text("Maintenez ") + Text(settings.triggerKey.label).fontWeight(.semibold) + Text(" et parlez"))
-                    .font(.system(size: 13))
-                Text("Appui bref : mains libres. Échap annule.")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-            }
-            Menu {
-                Picker("Touche de dictée", selection: $settings.triggerKey) {
-                    ForEach(TriggerKey.allCases) { Text($0.label).tag($0) }
+        case .recording:
+            HStack(spacing: 6) { BarsGlyph(height: 11, color: Theme.voice); Text("J'écoute") }
+                .font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.voice)
+        case .transcribing, .polishing, .translating:
+            Text("Mise au propre").font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.voice)
+        default:
+            if needsPermission || !license.canDictate {
+                HStack(spacing: 5) {
+                    Image(systemName: "exclamationmark.circle").font(.system(size: 11, weight: .semibold))
+                    Text(needsPermission ? "À configurer" : "Essai terminé")
                 }
-                .pickerStyle(.inline)
-            } label: {
-                Text("Changer de touche")
+                .font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.warn)
+            } else if !setup.isComplete {
+                Text("Préparation").font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.muted)
+            } else {
+                HStack(spacing: 6) { Circle().fill(Palette.ok).frame(width: 6, height: 6); Text("Prêt") }
+                    .font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.ok)
             }
-            .menuStyle(.borderlessButton)
-            .menuIndicator(.hidden)
-            .fixedSize()
-            .font(.system(size: 11, weight: .medium))
-            .foregroundStyle(Theme.voice)
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 18)
-        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Palette.hero))
     }
 
-    // MARK: Configuration
+    // MARK: Autorisations, préparation, mise à jour
 
-    private var setupCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            if micStatus != .authorized {
-                SetupRow(symbol: "mic.fill", title: "Micro", detail: "Pour entendre votre voix", action: "Autoriser") {
-                    if micStatus == .notDetermined {
-                        Task { _ = await AudioRecorder.requestPermission(); micStatus = AudioRecorder.permission }
+    @ViewBuilder
+    private var callouts: some View {
+        if micStatus != .authorized {
+            Callout(title: "Autorisez le microphone", detail: "Pour entendre votre voix.",
+                    action: micStatus == .notDetermined ? "Autoriser" : "Ouvrir les réglages") {
+                if micStatus == .notDetermined {
+                    Task { _ = await AudioRecorder.requestPermission(); micStatus = AudioRecorder.permission }
+                } else {
+                    HotkeyMonitor.openMicrophoneSettings()
+                }
+            }
+        } else if !axTrusted {
+            Callout(title: "Autorisez l'accessibilité", detail: "Pour détecter la touche et coller le texte.",
+                    action: "Ouvrir les réglages") {
+                HotkeyMonitor.promptForAccessibility()
+                HotkeyMonitor.openAccessibilitySettings()
+            }
+        }
+        ForEach(setup.items.filter { $0.progress != nil || $0.error != nil }) { item in
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text(item.title).font(.system(size: 12, weight: .medium))
+                    Spacer()
+                    if let p = item.progress {
+                        Text(p.formatted(.percent.precision(.fractionLength(0))))
+                            .font(.system(size: 12).monospacedDigit()).foregroundStyle(Palette.muted)
                     } else {
-                        HotkeyMonitor.openMicrophoneSettings()
+                        Button("Réessayer") { setup.install() }.buttonStyle(.plain)
+                            .font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.voice)
                     }
                 }
+                if let p = item.progress { ProgressView(value: p).progressViewStyle(.linear).controlSize(.small) }
+                if let error = item.error { Text(error).font(.system(size: 11)).foregroundStyle(Theme.warn).lineLimit(2) }
             }
-            if !axTrusted {
-                SetupRow(symbol: "accessibility", title: "Accessibilité", detail: "Pour la touche et le collage", action: "Autoriser") {
-                    HotkeyMonitor.promptForAccessibility()
-                    HotkeyMonitor.openAccessibilitySettings()
-                }
-            }
-            ForEach(setup.items.filter { $0.progress != nil || $0.error != nil }) { item in
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack {
-                        Text(item.title).font(.system(size: 12, weight: .medium))
-                        Spacer()
-                        if let p = item.progress {
-                            Text(p.formatted(.percent.precision(.fractionLength(0))))
-                                .font(.system(size: 12).monospacedDigit()).foregroundStyle(.secondary)
-                        } else {
-                            Button("Réessayer") { setup.install() }.controlSize(.small)
-                        }
-                    }
-                    if let p = item.progress { ProgressView(value: p).progressViewStyle(.linear).controlSize(.small) }
-                    if let error = item.error { Text(error).font(.system(size: 11)).foregroundStyle(Theme.voice).lineLimit(2) }
-                }
-            }
+            .padding(.vertical, 8)
         }
-        .padding(14)
-        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Palette.hero))
+        if updater.available != nil {
+            Callout(title: "Nouvelle version disponible", detail: "Installation en quelques secondes.",
+                    action: "Installer", tint: Theme.voice) { updater.install() }
+        }
     }
 
-    // MARK: Écriture
+    // MARK: Pied
 
-    /// Deux interrupteurs remplacent les modes : le ton suit l'app, et l'anglais en option.
-    private var writing: some View {
-        VStack(spacing: 0) {
-            ToggleRow(symbol: "wand.and.stars", title: "Adapter le ton à l'app",
-                      detail: "Mail soigné · Messages naturels · Prompts clairs", isOn: $settings.autoTone)
-            Divider().padding(.leading, 44)
-            ToggleRow(symbol: "globe", title: "Écrire en anglais",
-                      detail: "Vous parlez français, Murmure écrit en anglais", isOn: $settings.writeInEnglish)
-        }
-        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Palette.card))
-        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Palette.hairline, lineWidth: 0.5))
-    }
-
-    // MARK: Dernière dictée
-
-    private func lastDictation(_ entry: HistoryEntry) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                SectionLabel("Dernière dictée")
-                Spacer()
-                if history.entries.count > 1 {
-                    Menu {
-                        ForEach(Array(history.entries.prefix(6).dropFirst())) { e in
-                            Button(Self.preview(e.text)) { Self.copy(e.text) }
-                        }
-                        Divider()
-                        Button("Effacer l'historique") { history.clear() }
-                    } label: {
-                        Text("Précédentes")
-                    }
-                    .menuStyle(.borderlessButton)
-                    .menuIndicator(.hidden)
-                    .fixedSize()
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(.secondary)
+    private var footer: some View {
+        HStack(spacing: 0) {
+            Button { router.path = [.license] } label: {
+                switch license.state {
+                case .licensed:
+                    Text("Murmure est activé").foregroundStyle(Palette.muted)
+                case .trial(let days, _):
+                    (Text(days > 1 ? "Essai · \(days) jours · " : "Essai · dernier jour · ").foregroundColor(Palette.muted)
+                     + Text("Acheter").foregroundColor(Theme.voice).fontWeight(.semibold))
+                case .expired:
+                    (Text("Essai terminé · ").foregroundColor(Palette.muted)
+                     + Text("Activer").foregroundColor(Theme.voice).fontWeight(.semibold))
                 }
             }
-            LastDictationCard(text: entry.text)
+            .buttonStyle(.plain)
+            Spacer()
+            Button("Quitter") { NSApp.terminate(nil) }
+                .buttonStyle(.plain)
+                .foregroundStyle(Palette.muted)
         }
-        .padding(.horizontal, 4)
-    }
-
-    static func preview(_ text: String) -> String {
-        let line = text.replacingOccurrences(of: "\n", with: " ")
-        return line.count > 44 ? String(line.prefix(43)) + "…" : line
+        .font(.system(size: 12))
+        .padding(.horizontal, 16)
+        .frame(height: 40)
     }
 
     static func copy(_ text: String) {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(text, forType: .string)
     }
-
-    // MARK: Pied
-
-    private var footer: some View {
-        HStack {
-            Button { router.path = [.license] } label: {
-                Text(licenseLabel).font(.system(size: 12, weight: .semibold))
-            }
-            .buttonStyle(.plain)
-            .foregroundStyle(licenseColor)
-            Spacer()
-            Button { NSApp.terminate(nil) } label: {
-                Image(systemName: "power").font(.system(size: 12, weight: .semibold))
-                    .frame(width: 26, height: 26)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .foregroundStyle(.secondary)
-            .help("Quitter Murmure")
-        }
-        .padding(.horizontal, 16)
-        .frame(height: 44)
-    }
-
-    private var licenseLabel: String {
-        switch license.state {
-        case .licensed: return "Murmure est activé"
-        case .trial(let days, _): return days > 1 ? "Essai · \(days) jours · Acheter" : "Essai · dernier jour · Acheter"
-        case .expired: return "Essai terminé · Activer"
-        }
-    }
-
-    private var licenseColor: Color {
-        if case .licensed = license.state { return .secondary }
-        return Theme.voice
-    }
 }
 
 // MARK: - Composants
 
-struct ToggleRow: View {
-    let symbol: String
+/// Encadré d'alerte : liseré à gauche, titre, détail et action.
+struct Callout: View {
     let title: String
     let detail: String
-    @Binding var isOn: Bool
+    let action: String
+    var tint: Color = Theme.warn
+    let perform: () -> Void
 
     var body: some View {
-        Toggle(isOn: $isOn) {
-            HStack(spacing: 10) {
-                Image(systemName: symbol)
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(isOn ? Theme.voice : Color.secondary)
-                    .frame(width: 22)
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(title).font(.system(size: 13))
-                    Text(detail).font(.system(size: 11)).foregroundStyle(.secondary)
+        HStack(spacing: 0) {
+            Rectangle().fill(tint).frame(width: 3)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title).font(.system(size: 13, weight: .semibold))
+                Text(detail).font(.system(size: 12)).foregroundStyle(Palette.muted)
+                Button(action: perform) {
+                    HStack(spacing: 3) {
+                        Text(action)
+                        Image(systemName: "chevron.right").font(.system(size: 9, weight: .bold))
+                    }
                 }
+                .buttonStyle(.plain)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(Theme.voice)
+                .padding(.top, 3)
             }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 9)
+            Spacer(minLength: 0)
         }
-        .toggleStyle(.switch)
-        .controlSize(.small)
-        .tint(Theme.voice)
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
+        .background(tint.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+        .padding(.vertical, 6)
     }
 }
 
-struct SectionLabel: View {
-    let text: String
-    init(_ text: String) { self.text = text }
+/// Touche de dictée affichée comme une petite touche ; un clic ouvre la liste.
+struct KeyPickerChip: View {
+    @EnvironmentObject var settings: Settings
 
     var body: some View {
-        Text(text.uppercased())
-            .font(.system(size: 10, weight: .semibold))
-            .tracking(0.6)
-            .foregroundStyle(.secondary)
+        Menu {
+            Picker("Touche de dictée", selection: $settings.triggerKey) {
+                ForEach(TriggerKey.allCases) { Text($0.label).tag($0) }
+            }
+            .pickerStyle(.inline)
+        } label: {
+            HStack(spacing: 6) {
+                Text(settings.triggerKey.label).font(.system(size: 12, weight: .medium))
+                Image(systemName: "pencil").font(.system(size: 9, weight: .semibold)).foregroundStyle(Palette.muted)
+            }
+            .padding(.horizontal, 8)
+            .frame(height: 24)
+            .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(Palette.raised))
+            .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).strokeBorder(Palette.hairline, lineWidth: 1))
+        }
+        .menuStyle(.button)
+        .buttonStyle(.plain)
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .help("Changer la touche de dictée")
+    }
+}
+
+/// Sélecteur à deux options, pastille blanche sur fond en retrait.
+struct Segmented: View {
+    let options: [String]
+    @Binding var selection: Int
+
+    var body: some View {
+        HStack(spacing: 2) {
+            ForEach(options.indices, id: \.self) { i in
+                Button { selection = i } label: {
+                    Text(options[i])
+                        .font(.system(size: 12, weight: i == selection ? .medium : .regular))
+                        .foregroundStyle(i == selection ? Palette.ink : Palette.muted)
+                        .padding(.horizontal, 9)
+                        .frame(height: 22)
+                        .background {
+                            if i == selection {
+                                RoundedRectangle(cornerRadius: 5, style: .continuous).fill(Palette.raised)
+                                    .shadow(color: .black.opacity(0.12), radius: 1, y: 0.5)
+                            }
+                        }
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(2)
+        .background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(Palette.card))
+        .animation(Theme.quick, value: selection)
+    }
+}
+
+struct LastDictationCard: View {
+    let text: String
+    @State private var copied = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text("Dernière dictée").font(.system(size: 11, weight: .medium)).foregroundStyle(Palette.muted)
+                Spacer()
+                Button {
+                    HomePage.copy(text)
+                    copied = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) { copied = false }
+                } label: {
+                    ZStack {
+                        Image(systemName: "doc.on.doc").opacity(copied ? 0 : 1).scaleEffect(copied ? 0.25 : 1)
+                        Image(systemName: "checkmark").foregroundStyle(Palette.ok).opacity(copied ? 1 : 0).scaleEffect(copied ? 1 : 0.25)
+                    }
+                    .font(.system(size: 11, weight: .medium))
+                    .frame(width: 20, height: 20)
+                    .contentShape(Rectangle())
+                    .animation(.spring(duration: 0.3, bounce: 0), value: copied)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(Palette.muted)
+                .help("Copier")
+            }
+            Text(text)
+                .font(.system(size: 14))
+                .lineLimit(3)
+                .textSelection(.enabled)
+        }
+        .padding(.horizontal, 11)
+        .padding(.vertical, 9)
+        .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Palette.card))
     }
 }
 
@@ -519,157 +618,45 @@ extension TriggerKey {
     }
 }
 
-/// Grande touche de clavier ; elle s'enfonce pendant la dictée.
-struct BigKeyCap: View {
-    let key: TriggerKey
-    let pressed: Bool
-
-    var body: some View {
-        VStack(alignment: .trailing, spacing: 0) {
-            Group {
-                if key.glyph == "globe" {
-                    Image(systemName: "globe").font(.system(size: 15, weight: .medium))
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                } else {
-                    Text(key.glyph).font(.system(size: 17, weight: .medium))
-                        .frame(maxWidth: .infinity, alignment: .trailing)
-                }
-            }
-            Spacer(minLength: 0)
-            Text(key.keyName).font(.system(size: 10, weight: .medium)).foregroundStyle(pressed ? Color.white.opacity(0.85) : Color.secondary)
-        }
-        .foregroundStyle(pressed ? Color.white : Color.primary)
-        .padding(.horizontal, 10)
-        .padding(.vertical, 8)
-        .frame(width: 84, height: 64)
-        .background(
-            RoundedRectangle(cornerRadius: 11, style: .continuous)
-                .fill(pressed ? Theme.voice : Palette.card)
-                .shadow(color: .black.opacity(pressed ? 0.04 : 0.16), radius: 0, y: pressed ? 0 : 2)
-                .shadow(color: .black.opacity(0.08), radius: 6, y: 3)
-        )
-        .overlay(RoundedRectangle(cornerRadius: 11, style: .continuous).strokeBorder(Color.primary.opacity(0.08), lineWidth: 0.5))
-        .offset(y: pressed ? 2 : 0)
-        .animation(.easeOut(duration: 0.15), value: pressed)
-        .accessibilityLabel("Touche de dictée : \(key.label)")
-    }
-}
-
-struct ModeChipButton: View {
-    let mode: Mode
-    let selected: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 6) {
-                Image(systemName: mode.symbol).font(.system(size: 11, weight: .semibold))
-                Text(mode.name).font(.system(size: 12, weight: .medium)).lineLimit(1)
-            }
-            .padding(.leading, 10)
-            .padding(.trailing, 12)
-            .frame(height: 28)
-            .foregroundStyle(selected ? Color.white : Color.primary.opacity(0.8))
-            .background(Capsule().fill(selected ? Theme.voice : Palette.chip))
-            .contentShape(Capsule())
-        }
-        .buttonStyle(PressScale())
-        .animation(Theme.quick, value: selected)
-        .accessibilityAddTraits(selected ? .isSelected : [])
-    }
-}
-
-struct LastDictationCard: View {
-    let text: String
-    @State private var copied = false
-
-    var body: some View {
-        HStack(alignment: .top, spacing: 10) {
-            Text(text)
-                .font(.system(size: 12))
-                .foregroundStyle(.primary.opacity(0.85))
-                .lineLimit(3)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .textSelection(.enabled)
-            Button {
-                HomePage.copy(text)
-                copied = true
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) { copied = false }
-            } label: {
-                ZStack {
-                    Image(systemName: "doc.on.doc").opacity(copied ? 0 : 1).scaleEffect(copied ? 0.25 : 1)
-                    Image(systemName: "checkmark").foregroundStyle(.green).opacity(copied ? 1 : 0).scaleEffect(copied ? 1 : 0.25)
-                }
-                .font(.system(size: 12, weight: .medium))
-                .frame(width: 24, height: 24)
-                .contentShape(Rectangle())
-                .animation(.spring(duration: 0.3, bounce: 0), value: copied)
-            }
-            .buttonStyle(.plain)
-            .foregroundStyle(.secondary)
-            .help("Copier")
-        }
-        .padding(12)
-        .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Palette.card))
-        .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(Palette.hairline, lineWidth: 0.5))
-    }
-}
-
-struct PanelRow: View {
-    let title: String
-    let value: String
-    var accent = false
-    let action: () -> Void
-    @State private var hovering = false
-
-    var body: some View {
-        Button(action: action) {
-            HStack {
-                Text(title).font(.system(size: 13))
-                Spacer()
-                if !value.isEmpty {
-                    Text(value).font(.system(size: 12, weight: accent ? .semibold : .regular))
-                        .foregroundStyle(accent ? Theme.voice : Color.secondary)
-                }
-                Image(systemName: "chevron.right").font(.system(size: 10, weight: .semibold)).foregroundStyle(.tertiary)
-            }
-            .padding(.horizontal, 10)
-            .frame(height: 32)
-            .background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(Color.primary.opacity(hovering ? 0.06 : 0)))
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .onHover { hovering = $0 }
-    }
-}
-
-private struct SetupRow: View {
-    let symbol: String
-    let title: String
-    let detail: String
-    let action: String
-    let perform: () -> Void
-
-    var body: some View {
-        HStack(spacing: 10) {
-            SettingsIcon(symbol: symbol, color: .orange, size: 26)
-            VStack(alignment: .leading, spacing: 1) {
-                Text(title).font(.system(size: 13, weight: .medium))
-                Text(detail).font(.system(size: 11)).foregroundStyle(.secondary)
-            }
-            Spacer()
-            Button(action, action: perform)
-                .buttonStyle(.borderedProminent)
-                .controlSize(.small)
-        }
-    }
-}
-
-/// Appui : légère réduction, jamais en dessous de 0,96.
-struct PressScale: ButtonStyle {
+/// Bouton principal plein, accent iris.
+struct AccentButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundStyle(Theme.onAccent)
+            .padding(.horizontal, 14)
+            .frame(height: 30)
+            .background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(Theme.voice))
+            .shadow(color: .black.opacity(0.12), radius: 1, y: 1)
             .scaleEffect(configuration.isPressed && !Theme.reduceMotion ? 0.96 : 1)
+            .opacity(configuration.isPressed ? 0.9 : 1)
             .animation(.easeOut(duration: 0.15), value: configuration.isPressed)
+    }
+}
+
+/// Barre du haut des sous-pages : chevron de retour, titre centré, action facultative à droite.
+struct PanelSubpageBar<Trailing: View>: View {
+    let title: String
+    let back: () -> Void
+    @ViewBuilder var trailing: () -> Trailing
+
+    var body: some View {
+        ZStack {
+            Text(title).font(.system(size: 13, weight: .semibold))
+            HStack {
+                Button(action: back) {
+                    Image(systemName: "chevron.left").font(.system(size: 13, weight: .semibold))
+                        .frame(width: 28, height: 28).contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .keyboardShortcut("[", modifiers: .command)
+                .help("Retour")
+                Spacer()
+                trailing()
+            }
+        }
+        .padding(.horizontal, 10)
+        .frame(height: 46)
+        .overlay(alignment: .bottom) { Divider().overlay(Palette.hairline).padding(.horizontal, 16) }
     }
 }
