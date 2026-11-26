@@ -85,6 +85,8 @@ extension SelfTest {
     /// Compare des LLM sur des transcriptions brutes (une par ligne) :
     ///   Murmure --llmtest textes.txt --llm qwen2.5-1.5b,gemma-3-1b
     static func llmTest(_ path: String, llms: String, settings: Settings, tone: AutoTone? = nil) async -> Int32 {
+        // Sortie non mise en tampon : un test interrompu garde les lignes déjà produites.
+        setvbuf(stdout, nil, _IONBF, 0)
         guard let content = try? String(contentsOfFile: path, encoding: .utf8) else { print("Fichier illisible"); return 2 }
         let texts = content.split(separator: "\n").map(String.init).filter { !$0.isEmpty }
         let ai = PostProcessor.shared

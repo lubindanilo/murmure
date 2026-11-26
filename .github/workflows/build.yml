@@ -102,9 +102,11 @@ jobs:
 
       - name: Test des tons
         if: ${{ github.event.inputs.tones != '' }}
+        continue-on-error: true
+        timeout-minutes: 20
         run: |
           for tone in $(echo "${{ github.event.inputs.tones }}" | tr ',' ' '); do
-            build/Murmure.app/Contents/MacOS/Murmure --llmtest Tests/fixtures/dictees-tons.txt --llm qwen2.5-1.5b --tone "$tone" 2>&1 \
+            perl -e 'alarm shift; exec @ARGV' 360 build/Murmure.app/Contents/MacOS/Murmure --llmtest Tests/fixtures/dictees-tons.txt --llm qwen2.5-1.5b --tone "$tone" 2>&1 \
               | grep -E "^(=====|#|Téléchargement|Échec|LLM)|garde-fou" | tee -a tones.txt
           done
 
