@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Murmure · La dictée locale pour Mac</title>
-<meta name="description" content="Maintenez une touche, parlez, relâchez : le texte arrive là où se trouve votre curseur. Transcription et nettoyage sur votre Mac, hors ligne. 7 jours d'essai.">
-<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta name="description" content="Maintenez une touche, parlez, relâchez : un texte propre arrive là où se trouve votre curseur. Transcription et nettoyage sur votre Mac, hors ligne. 7 jours d'essai.">
+<meta name="theme-color" content="#fbfaf7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#131209" media="(prefers-color-scheme: dark)">
 <meta property="og:title" content="Murmure · La dictée locale pour Mac">
-<meta property="og:description" content="Parlez, Murmure écrit. Tout reste sur votre Mac.">
+<meta property="og:description" content="Parlez, Murmure écrit. Votre voix ne quitte jamais votre Mac.">
 <meta property="og:image" content="https://murmure-mac.vercel.app/og.png">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
@@ -20,7 +20,7 @@
 <link rel="stylesheet" href="/style.css">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
-{"@type":"Question","name":"Pourquoi une commande dans le Terminal ?","acceptedAnswer":{"@type":"Answer","text":"Murmure n'est pas encore notarisé par Apple. La commande télécharge l'app et l'installe dans Applications sans alerte de sécurité. Le DMG fonctionne aussi."}},
+{"@type":"Question","name":"Pourquoi passer par le Terminal ?","acceptedAnswer":{"@type":"Answer","text":"Murmure n'est pas encore notarisé par Apple. La commande télécharge l'app et l'installe dans Applications sans alerte de sécurité. Le DMG fonctionne aussi."}},
 {"@type":"Question","name":"Ma voix est-elle envoyée sur internet ?","acceptedAnswer":{"@type":"Answer","text":"Non. La transcription et le nettoyage tournent sur votre Mac. Murmure ne contacte internet que pour télécharger ses modèles une fois et vérifier votre licence."}}
 ]}
 </script>
@@ -29,36 +29,30 @@
 <a class="skip" href="#main">Aller au contenu</a>
 
 <header class="nav">
-  <a class="brand" href="/" aria-current="page"><img src="/favicon.svg" alt="" width="20" height="20">Murmure</a>
-  <nav class="nav-links" aria-label="Sections">
-    <a href="#fonctions">Fonctions</a>
-    <a href="#questions">Questions</a>
-  </nav>
-  <a class="nav-cta" href="#installer">Installer</a>
+  <a class="brand" href="/" aria-current="page"><img src="/favicon.svg" alt="" width="22" height="22">Murmure</a>
+  <button class="nav-cta" type="button" data-install>Installer</button>
 </header>
 
 <main id="main">
-  <section class="hero" id="installer">
-    <img class="hero-icon enter" style="--i:0" src="/icon.png" srcset="/icon.png 1x, /icon@2x.png 2x" alt="Icône de Murmure" width="112" height="112">
+  <!-- Hero -->
+  <section class="hero">
+    <img class="hero-icon enter" style="--i:0" src="/icon.png" srcset="/icon.png 1x, /icon@2x.png 2x" alt="Icône de Murmure" width="96" height="96">
     <h1 class="title enter" style="--i:1">Parlez.<br>Murmure écrit.</h1>
-    <p class="lead enter" style="--i:2">Maintenez une touche, dictez, relâchez. Un texte propre arrive là où se trouve votre curseur, dans toutes vos apps. Sans rien envoyer nulle part.</p>
-
-    <div class="install enter" style="--i:3">
-      <div class="cmd" role="group" aria-label="Commande d'installation">
-        <span class="prompt" aria-hidden="true">$</span>
-        <code>curl -fsSL https://murmure-mac.vercel.app/install.sh | bash</code>
-        <button class="copy" type="button" data-copy>
-          <span class="copy-icons" aria-hidden="true"><i class="ph ph-copy"></i><i class="ph-bold ph-check"></i></span>
-          <span class="copy-label">Copier</span>
-        </button>
-      </div>
-      <p class="hint">Collez cette ligne dans le Terminal, puis Entrée. <a href="https://github.com/lubindanilo/murmure-releases/releases/latest/download/Murmure.dmg">Ou téléchargez le DMG</a></p>
-      <p class="mobile-note">Ouvrez cette page sur votre Mac pour installer Murmure.</p>
+    <p class="lead enter" style="--i:2">Maintenez une touche, parlez, relâchez. Un texte propre s'écrit là où se trouve votre curseur, dans toutes vos apps.</p>
+    <div class="cta enter" style="--i:3">
+      <button class="button" type="button" data-install><i class="ph-fill ph-apple-logo" aria-hidden="true"></i>Installer sur Mac</button>
+      <a class="button-ghost" href="#demo">Voir la démo<i class="ph ph-arrow-down" aria-hidden="true"></i></a>
     </div>
+    <p class="fine enter" style="--i:4">Gratuit pendant 7 jours, sans carte. Mac avec puce Apple, macOS 15 ou plus récent.</p>
+  </section>
 
-    <ul class="facts enter" style="--i:4" aria-label="En bref"><li><i class="ph-bold ph-check" aria-hidden="true"></i>7 jours d'essai, sans carte</li><li><i class="ph-bold ph-check" aria-hidden="true"></i>Mac avec puce Apple</li><li><i class="ph-bold ph-check" aria-hidden="true"></i>macOS 15 ou plus récent</li></ul>
-
-    <figure class="stage enter" style="--i:5" aria-label="Démonstration : une dictée insérée dans un message">
+  <!-- Écran de démonstration -->
+  <section class="showcase enter" style="--i:5" id="demo" aria-label="Démonstration">
+    <figure class="screen">
+      <div class="menubar" aria-hidden="true">
+        <span class="mb-left"><strong id="mb-app">Mail</strong><span>Fichier</span><span>Édition</span><span>Présentation</span></span>
+        <span class="mb-right"><span class="mb-icon" id="mb-icon"><span class="mini-bars"><i></i><i></i><i></i><i></i><i></i></span></span><i class="ph ph-wifi-high"></i><span>jeu. 9:41</span></span>
+      </div>
       <div class="win">
         <div class="win-bar">
           <span class="lights" aria-hidden="true"><i></i><i></i><i></i></span>
@@ -69,87 +63,94 @@
           <p class="win-text"><span id="typed"></span><span class="caret" aria-hidden="true"></span></p>
         </div>
       </div>
+      <div class="dock" aria-hidden="true"><i></i><i></i><i></i><i class="dock-me"><img src="/favicon.svg" alt=""></i><i></i><i></i><i></i></div>
       <div class="hud hidden" id="hud" aria-hidden="true">
-        <span class="bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
-        <span class="hud-label" id="hud-label">0:01</span>
+        <span class="bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
       </div>
-      <div class="stage-foot" aria-hidden="true">
-        <span class="key" id="key"><span class="key-glyph">⌘</span><span class="key-name">command</span></span>
-        <span class="stage-hint" id="stage-hint">Maintenez la touche et parlez</span>
-      </div>
-      <figcaption class="sr">Murmure transcrit la dictée « euh salut Axel la réunion de demain est décalée à 15 h » en « Salut Axel, la réunion de demain est décalée à 15 h. »</figcaption>
+      <figcaption class="sr">Démonstration : on maintient la touche ⌘ droite, on dicte, et Murmure écrit « Salut Axel, la réunion de demain est décalée à 15 h. Tu peux prévenir Louis ? » dans un message.</figcaption>
     </figure>
+    <p class="screen-caption" aria-hidden="true">
+      <span class="key" id="key">⌘</span>
+      <span id="stage-hint">Maintenez ⌘ droite et parlez</span>
+    </p>
   </section>
 
+  <!-- Phrase -->
   <section class="tagline" aria-label="En une phrase">
-    <p id="tagline">Écrivez à la vitesse où vous pensez. Votre voix ne quitte jamais votre Mac.</p>
+    <p id="tagline">On parle trois fois plus vite qu'on ne tape. Murmure vous rend ce temps.</p>
   </section>
 
-  <section class="bento" id="fonctions" aria-labelledby="bento-title">
-    <h2 id="bento-title" class="section-title reveal">Tout ce qu'il faut.<br><span>Rien de plus.</span></h2>
-    <div class="grid">
-      <article class="card card-wide reveal" id="card-clean">
-        <div class="card-copy">
-          <h3>Sans les « euh »</h3>
-          <p>Une IA locale retire les hésitations, corrige la ponctuation et garde vos mots. Aucun coût par mot.</p>
-        </div>
-        <div class="clean-demo" aria-hidden="true">
-          <p class="clean-label">Vous dites</p>
-          <p class="clean-raw"><s>euh</s> donc le devis est validé <s>hum</s> on peut <s>on peut</s> lancer lundi</p>
-          <p class="clean-label">Murmure écrit</p>
-          <p class="clean-out">Donc le devis est validé, on peut lancer lundi.</p>
-        </div>
-      </article>
+  <!-- Avant, après -->
+  <section class="section" aria-labelledby="clean-title">
+    <div class="section-head reveal">
+      <p class="eyebrow">Nettoyage</p>
+      <h2 id="clean-title" class="h2">Vous parlez comme vous parlez.<br><span>Murmure écrit comme vous écrivez.</span></h2>
+    </div>
+    <div class="compare reveal" id="compare">
+      <div class="compare-col">
+        <p class="label">Ce que vous dites</p>
+        <p class="raw"><s>euh</s> donc en fait le devis est validé <s>hum</s> on peut <s>on peut</s> lancer lundi <s>voilà</s></p>
+      </div>
+      <div class="compare-arrow" aria-hidden="true"><i class="ph ph-arrow-right"></i></div>
+      <div class="compare-col">
+        <p class="label">Ce que Murmure écrit</p>
+        <p class="clean">Le devis est validé, on peut lancer lundi.</p>
+      </div>
+    </div>
+    <p class="note reveal">Hésitations retirées, ponctuation corrigée, vos mots gardés. Par une IA qui tourne sur votre Mac, sans coût par mot.</p>
+  </section>
 
-      <article class="card reveal">
-        <div class="card-visual offline" aria-hidden="true"><i class="ph ph-airplane-tilt"></i></div>
-        <div class="card-copy">
-          <h3>Même en mode avion</h3>
-          <p>Parakeet transcrit sur la puce Apple. Aucun audio envoyé, aucun compte à créer.</p>
-        </div>
-      </article>
-
-      <article class="card reveal">
-        <div class="translate" aria-hidden="true">
-          <p><span class="lang">FR</span>Je t'envoie le contrat ce soir.</p>
-          <p><span class="lang lang-on">EN</span>I'll send you the contract tonight.</p>
-        </div>
-        <div class="card-copy">
-          <h3>Parlez français, écrivez anglais</h3>
-          <p>Un mode traduit votre dictée avec le traducteur intégré à macOS, sur votre Mac.</p>
-        </div>
-      </article>
-
-      <article class="card card-wide reveal" id="card-modes">
-        <div class="card-copy">
-          <h3>Un mode pour chaque usage</h3>
-          <p>Mail soigné, message court, prompt pour IA, traduction. Le bon mode s'active selon l'app ouverte, un mot dit au début ou une touche.</p>
-        </div>
-        <ul class="modes" aria-label="Exemples de modes">
-          <li><i class="ph ph-envelope-simple" aria-hidden="true"></i>Mail</li>
-          <li><i class="ph ph-chat-circle" aria-hidden="true"></i>Message</li>
-          <li><i class="ph ph-sparkle" aria-hidden="true"></i>Prompt pour IA</li>
-          <li><i class="ph ph-translate" aria-hidden="true"></i>Anglais</li>
-        </ul>
-      </article>
+  <!-- Modes -->
+  <section class="section" aria-labelledby="modes-title">
+    <div class="section-head reveal">
+      <p class="eyebrow">Modes</p>
+      <h2 id="modes-title" class="h2">Une seule dictée.<br><span>Le bon ton pour chaque app.</span></h2>
+    </div>
+    <div class="modes reveal">
+      <div class="tabs" role="tablist" aria-label="Exemples de modes">
+        <button role="tab" aria-selected="true" aria-controls="mode-out" data-mode="mail"><i class="ph ph-envelope-simple" aria-hidden="true"></i>Mail</button>
+        <button role="tab" aria-selected="false" aria-controls="mode-out" data-mode="message"><i class="ph ph-chat-circle" aria-hidden="true"></i>Message</button>
+        <button role="tab" aria-selected="false" aria-controls="mode-out" data-mode="prompt"><i class="ph ph-sparkle" aria-hidden="true"></i>Prompt pour IA</button>
+        <button role="tab" aria-selected="false" aria-controls="mode-out" data-mode="english"><i class="ph ph-translate" aria-hidden="true"></i>Anglais</button>
+      </div>
+      <div class="mode-card">
+        <p class="label">Vous dites</p>
+        <p class="mode-in">« dis à Claire que la démo est prête et qu'on peut la faire jeudi à 14 h si ça lui va »</p>
+        <div class="mode-sep" aria-hidden="true"></div>
+        <p class="label" id="mode-label">Dans Mail</p>
+        <p class="mode-out" id="mode-out" role="tabpanel" aria-live="polite"></p>
+      </div>
+      <p class="note">Le mode se choisit tout seul selon l'app ouverte, ou d'un mot dit au début : « mail », « anglais »…</p>
     </div>
   </section>
 
-  <section class="steps" aria-labelledby="steps-title">
-    <h2 id="steps-title" class="section-title reveal">Prêt en deux minutes.</h2>
-    <ol class="reveal">
-      <li><span class="n">1</span><strong>Installez</strong><p>Une commande dans le Terminal. Murmure s'ouvre tout seul.</p></li>
-      <li><span class="n">2</span><strong>Autorisez</strong><p>Le micro, puis l'accessibilité pour coller au curseur. L'app vous guide.</p></li>
-      <li><span class="n">3</span><strong>Dictez</strong><p>Maintenez ⌘ droite, parlez, relâchez. Partout où vous écrivez.</p></li>
-    </ol>
+  <!-- Confidentialité -->
+  <section class="private reveal" aria-labelledby="private-title">
+    <div class="private-inner">
+      <div>
+        <h2 id="private-title" class="h2">Votre voix ne quitte<br>jamais votre Mac.</h2>
+        <p class="private-lead">Pas de serveur qui écoute, pas d'abonnement à une IA en ligne. Tout ce que Murmure entend et écrit reste sur votre machine.</p>
+      </div>
+      <ul class="private-list">
+        <li><i class="ph ph-cpu" aria-hidden="true"></i><strong>Transcription sur la puce Apple</strong><span>Parakeet, le modèle de reconnaissance, tourne en local.</span></li>
+        <li><i class="ph ph-airplane-tilt" aria-hidden="true"></i><strong>Fonctionne en mode avion</strong><span>Aucun audio, aucun texte n'est envoyé où que ce soit.</span></li>
+        <li><i class="ph ph-user-circle-dashed" aria-hidden="true"></i><strong>Aucun compte à créer</strong><span>Installez, autorisez le micro, dictez.</span></li>
+        <li><i class="ph ph-translate" aria-hidden="true"></i><strong>25 langues</strong><span>Français, anglais, espagnol, allemand, italien et bien d'autres.</span></li>
+      </ul>
+    </div>
   </section>
 
+  <!-- FAQ -->
   <section class="faq" id="questions" aria-labelledby="faq-title">
-    <h2 id="faq-title" class="section-title reveal">Questions.</h2>
+    <h2 id="faq-title" class="h2 reveal">Questions</h2>
     <div class="reveal">
       <details>
-        <summary>Pourquoi une commande dans le Terminal ?</summary>
-        <p>Murmure n'est pas encore notarisé par Apple. La commande télécharge l'app depuis GitHub et l'installe dans Applications, sans alerte de sécurité. Vous préférez le DMG ? Glissez Murmure dans Applications, ouvrez l'app, puis allez dans Réglages Système, Confidentialité et sécurité, et cliquez sur « Ouvrir quand même ».</p>
+        <summary>Comment l'installer ?</summary>
+        <p>Cliquez sur « Installer sur Mac » : une commande est copiée. Ouvrez le Terminal, collez avec ⌘V, appuyez sur Entrée. Murmure s'installe dans Applications et s'ouvre tout seul pour vous guider.</p>
+      </details>
+      <details>
+        <summary>Pourquoi passer par le Terminal ?</summary>
+        <p>Murmure n'est pas encore notarisé par Apple. La commande l'installe sans alerte de sécurité. Vous préférez le DMG ? Glissez Murmure dans Applications, ouvrez l'app, puis dans Réglages Système, Confidentialité et sécurité, cliquez sur « Ouvrir quand même ».</p>
       </details>
       <details>
         <summary>Ma voix est-elle envoyée sur internet ?</summary>
@@ -160,42 +161,61 @@
         <p>Un Mac avec puce Apple (M1 ou plus récent) sous macOS 15 Sequoia ou plus récent, et environ 2 Go d'espace libre pour les modèles.</p>
       </details>
       <details>
-        <summary>Quelles langues sont reconnues ?</summary>
-        <p>25 langues européennes, dont le français, l'anglais, l'espagnol, l'allemand, l'italien et le portugais. La traduction passe par le traducteur intégré à macOS.</p>
-      </details>
-      <details>
         <summary>Que se passe-t-il après les 7 jours ?</summary>
         <p>Murmure vous propose de l'activer. Rien n'est prélevé automatiquement, et vos modes, votre dictionnaire et votre historique sont conservés.</p>
       </details>
       <details>
-        <summary>Comment mettre à jour ou désinstaller ?</summary>
-        <p>Quand une version sort, Murmure le signale dans son menu. Pour le désinstaller, quittez l'app, glissez-la dans la corbeille et supprimez le dossier Murmure dans ~/Library/Application Support.</p>
+        <summary>Comment le désinstaller ?</summary>
+        <p>Quittez l'app, glissez-la dans la corbeille et supprimez le dossier Murmure dans ~/Library/Application Support.</p>
       </details>
     </div>
   </section>
 
+  <!-- Final -->
   <section class="final reveal" aria-labelledby="final-title">
-    <img src="/icon.png" srcset="/icon.png 1x, /icon@2x.png 2x" alt="" width="96" height="96">
-    <h2 id="final-title" class="section-title">Essayez Murmure.</h2>
-    <p class="final-lead">7 jours d'essai complet, sans carte bancaire.</p>
-    <div class="install">
-      <div class="cmd" role="group" aria-label="Commande d'installation">
-        <span class="prompt" aria-hidden="true">$</span>
-        <code>curl -fsSL https://murmure-mac.vercel.app/install.sh | bash</code>
-        <button class="copy" type="button" data-copy>
-          <span class="copy-icons" aria-hidden="true"><i class="ph ph-copy"></i><i class="ph-bold ph-check"></i></span>
-          <span class="copy-label">Copier</span>
-        </button>
-      </div>
-      <p class="hint">Collez cette ligne dans le Terminal, puis Entrée. <a href="https://github.com/lubindanilo/murmure-releases/releases/latest/download/Murmure.dmg">Ou téléchargez le DMG</a></p>
+    <img src="/icon.png" srcset="/icon.png 1x, /icon@2x.png 2x" alt="" width="80" height="80">
+    <h2 id="final-title" class="h2">Essayez Murmure.</h2>
+    <p class="final-lead">Deux minutes pour l'installer. Le reste, vous le dictez.</p>
+    <div class="cta">
+      <button class="button" type="button" data-install><i class="ph-fill ph-apple-logo" aria-hidden="true"></i>Installer sur Mac</button>
     </div>
+    <p class="fine">Gratuit pendant 7 jours, sans carte.</p>
   </section>
 </main>
 
 <footer class="footer">
-  <span class="brand"><img src="/favicon.svg" alt="" width="16" height="16">Murmure</span>
+  <span class="brand"><img src="/favicon.svg" alt="" width="18" height="18">Murmure</span>
   <nav aria-label="Informations légales"><a href="/confidentialite">Confidentialité</a><a href="/conditions">Conditions</a></nav>
 </footer>
+
+<!-- Installation guidée -->
+<dialog class="sheet" id="install" aria-labelledby="install-title">
+  <button class="sheet-close" type="button" data-close aria-label="Fermer"><i class="ph ph-x" aria-hidden="true"></i></button>
+  <div class="sheet-mac">
+    <img src="/icon.png" srcset="/icon.png 1x, /icon@2x.png 2x" alt="" width="56" height="56">
+    <h2 id="install-title">Installer Murmure</h2>
+    <p class="sheet-status" id="copy-status"><i class="ph-bold ph-check" aria-hidden="true"></i>Commande copiée</p>
+    <ol class="sheet-steps">
+      <li><span class="n">1</span><span>Ouvrez le Terminal : <kbd>⌘</kbd><kbd>espace</kbd>, tapez «&nbsp;Terminal&nbsp;», puis Entrée.</span></li>
+      <li><span class="n">2</span><span>Collez avec <kbd>⌘</kbd><kbd>V</kbd>, puis Entrée.</span></li>
+      <li><span class="n">3</span><span>Murmure s'ouvre et vous guide en une minute.</span></li>
+    </ol>
+    <div class="cmd">
+      <code id="cmd">curl -fsSL https://murmure-mac.vercel.app/install.sh | bash</code>
+      <button class="copy" type="button" id="copy" aria-label="Copier la commande">
+        <span class="copy-icons" aria-hidden="true"><i class="ph ph-copy"></i><i class="ph-bold ph-check"></i></span>
+      </button>
+    </div>
+    <p class="sheet-alt">Vous préférez une image disque ? <a href="https://github.com/lubindanilo/murmure-releases/releases/latest/download/Murmure.dmg">Télécharger le DMG</a></p>
+  </div>
+  <div class="sheet-phone">
+    <img src="/icon.png" srcset="/icon.png 1x, /icon@2x.png 2x" alt="" width="56" height="56">
+    <h2>Murmure s'installe sur Mac</h2>
+    <p>Ouvrez cette page sur votre Mac. Envoyez-vous le lien pour ne pas l'oublier.</p>
+    <button class="button" type="button" id="share"><i class="ph ph-paper-plane-tilt" aria-hidden="true"></i>M'envoyer le lien</button>
+    <p class="sheet-status" id="share-status" hidden><i class="ph-bold ph-check" aria-hidden="true"></i>Lien copié</p>
+  </div>
+</dialog>
 
 <script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
 <script src="/main.js" defer></script>
