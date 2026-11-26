@@ -130,7 +130,7 @@ img { display: block; }
 /* Encoche de MacBook : bas arrondi, raccords incurvés en haut, caméra au centre. */
 .notch {
   position: absolute; z-index: 4; top: 0; left: 50%; transform: translateX(-50%);
-  width: 12%; aspect-ratio: 6.2 / 1; background: #000; border-radius: 0 0 6px 6px;
+  width: 13.2%; aspect-ratio: 6.25 / 1; background: #000; border-radius: 0 0 6px 6px;
 }
 .notch::before, .notch::after {
   content: ""; position: absolute; top: 0; width: 4px; height: 4px;
@@ -142,28 +142,29 @@ img { display: block; }
 /* Île : elle sort de l'encoche et affiche l'état sous la caméra. */
 .island {
   position: absolute; z-index: 3; top: 0; left: 50%; translate: -50% 0;
-  display: grid; place-items: end center; width: 18%; min-width: 150px; height: 44px; padding-bottom: 8px;
-  background: #000; color: #fff; border-radius: 0 0 18px 18px;
-  font-size: 12px; line-height: 16px; font-weight: 500;
-  box-shadow: 0 10px 24px rgb(0 0 0 / 0.3);
+  display: grid; place-items: end center; width: max-content; min-width: calc(13.2% + 24px); height: 34px; padding: 0 14px 6px;
+  background: #000; color: #fff; border-radius: 0 0 14px 14px;
+  font-size: 11px; line-height: 16px; font-weight: 500;
+  box-shadow: 0 6px 16px rgb(0 0 0 / 0.25);
   transform-origin: 50% 0;
   transition-property: scale, opacity; transition-duration: 350ms; transition-timing-function: var(--ease);
   scale: 0.62 0.45; opacity: 0;
 }
 .island.open { scale: 1 1; opacity: 1; }
-.island::before, .island::after { content: ""; position: absolute; top: 0; width: 10px; height: 10px; }
-.island::before { left: -10px; background: radial-gradient(circle at 0 100%, transparent 9.5px, #000 10px); }
-.island::after { right: -10px; background: radial-gradient(circle at 100% 100%, transparent 9.5px, #000 10px); }
+.island::before, .island::after { content: ""; position: absolute; top: 0; width: 5px; height: 5px; }
+.island::before { left: -5px; background: radial-gradient(circle at 0 100%, transparent 4.5px, #000 5px); }
+.island::after { right: -5px; background: radial-gradient(circle at 100% 100%, transparent 4.5px, #000 5px); }
 .notch-state {
   grid-area: 1 / 1; white-space: nowrap; display: inline-flex; align-items: center; gap: 8px;
   opacity: 0; filter: blur(3px); scale: 0.9;
   transition-property: opacity, filter, scale; transition-duration: 300ms; transition-timing-function: var(--ease-ui);
+  gap: 6px;
 }
 .notch-state.on { opacity: 1; filter: blur(0); scale: 1; }
-.notch-state i.ph, .notch-state i.ph-bold { font-size: 14px; }
+.notch-state i.ph, .notch-state i.ph-bold { font-size: 12px; }
 .notch-state[data-state="done"] i { color: #6bd590; }
-.bars { display: flex; align-items: center; gap: 2px; height: 16px; }
-.bars i { display: block; width: 2.5px; height: 16px; border-radius: 2px; background: var(--lavender); scale: 1 0.25; transition: scale 110ms var(--ease-ui); }
+.bars { display: flex; align-items: center; gap: 1.5px; height: 12px; }
+.bars i { display: block; width: 2px; height: 12px; border-radius: 2px; background: var(--lavender); scale: 1 0.25; transition: scale 110ms var(--ease-ui); }
 
 .win {
   position: absolute; left: 50%; top: 17%; width: 70%; transform: translateX(-50%);
@@ -373,8 +374,8 @@ kbd {
   .lead { font-size: 16px; line-height: 24px; margin-top: 24px; }
   .screen { aspect-ratio: 4 / 3.6; border-width: 4px; border-radius: 12px; }
   .mb-left span, .mb-right > i, .mb-right > span:not(.mb-icon) { display: none; }
-  .notch { width: 18%; }
-  .island { width: 50%; min-width: 0; height: 40px; padding-bottom: 6px; }
+  .notch { width: 16%; }
+  .island { min-width: calc(16% + 20px); height: 30px; padding-bottom: 5px; font-size: 10px; }
   .win { top: 15%; width: 86%; }
   .win-body { padding: 8px 16px 24px; min-height: 150px; }
   .win-h { font-size: 18px; line-height: 24px; }
