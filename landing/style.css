@@ -311,30 +311,13 @@ img { display: block; }
   transition: color 150ms var(--ease-ui);
 }
 @media (hover: hover) { .sheet-close:hover { color: var(--fg); } }
-.sheet-status { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 14px; line-height: 20px; font-weight: 500; color: var(--ok); }
-.sheet-steps { list-style: none; padding: 0; margin: 32px 0 24px; display: grid; gap: 16px; text-align: left; }
-.sheet-steps li { display: flex; gap: 12px; align-items: flex-start; }
-.sheet-steps .n { flex: none; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--voice-soft); color: var(--voice); font-size: 12px; line-height: 16px; font-weight: 600; }
 kbd {
   display: inline-grid; place-items: center; min-width: 24px; height: 24px; padding: 0 6px; margin: 0 2px; border-radius: 6px;
   font-family: inherit; font-size: 12px; line-height: 16px; font-weight: 600;
   background: var(--card); box-shadow: inset 0 -1px 0 rgb(0 0 0 / 0.12);
 }
-.cmd { display: flex; align-items: center; gap: 8px; padding: 4px 4px 4px 16px; border-radius: 10px; background: var(--card); }
-.cmd code { flex: 1; min-width: 0; text-align: left; font-family: "Geist Mono", ui-monospace, monospace; font-size: 12px; line-height: 16px; white-space: nowrap; overflow-x: auto; scrollbar-width: none; padding: 8px 0; color: var(--muted); }
-.cmd code::-webkit-scrollbar { display: none; }
-.copy { display: grid; place-items: center; flex: none; width: 32px; height: 32px; border: 0; border-radius: 8px; background: var(--surface); box-shadow: var(--shadow-sm); transition: scale 150ms ease-out; }
-.copy:active { scale: 0.96; }
-.copy-icons { position: relative; width: 16px; height: 16px; }
-.copy-icons i { position: absolute; inset: 0; font-size: 16px; line-height: 16px; transition-property: opacity, scale, filter; transition-duration: 300ms; transition-timing-function: var(--ease-ui); }
-.copy-icons i + i { opacity: 0; scale: 0.25; filter: blur(4px); color: var(--ok); }
-.copy.done .copy-icons i:first-child { opacity: 0; scale: 0.25; filter: blur(4px); }
-.copy.done .copy-icons i + i { opacity: 1; scale: 1; filter: blur(0); }
-.sheet-alt { margin-top: 16px; font-size: 14px; line-height: 20px; color: var(--muted); }
-.sheet-alt a { color: var(--voice); }
-.sheet-phone { display: none; }
 .sheet-phone p { margin: 12px 0 32px; color: var(--muted); }
-.sheet-phone .sheet-status { display: flex; justify-content: center; margin-top: 16px; }
+.sheet-phone .sheet-status { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 16px; font-size: 14px; line-height: 20px; font-weight: 500; color: var(--ok); }
 
 /* Pages simples */
 .page { max-width: 680px; margin: 0 auto; padding: 96px 32px; }
@@ -396,6 +379,4 @@ kbd {
 }
 /* Sur téléphone ou tablette tactile : la fenêtre d'installation propose de s'envoyer le lien. */
 @media (hover: none) and (pointer: coarse) {
-  .sheet-mac { display: none; }
-  .sheet-phone { display: block; }
 }

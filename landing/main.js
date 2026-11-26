@@ -17,28 +17,16 @@ async function copyText(text, fallbackNode) {
   }
 }
 
-// Installation : le bouton copie la commande et ouvre la marche à suivre
+// Installation : sur Mac, le bouton télécharge directement le DMG (c'est un lien).
+// Sur téléphone, il ouvre une fenêtre pour s'envoyer le lien de la page.
 const sheet = $("install");
-const cmd = $("cmd");
-const copyBtn = $("copy");
-const copyStatus = $("copy-status");
-let copyTimer;
-
-async function copyCommand() {
-  const ok = await copyText(cmd.textContent.trim(), cmd);
-  copyStatus.style.visibility = ok ? "visible" : "hidden";
-  copyBtn.classList.add("done");
-  clearTimeout(copyTimer);
-  copyTimer = setTimeout(() => copyBtn.classList.remove("done"), 2000);
-}
-
 document.querySelectorAll("[data-install]").forEach((btn) =>
-  btn.addEventListener("click", () => {
-    if (!touch) copyCommand();
+  btn.addEventListener("click", (e) => {
+    if (!touch) return;
+    e.preventDefault();
     sheet.showModal();
   }),
 );
-copyBtn.addEventListener("click", copyCommand);
 sheet.querySelector("[data-close]").addEventListener("click", () => sheet.close());
 sheet.addEventListener("click", (e) => { if (e.target === sheet) sheet.close(); });
 

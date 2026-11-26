@@ -22,7 +22,7 @@
 <link rel="stylesheet" href="/style.css">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
-{"@type":"Question","name":"Pourquoi passer par le Terminal ?","acceptedAnswer":{"@type":"Answer","text":"Murmure n'est pas encore notarisé par Apple. La commande télécharge l'app et l'installe dans Applications sans alerte de sécurité. Le DMG fonctionne aussi."}},
+{"@type":"Question","name":"Le Mac refuse d'ouvrir Murmure ?","acceptedAnswer":{"@type":"Answer","text":"Murmure n'est pas encore notarisé par Apple. Au premier lancement, ouvrez Réglages Système, Confidentialité et sécurité, puis cliquez sur « Ouvrir quand même »."}},
 {"@type":"Question","name":"Ma voix est-elle envoyée sur internet ?","acceptedAnswer":{"@type":"Answer","text":"Non. La transcription et le nettoyage tournent sur votre Mac. Murmure ne contacte internet que pour télécharger ses modèles une fois et vérifier votre licence."}}
 ]}
 </script>
@@ -41,7 +41,7 @@
       <h1 class="title enter" style="--i:0">Parlez.<br>Le texte suit.</h1>
       <p class="lead enter" style="--i:1">Maintenez ⌘ droite, dictez, puis relâchez. Vos mots se posent au curseur, dans l'app ouverte. Tout reste sur votre Mac.</p>
       <div class="cta enter" style="--i:2">
-        <button class="button" type="button" data-install><i class="ph ph-download-simple" aria-hidden="true"></i>Installer sur Mac</button>
+        <a class="button" href="https://github.com/lubindanilo/murmure-releases/releases/latest/download/Murmure.dmg" data-install><i class="ph ph-download-simple" aria-hidden="true"></i>Installer sur Mac</a>
       </div>
     </div>
 
@@ -143,11 +143,11 @@
     <div class="reveal">
       <details>
         <summary>Comment l'installer ?</summary>
-        <p>Cliquez sur « Installer sur Mac » : une commande est copiée. Ouvrez le Terminal, collez avec ⌘V, appuyez sur Entrée. Murmure s'installe dans Applications et s'ouvre tout seul pour vous guider.</p>
+        <p>Cliquez sur « Installer sur Mac » : le fichier Murmure.dmg se télécharge. Ouvrez-le, glissez Murmure dans Applications, puis lancez l'app : elle vous guide en une minute.</p>
       </details>
       <details>
-        <summary>Pourquoi passer par le Terminal ?</summary>
-        <p>Murmure n'est pas encore notarisé par Apple. La commande l'installe sans alerte de sécurité. Vous préférez le DMG ? Glissez Murmure dans Applications, ouvrez l'app, puis dans Réglages Système, Confidentialité et sécurité, cliquez sur « Ouvrir quand même ».</p>
+        <summary>Le Mac refuse de l'ouvrir ?</summary>
+        <p>Murmure n'est pas encore notarisé par Apple, donc macOS demande une confirmation au premier lancement. Ouvrez Réglages Système, puis Confidentialité et sécurité, et cliquez sur « Ouvrir quand même ». Ensuite, Murmure s'ouvre normalement.</p>
       </details>
       <details>
         <summary>Ma voix est-elle envoyée sur internet ?</summary>
@@ -174,7 +174,7 @@
     <h2 id="final-title" class="h2">Essayez Murmure.</h2>
     <p class="final-lead">Deux minutes pour l'installer. Le reste, vous le dictez.</p>
     <div class="cta">
-      <button class="button" type="button" data-install><i class="ph ph-download-simple" aria-hidden="true"></i>Installer sur Mac</button>
+      <a class="button" href="https://github.com/lubindanilo/murmure-releases/releases/latest/download/Murmure.dmg" data-install><i class="ph ph-download-simple" aria-hidden="true"></i>Installer sur Mac</a>
     </div>
   </section>
 </main>
@@ -184,29 +184,12 @@
   <nav aria-label="Informations légales"><a href="/confidentialite">Confidentialité</a><a href="/conditions">Conditions</a></nav>
 </footer>
 
-<!-- Installation guidée -->
+<!-- Sur téléphone : le DMG ne sert à rien, on propose de s'envoyer le lien -->
 <dialog class="sheet" id="install" aria-labelledby="install-title">
   <button class="sheet-close" type="button" data-close aria-label="Fermer"><i class="ph ph-x" aria-hidden="true"></i></button>
-  <div class="sheet-mac">
-    <img src="/icon.png" srcset="/icon.png 1x, /icon@2x.png 2x" alt="" width="56" height="56">
-    <h2 id="install-title">Installer Murmure</h2>
-    <p class="sheet-status" id="copy-status"><i class="ph-bold ph-check" aria-hidden="true"></i>Commande copiée</p>
-    <ol class="sheet-steps">
-      <li><span class="n">1</span><span>Ouvrez le Terminal : <kbd>⌘</kbd><kbd>espace</kbd>, tapez «&nbsp;Terminal&nbsp;», puis Entrée.</span></li>
-      <li><span class="n">2</span><span>Collez avec <kbd>⌘</kbd><kbd>V</kbd>, puis Entrée.</span></li>
-      <li><span class="n">3</span><span>Murmure s'ouvre et vous guide en une minute.</span></li>
-    </ol>
-    <div class="cmd">
-      <code id="cmd">curl -fsSL https://murmure-ai.com/install.sh | bash</code>
-      <button class="copy" type="button" id="copy" aria-label="Copier la commande">
-        <span class="copy-icons" aria-hidden="true"><i class="ph ph-copy"></i><i class="ph-bold ph-check"></i></span>
-      </button>
-    </div>
-    <p class="sheet-alt">Vous préférez une image disque ? <a href="https://github.com/lubindanilo/murmure-releases/releases/latest/download/Murmure.dmg">Télécharger le DMG</a></p>
-  </div>
   <div class="sheet-phone">
     <img src="/icon.png" srcset="/icon.png 1x, /icon@2x.png 2x" alt="" width="56" height="56">
-    <h2>Murmure s'installe sur Mac</h2>
+    <h2 id="install-title">Murmure s'installe sur Mac</h2>
     <p>Ouvrez cette page sur votre Mac. Envoyez-vous le lien pour ne pas l'oublier.</p>
     <button class="button" type="button" id="share"><i class="ph ph-paper-plane-tilt" aria-hidden="true"></i>M'envoyer le lien</button>
     <p class="sheet-status" id="share-status" hidden><i class="ph-bold ph-check" aria-hidden="true"></i>Lien copié</p>
