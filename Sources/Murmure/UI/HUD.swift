@@ -142,7 +142,7 @@ struct HUDView: View {
     private var content: some View {
         switch app.phase {
         case .recording(let handsFree):
-            Waveform(level: app.level, active: true)
+            RibbonMark(height: 11, level: app.level, animated: true)
             Text(handsFree ? "J'écoute · mains libres" : "J'écoute")
         case .transcribing, .polishing:
             Image(systemName: "text.alignleft").font(.system(size: 10, weight: .semibold))
@@ -161,41 +161,6 @@ struct HUDView: View {
         case .idle:
             EmptyView()
         }
-    }
-}
-
-/// Barres qui suivent la voix. Au repos (transcription), une vague lente les parcourt.
-struct Waveform: View {
-    let level: Float
-    let active: Bool
-    var color: Color = Theme.wave
-    private let bars = 9
-    /// Profil en cloche : les barres centrales réagissent plus fort.
-    private let profile: [CGFloat] = [0.35, 0.55, 0.75, 0.9, 1, 0.9, 0.75, 0.55, 0.35]
-
-    var body: some View {
-        TimelineView(.animation(minimumInterval: 1 / 30, paused: Theme.reduceMotion)) { ctx in
-            let t = ctx.date.timeIntervalSinceReferenceDate
-            HStack(alignment: .center, spacing: 2) {
-                ForEach(0..<bars, id: \.self) { i in
-                    Capsule()
-                        .fill(active ? color : Color.white.opacity(0.55))
-                        .frame(width: 2, height: height(i, t))
-                }
-            }
-            .frame(height: 11)
-        }
-    }
-
-    private func height(_ i: Int, _ t: TimeInterval) -> CGFloat {
-        let minH: CGFloat = 3
-        if active {
-            let jitter = CGFloat(0.75 + 0.25 * sin(t * 13 + Double(i) * 1.7))
-            return minH + CGFloat(level) * 8 * profile[i] * jitter
-        }
-        if Theme.reduceMotion { return 6 }
-        let wave = (sin(t * 5 - Double(i) * 0.7) + 1) / 2
-        return minH + CGFloat(wave) * 5
     }
 }
 

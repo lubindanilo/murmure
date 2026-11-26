@@ -111,13 +111,20 @@ if (!reduce) new IntersectionObserver(([e]) => {
 const typed = $("typed");
 const hud = $("hud");
 const states = [...hud.querySelectorAll(".notch-state")];
-const bars = [...hud.querySelectorAll(".bars i")];
+const voice = $("voice");
+const mbRibbon = $("mb-ribbon");
+const menubarInk = "#1e2433";
+// Le ruban de la barre des menus et celui de l'encoche, immobiles au repos.
+function restRibbons() {
+  drawRibbon(mbRibbon, { mono: menubarInk });
+  drawRibbon(voice);
+}
+restRibbons();
 const scenes = [
   { app: "Notes", title: "Notes", h: "Au fil des idées", prev: "Reprendre le fil du projet.", text: "Je t'envoie le brouillon demain matin." },
   { app: "Mail", title: "Nouveau message", h: "Réunion de demain", prev: "Salut Axel,", text: "la réunion est décalée à 15 h. Tu peux prévenir Louis ?" },
   { app: "Slack", title: "# produit", h: "Lancement", prev: "Bonne nouvelle :", text: "la version 2 part en recette ce soir. Merci à tous pour le sprint" },
 ];
-const profile = [0.45, 0.7, 0.9, 1, 0.9, 0.7, 0.45];
 let visible = true;
 
 function setState(name) {
@@ -142,9 +149,11 @@ async function demo() {
     while (performance.now() - start < 2600) {
       const t = performance.now() / 1000;
       const level = 0.3 + 0.7 * Math.abs(Math.sin(t * 3.1) * Math.sin(t * 1.7));
-      bars.forEach((b, k) => { b.style.scale = `1 ${Math.max(0.25, level * profile[k] * (0.75 + 0.25 * Math.sin(t * 13 + k)))}`; });
-      await sleep(70);
+      drawRibbon(voice, { t, level });
+      drawRibbon(mbRibbon, { t, level, mono: menubarInk });
+      await sleep(40);
     }
+    restRibbons();
     setState("clean");
     await sleep(800);
     setState("done");

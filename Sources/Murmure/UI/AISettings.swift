@@ -18,7 +18,7 @@ struct LicenseView: View {
         VStack(spacing: 0) {
             PanelSubpageBar(title: "Licence", back: { PanelController.shared.router.path.removeAll() }) { EmptyView() }
             VStack(spacing: 14) {
-                BarsGlyph(height: 22, color: Theme.voice)
+                RibbonLogo(height: 26)
                     .frame(width: 52, height: 48)
                     .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
                         .strokeBorder(Theme.voice.opacity(0.4), style: StrokeStyle(lineWidth: 1, dash: [3, 3])))

@@ -92,6 +92,7 @@ final class PanelController: NSObject {
     private var statusItem: NSStatusItem?
     private var panel: KeyPanel?
     private var phaseWatch: AnyCancellable?
+    private var iconTimer: Timer?
     private var outsideClick: Any?
     private var escapeKey: Any?
 
@@ -101,25 +102,40 @@ final class PanelController: NSObject {
         // Les modes ne sont plus choisis à la main : on oublie un ancien choix devenu invisible.
         ModeStore.shared.pinnedModeID = nil
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        item.button?.image = Self.icon(for: .idle)
+        item.button?.image = Ribbon.templateImage()
         item.button?.target = self
         item.button?.action = #selector(toggle(_:))
         statusItem = item
         phaseWatch = AppController.shared.$phase
             .receive(on: RunLoop.main)
-            .sink { [weak self] phase in self?.statusItem?.button?.image = Self.icon(for: phase) }
+            .sink { [weak self] phase in self?.animateIcon(for: phase) }
     }
 
-    private static func icon(for phase: AppController.Phase) -> NSImage? {
-        let name: String
+    /// Le ruban de la barre des menus ondule avec la voix pendant la dictée,
+    /// tourne lentement pendant la mise au propre, et reste immobile le reste du temps.
+    private func animateIcon(for phase: AppController.Phase) {
+        iconTimer?.invalidate()
+        iconTimer = nil
+        let busy: Double?
         switch phase {
-        case .recording: name = "waveform.circle.fill"
-        case .transcribing, .polishing, .translating: name = "ellipsis.circle"
-        default: name = "waveform"
+        case .recording: busy = nil
+        case .transcribing, .polishing, .translating: busy = 0.3
+        default:
+            statusItem?.button?.image = Ribbon.templateImage()
+            return
         }
-        let image = NSImage(systemSymbolName: name, accessibilityDescription: "Murmure")
-        image?.isTemplate = true
-        return image
+        if Theme.reduceMotion {
+            statusItem?.button?.image = Ribbon.templateImage(level: 0.6)
+            return
+        }
+        let tick = { [weak self] in
+            let level = busy ?? Double(AppController.shared.level)
+            self?.statusItem?.button?.image = Ribbon.templateImage(t: Date.timeIntervalSinceReferenceDate, level: level)
+        }
+        tick()
+        let timer = Timer(timeInterval: 1 / 20, repeats: true) { _ in tick() }
+        RunLoop.main.add(timer, forMode: .common)
+        iconTimer = timer
     }
 
     @objc private func toggle(_ sender: Any?) {
@@ -253,31 +269,15 @@ struct PanelView: View {
     }
 }
 
-/// Marque : cinq barres et le nom.
+/// Marque : le ruban et le nom.
 struct Wordmark: View {
     var size: CGFloat = 15
 
     var body: some View {
         HStack(spacing: size * 0.4) {
-            BarsGlyph(height: size * 1.05)
+            RibbonLogo(height: size * 1.2)
             Text("Murmure").font(.system(size: size, weight: .semibold)).tracking(-0.3)
         }
-    }
-}
-
-struct BarsGlyph: View {
-    var height: CGFloat = 16
-    var color: Color = Palette.ink
-    private let profile: [CGFloat] = [0.45, 0.8, 1, 0.7, 0.4]
-
-    var body: some View {
-        HStack(alignment: .center, spacing: height * 0.13) {
-            ForEach(0..<5, id: \.self) { i in
-                Capsule().fill(color).frame(width: height * 0.12, height: height * profile[i])
-            }
-        }
-        .frame(height: height)
-        .accessibilityHidden(true)
     }
 }
 
@@ -365,7 +365,7 @@ struct HomePage: View {
     private var statusView: some View {
         switch app.phase {
         case .recording:
-            HStack(spacing: 6) { BarsGlyph(height: 11, color: Theme.voice); Text("J'écoute") }
+            HStack(spacing: 6) { RibbonMark(height: 13, level: app.level, animated: true); Text("J'écoute") }
                 .font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.voice)
         case .transcribing, .polishing, .translating:
             Text("Mise au propre").font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.voice)

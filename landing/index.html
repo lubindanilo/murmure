@@ -29,7 +29,7 @@
 <a class="skip" href="#main">Aller au contenu</a>
 
 <header class="nav">
-  <a class="brand" href="/" aria-current="page"><svg class="mark" viewBox="0 0 20 18" aria-hidden="true"><rect x="0" y="5" width="2.4" height="8" rx="1.2"/><rect x="4.4" y="2" width="2.4" height="14" rx="1.2"/><rect x="8.8" y="0" width="2.4" height="18" rx="1.2"/><rect x="13.2" y="3" width="2.4" height="12" rx="1.2"/><rect x="17.6" y="6" width="2.4" height="6" rx="1.2"/></svg>Murmure</a>
+  <a class="brand" href="/" aria-current="page"><img class="mark" src="/favicon.svg" alt="" width="22" height="22">Murmure</a>
   <span class="nav-meta">Dictée pour Mac</span>
 </header>
 
@@ -47,11 +47,11 @@
     <figure class="screen enter" style="--i:2" id="demo" aria-label="Démonstration : une dictée qui s'écrit dans Notes">
       <div class="menubar" aria-hidden="true">
         <span class="mb-left"><strong id="mb-app">Notes</strong><span>Fichier</span><span>Édition</span></span>
-        <span class="mb-right"><span class="mb-icon" id="mb-icon"><svg class="mark" viewBox="0 0 20 18" aria-hidden="true"><rect x="0" y="5" width="2.4" height="8" rx="1.2"/><rect x="4.4" y="2" width="2.4" height="14" rx="1.2"/><rect x="8.8" y="0" width="2.4" height="18" rx="1.2"/><rect x="13.2" y="3" width="2.4" height="12" rx="1.2"/><rect x="17.6" y="6" width="2.4" height="6" rx="1.2"/></svg></span><i class="ph ph-wifi-high"></i><i class="ph ph-battery-high"></i><span>Jeu. 26 nov.</span><span>09:41</span></span>
+        <span class="mb-right"><span class="mb-icon" id="mb-icon"><canvas id="mb-ribbon" width="40" height="32"></canvas></span><i class="ph ph-wifi-high"></i><i class="ph ph-battery-high"></i><span>Jeu. 26 nov.</span><span>09:41</span></span>
       </div>
       <div class="island" id="hud" aria-hidden="true">
         <span class="notch-state on" data-state="idle"></span>
-        <span class="notch-state" data-state="listen"><span class="bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>J'écoute</span>
+        <span class="notch-state" data-state="listen"><canvas class="voice" id="voice" width="56" height="44"></canvas>J'écoute</span>
         <span class="notch-state" data-state="clean">Mise au propre</span>
         <span class="notch-state" data-state="done"><i class="ph-bold ph-check"></i>Collé</span>
       </div>
@@ -179,7 +179,7 @@
 </main>
 
 <footer class="footer">
-  <span class="brand"><svg class="mark" viewBox="0 0 20 18" aria-hidden="true"><rect x="0" y="5" width="2.4" height="8" rx="1.2"/><rect x="4.4" y="2" width="2.4" height="14" rx="1.2"/><rect x="8.8" y="0" width="2.4" height="18" rx="1.2"/><rect x="13.2" y="3" width="2.4" height="12" rx="1.2"/><rect x="17.6" y="6" width="2.4" height="6" rx="1.2"/></svg>Murmure</span>
+  <span class="brand"><img class="mark" src="/favicon.svg" alt="" width="22" height="22">Murmure</span>
   <nav aria-label="Informations légales"><a href="/confidentialite">Confidentialité</a><a href="/conditions">Conditions</a></nav>
 </footer>
 
@@ -213,6 +213,7 @@
 </dialog>
 
 <script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+<script src="/ribbon.js" defer></script>
 <script src="/main.js" defer></script>
 </body>
 </html>

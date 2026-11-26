@@ -66,7 +66,7 @@ img { display: block; }
 .skip { position: absolute; left: 16px; top: -48px; background: var(--fg); color: var(--bg); padding: 8px 12px; border-radius: 8px; z-index: 20; }
 .skip:focus { top: 16px; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.mark { width: 20px; height: 18px; fill: currentColor; flex: none; }
+.mark { width: 22px; height: 22px; flex: none; }
 
 /* En-tête */
 .nav {
@@ -125,7 +125,7 @@ img { display: block; }
 .mb-left, .mb-right { display: flex; align-items: center; gap: 16px; }
 .mb-right i { font-size: 14px; }
 .mb-icon { display: grid; place-items: center; width: 28px; height: 20px; border-radius: 5px; background: rgb(30 36 51 / 0.1); }
-.mb-icon .mark { width: 13px; height: 12px; }
+.mb-icon canvas { width: 20px; height: 16px; }
 
 /* Encoche de MacBook : bas arrondi, raccords incurvés en haut, caméra au centre. */
 .notch {
@@ -163,8 +163,7 @@ img { display: block; }
 .notch-state.on { opacity: 1; filter: blur(0); scale: 1; }
 .notch-state i.ph, .notch-state i.ph-bold { font-size: 10px; }
 .notch-state[data-state="done"] i { color: #6bd590; }
-.bars { display: flex; align-items: center; gap: 1.5px; height: 9px; }
-.bars i { display: block; width: 1.5px; height: 9px; border-radius: 2px; background: var(--lavender); scale: 1 0.25; transition: scale 110ms var(--ease-ui); }
+.voice { width: 13px; height: 10px; }
 
 .win {
   position: absolute; left: 50%; top: 17%; width: 70%; transform: translateX(-50%);
@@ -288,7 +287,7 @@ img { display: block; }
   display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: 14px; line-height: 20px;
 }
 .footer .brand { font-size: 16px; line-height: 24px; }
-.footer .mark { width: 16px; height: 14px; }
+.footer .mark { width: 18px; height: 18px; }
 .footer nav { display: flex; gap: 24px; }
 .footer a { text-decoration: none; transition: color 200ms var(--ease-ui); }
 @media (hover: hover) { .footer a:hover { color: var(--fg); } }

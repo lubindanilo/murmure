@@ -311,7 +311,7 @@ private struct RibbonArt: View {
                     .animation(Theme.reduceMotion ? nil : .easeInOut(duration: 6).repeatForever(autoreverses: true), value: drift)
                     .onAppear { drift = true }
             } else {
-                BarsGlyph(height: 60, color: Theme.voice)
+                RibbonMark(height: 150)
             }
         }
     }
@@ -320,16 +320,12 @@ private struct RibbonArt: View {
 /// Une touche de micro au centre d'ondes concentriques.
 private struct MicrophoneArt: View {
     var body: some View {
-        HStack(spacing: 14) {
-            WaveBars(count: 9, height: 22)
-            ZStack {
-                Circle().strokeBorder(Theme.voice.opacity(0.14), lineWidth: 1).frame(width: 140, height: 140)
-                Circle().strokeBorder(Theme.voice.opacity(0.22), lineWidth: 1).frame(width: 112, height: 112)
-                Tile(width: 72, height: 72) {
-                    Image(systemName: "mic").font(.system(size: 30, weight: .regular)).foregroundStyle(Theme.voice)
-                }
+        ZStack {
+            Circle().strokeBorder(Theme.voice.opacity(0.14), lineWidth: 1).frame(width: 140, height: 140)
+            Circle().strokeBorder(Theme.voice.opacity(0.22), lineWidth: 1).frame(width: 112, height: 112)
+            Tile(width: 72, height: 72) {
+                Image(systemName: "mic").font(.system(size: 30, weight: .regular)).foregroundStyle(Theme.voice)
             }
-            WaveBars(count: 9, height: 22)
         }
     }
 }
@@ -473,7 +469,7 @@ private struct ScreenArt: View {
                            startPoint: .bottomLeading, endPoint: .topTrailing)
             HStack(spacing: 9) {
                 Spacer()
-                BarsGlyph(height: 9, color: .white)
+                RibbonMark(height: 9, mono: .white)
                     .frame(width: 20, height: 13)
                     .background(RoundedRectangle(cornerRadius: 3).fill(Theme.voice))
                 Image(systemName: "wifi").font(.system(size: 8, weight: .semibold))
@@ -488,7 +484,7 @@ private struct ScreenArt: View {
                 .fill(Color.black)
                 .frame(width: 62, height: 16)
             ZStack(alignment: .bottomTrailing) {
-                Tile(width: 36, height: 34) { BarsGlyph(height: 15, color: Theme.voice) }
+                Tile(width: 36, height: 34) { RibbonLogo(height: 20) }
                 Image(systemName: "cursorarrow").font(.system(size: 15)).foregroundStyle(Color.black)
                     .shadow(color: .white, radius: 1)
                     .offset(x: 12, y: 12)
@@ -516,25 +512,6 @@ private struct Tile<Content: View>: View {
                 .shadow(color: .black.opacity(0.14), radius: 0, y: 2)
                 .shadow(color: .black.opacity(0.10), radius: 10, y: 5))
             .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Palette.hairline, lineWidth: 0.5))
-    }
-}
-
-private struct WaveBars: View {
-    let count: Int
-    let height: CGFloat
-
-    var body: some View {
-        TimelineView(.animation(minimumInterval: 1 / 24, paused: Theme.reduceMotion)) { ctx in
-            let t = ctx.date.timeIntervalSinceReferenceDate
-            HStack(spacing: 2.5) {
-                ForEach(0..<count, id: \.self) { i in
-                    let wave = Theme.reduceMotion ? 0.5 : (sin(t * 4 + Double(i) * 0.8) + 1) / 2
-                    Capsule().fill(Theme.voice.opacity(0.8))
-                        .frame(width: 2, height: 3 + height * CGFloat(wave) * (i % 2 == 0 ? 1 : 0.6))
-                }
-            }
-            .frame(height: height + 3)
-        }
     }
 }
 
@@ -617,16 +594,5 @@ private struct Caption: View {
             .font(.system(size: 12))
             .foregroundStyle(accent ? Theme.voice : Palette.muted)
             .fixedSize(horizontal: false, vertical: true)
-    }
-}
-
-/// Barres animées par une voix simulée (illustrations).
-struct SimulatedWaveform: View {
-    var body: some View {
-        TimelineView(.animation(minimumInterval: 1 / 30, paused: Theme.reduceMotion)) { ctx in
-            let t = ctx.date.timeIntervalSinceReferenceDate
-            let level = Float(0.35 + 0.65 * abs(sin(t * 3.1) * sin(t * 1.7)))
-            Waveform(level: Theme.reduceMotion ? 0.5 : level, active: true)
-        }
     }
 }
