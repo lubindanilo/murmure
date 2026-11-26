@@ -8,7 +8,6 @@ struct ModesSettings: View {
     @State private var editing: Mode.ID?
 
     var body: some View {
-        NavigationStack {
             Form {
                 Section {
                     ForEach(store.modes) { mode in
@@ -67,7 +66,6 @@ struct ModesSettings: View {
             .navigationDestination(item: $editing) { id in
                 ModeEditor(modeID: id)
             }
-        }
     }
 
     private func copyLink(_ mode: Mode) {

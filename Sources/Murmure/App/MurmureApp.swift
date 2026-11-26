@@ -146,7 +146,7 @@ final class SettingsWindow: NSObject, NSWindowDelegate {
     private let navigation = SettingsNavigation()
 
     func show(_ section: SettingsSection) {
-        navigation.section = section
+        navigation.open(section)
         if window == nil {
             let root = SettingsView()
                 .environmentObject(AppController.shared)
@@ -157,8 +157,8 @@ final class SettingsWindow: NSObject, NSWindowDelegate {
             window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
             window.titlebarAppearsTransparent = true
             window.toolbarStyle = .unified
-            window.setContentSize(NSSize(width: 820, height: 600))
-            window.minSize = NSSize(width: 720, height: 480)
+            window.setContentSize(NSSize(width: 560, height: 640))
+            window.minSize = NSSize(width: 500, height: 480)
             window.isReleasedWhenClosed = false
             window.delegate = self
             window.center()

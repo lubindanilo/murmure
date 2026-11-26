@@ -93,8 +93,8 @@ struct HUDView: View {
         }
         .id(phaseKey)
         .transition(Theme.reduceMotion ? .opacity : .opacity.combined(with: .scale(scale: 0.92)).combined(with: .modifier(active: BlurModifier(radius: 3), identity: BlurModifier(radius: 0))))
-        .padding(.horizontal, 16)
-        .frame(height: 40)
+        .padding(.horizontal, 14)
+        .frame(height: 36)
         .background(
             Capsule(style: .continuous)
                 .fill(Theme.hudBackground)
@@ -123,15 +123,6 @@ struct HUDView: View {
         switch app.phase {
         case .recording(let handsFree):
             Waveform(level: app.level, active: true)
-            if let start = app.recordingStart {
-                TimelineView(.periodic(from: start, by: 1)) { ctx in
-                    Text(Self.elapsed(from: start, to: ctx.date))
-                        .font(.system(size: 12, weight: .medium).monospacedDigit())
-                        .foregroundStyle(Theme.hudSecondary)
-                        .contentTransition(.numericText())
-                        .animation(Theme.quick, value: Self.elapsed(from: start, to: ctx.date))
-                }
-            }
             if handsFree {
                 Text("mains libres")
                     .font(.system(size: 11, weight: .medium))

@@ -179,7 +179,7 @@ img { display: block; }
 }
 .hud.hidden { opacity: 0; translate: -50% 8px; scale: 0.92; filter: blur(4px); }
 .bars { display: flex; align-items: center; gap: 3px; height: 20px; }
-.bars i { display: block; width: 3px; height: 20px; border-radius: 2px; background: #fff; scale: 1 0.2; transition: scale 110ms var(--ease-ui), opacity 300ms var(--ease-ui); }
+.bars i { display: block; width: 3px; height: 20px; border-radius: 2px; background: #ff6a4d; scale: 1 0.2; transition: scale 110ms var(--ease-ui), opacity 300ms var(--ease-ui); }
 .hud.thinking .bars i { opacity: 0.45; }
 
 .dock {

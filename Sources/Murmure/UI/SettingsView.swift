@@ -66,31 +66,34 @@ struct SettingsIcon: View {
 }
 
 final class SettingsNavigation: ObservableObject {
-    @Published var section: SettingsSection = .general
+    /// Pile de navigation : vide = page principale ; sinon la sous-page ouverte.
+    @Published var path: [SettingsSection] = []
+
+    func open(_ section: SettingsSection) {
+        path = section == .general ? [] : [section]
+    }
 }
 
+/// Une seule page de réglages ; Modes, Dictionnaire, Historique et Licence s'ouvrent par-dessus.
 struct SettingsView: View {
     @EnvironmentObject var nav: SettingsNavigation
 
     var body: some View {
-        NavigationSplitView {
-            List(SettingsSection.allCases, selection: Binding(
-                get: { nav.section }, set: { if let s = $0 { nav.section = s } })) { section in
-                Label { Text(section.title) } icon: { SettingsIcon(symbol: section.symbol, color: section.color, size: 20) }
-                    .tag(section)
-            }
-            .navigationSplitViewColumnWidth(min: 180, ideal: 190, max: 220)
-        } detail: {
-            Group {
-                switch nav.section {
-                case .general: GeneralSettings()
-                case .modes: ModesSettings()
-                case .dictionary: DictionarySettings()
-                case .history: HistoryView()
-                case .license: LicenseView()
+        NavigationStack(path: $nav.path) {
+            GeneralSettings()
+                .navigationTitle("Murmure")
+                .navigationDestination(for: SettingsSection.self) { section in
+                    Group {
+                        switch section {
+                        case .general: GeneralSettings()
+                        case .modes: ModesSettings()
+                        case .dictionary: DictionarySettings()
+                        case .history: HistoryView()
+                        case .license: LicenseView()
+                        }
+                    }
+                    .navigationTitle(section.title)
                 }
-            }
-            .navigationTitle(nav.section.title)
         }
         .tint(Theme.voice)
     }
@@ -104,6 +107,8 @@ struct GeneralSettings: View {
     @State private var micStatus = AudioRecorder.permission
     @State private var axTrusted = HotkeyMonitor.isTrusted
     @State private var launchAtLogin = LaunchAtLogin.isEnabled
+    @ObservedObject private var modes = ModeStore.shared
+    @ObservedObject private var history = HistoryStore.shared
     private let poll = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     private var needsSetup: Bool { micStatus != .authorized || !axTrusted }
@@ -115,19 +120,20 @@ struct GeneralSettings: View {
                     Image(nsImage: NSApp.applicationIconImage)
                         .resizable()
                         .interpolation(.high)
-                        .frame(width: 52, height: 52)
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(needsSetup ? "Encore une étape" : "Murmure est prêt")
+                        .frame(width: 48, height: 48)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(needsSetup ? "Encore une étape" : "Prêt à dicter")
                             .font(.system(size: 15, weight: .semibold))
                         Text(needsSetup
-                             ? "Autorisez le micro et l'accessibilité pour dicter."
-                             : "Maintenez \(settings.triggerKey.label) et parlez, dans n'importe quelle app.")
+                             ? "Autorisez le micro et l'accessibilité."
+                             : "Maintenez \(settings.triggerKey.label) et parlez.")
                             .foregroundStyle(.secondary)
                     }
                     Spacer()
-                    if !needsSetup { KeyHint(label: settings.triggerKey.label) }
+                    NavigationLink(value: SettingsSection.license) { LicenseBadge() }
+                        .buttonStyle(.plain)
                 }
-                .padding(.vertical, 6)
+                .padding(.vertical, 4)
             }
 
             SetupSection()
@@ -158,36 +164,38 @@ struct GeneralSettings: View {
                 Picker("Touche de dictée", selection: $settings.triggerKey) {
                     ForEach(TriggerKey.allCases) { Text($0.label).tag($0) }
                 }
-                Picker("Comportement", selection: $settings.triggerMode) {
-                    ForEach(TriggerMode.allCases) { Text($0.label).tag($0) }
-                }
-            } header: {
-                Text("Raccourci")
-            } footer: {
-                Text(settings.triggerMode == .hold
-                     ? "Un appui bref lance la dictée mains libres. Échap annule."
-                     : "Échap annule.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
-            Section("Dictée") {
                 Picker("Langue", selection: $settings.language) {
                     ForEach(Languages.all, id: \.code) { Text($0.name).tag($0.code) }
                 }
                 Toggle(isOn: $settings.aiEnabled) {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Nettoyer avec l'IA locale")
-                        Text("Retire les hésitations, corrige la ponctuation et applique les modes. Sur ce Mac, sans coût.")
+                        Text("Nettoyer le texte")
+                        Text("Retire les hésitations et corrige la ponctuation, sur ce Mac.")
                             .font(.caption).foregroundStyle(.secondary)
                     }
                 }
                 .onChange(of: settings.aiEnabled) { _, on in if on { Setup.shared.install() } else { PostProcessor.shared.unload() } }
-                Toggle("Sons de début et de fin", isOn: $settings.playSounds)
+            } footer: {
+                Text("Maintenez la touche pour dicter. Un appui bref lance la dictée mains libres, Échap annule.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
 
-            Section("Démarrage") {
-                Toggle("Ouvrir Murmure à l'ouverture de session", isOn: $launchAtLogin)
+            Section {
+                NavigationLink(value: SettingsSection.modes) {
+                    SettingsRow(section: .modes, value: "\(modes.modes.count)")
+                }
+                NavigationLink(value: SettingsSection.dictionary) {
+                    SettingsRow(section: .dictionary, value: settings.dictionary.isEmpty && settings.replacements.isEmpty
+                                ? "" : "\(settings.dictionary.count + settings.replacements.count)")
+                }
+                NavigationLink(value: SettingsSection.history) {
+                    SettingsRow(section: .history, value: history.entries.isEmpty ? "" : "\(history.entries.count)")
+                }
+            }
+
+            Section {
+                Toggle("Ouvrir au démarrage du Mac", isOn: $launchAtLogin)
                     .onChange(of: launchAtLogin) { _, value in LaunchAtLogin.set(value) }
             }
         }
@@ -197,6 +205,56 @@ struct GeneralSettings: View {
             let trusted = HotkeyMonitor.isTrusted
             if trusted && !axTrusted { app.restartHotkey() }
             axTrusted = trusted
+        }
+    }
+}
+
+/// Ligne de la page principale qui ouvre une sous-page.
+struct SettingsRow: View {
+    let section: SettingsSection
+    let value: String
+
+    var body: some View {
+        HStack(spacing: 10) {
+            SettingsIcon(symbol: section.symbol, color: section.color, size: 24)
+            Text(section.title)
+            Spacer()
+            if !value.isEmpty { Text(value).foregroundStyle(.secondary).monospacedDigit() }
+        }
+    }
+}
+
+/// État de la licence en une pastille : jours d'essai, activée ou à activer.
+struct LicenseBadge: View {
+    @ObservedObject private var license = LicenseManager.shared
+
+    var body: some View {
+        HStack(spacing: 5) {
+            Text(label)
+            Image(systemName: "chevron.right").font(.system(size: 9, weight: .bold)).opacity(0.6)
+        }
+        .font(.system(size: 12, weight: .semibold))
+        .foregroundStyle(color)
+        .padding(.horizontal, 10)
+        .frame(height: 24)
+        .background(Capsule().fill(color.opacity(0.12)))
+        .contentShape(Capsule())
+        .help("Licence")
+    }
+
+    private var label: String {
+        switch license.state {
+        case .licensed: return "Activé"
+        case .trial(let days, _): return days > 1 ? "Essai · \(days) jours" : "Essai · dernier jour"
+        case .expired: return "Activer"
+        }
+    }
+
+    private var color: Color {
+        switch license.state {
+        case .licensed: return .green
+        case .trial: return Theme.voice
+        case .expired: return Theme.voice
         }
     }
 }
