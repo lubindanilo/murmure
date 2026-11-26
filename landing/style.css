@@ -142,10 +142,10 @@ img { display: block; }
 /* Île : elle sort de l'encoche et affiche l'état sous la caméra. */
 .island {
   position: absolute; z-index: 3; top: 0; left: 50%; translate: -50% 0;
-  display: grid; place-items: end center; width: max-content; min-width: calc(13.2% + 24px); height: 34px; padding: 0 14px 6px;
-  background: #000; color: #fff; border-radius: 0 0 14px 14px;
-  font-size: 11px; line-height: 16px; font-weight: 500;
-  box-shadow: 0 6px 16px rgb(0 0 0 / 0.25);
+  display: grid; place-items: end center; width: max-content; min-width: calc(13.2% + 12px); height: 28px; padding: 0 10px 4px;
+  background: #000; color: #fff; border-radius: 0 0 10px 10px;
+  font-size: 10px; line-height: 11px; font-weight: 500;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.22);
   transform-origin: 50% 0;
   transition-property: scale, opacity; transition-duration: 350ms; transition-timing-function: var(--ease);
   scale: 0.62 0.45; opacity: 0;
@@ -158,13 +158,13 @@ img { display: block; }
   grid-area: 1 / 1; white-space: nowrap; display: inline-flex; align-items: center; gap: 8px;
   opacity: 0; filter: blur(3px); scale: 0.9;
   transition-property: opacity, filter, scale; transition-duration: 300ms; transition-timing-function: var(--ease-ui);
-  gap: 6px;
+  gap: 5px;
 }
 .notch-state.on { opacity: 1; filter: blur(0); scale: 1; }
-.notch-state i.ph, .notch-state i.ph-bold { font-size: 12px; }
+.notch-state i.ph, .notch-state i.ph-bold { font-size: 10px; }
 .notch-state[data-state="done"] i { color: #6bd590; }
-.bars { display: flex; align-items: center; gap: 1.5px; height: 12px; }
-.bars i { display: block; width: 2px; height: 12px; border-radius: 2px; background: var(--lavender); scale: 1 0.25; transition: scale 110ms var(--ease-ui); }
+.bars { display: flex; align-items: center; gap: 1.5px; height: 9px; }
+.bars i { display: block; width: 1.5px; height: 9px; border-radius: 2px; background: var(--lavender); scale: 1 0.25; transition: scale 110ms var(--ease-ui); }
 
 .win {
   position: absolute; left: 50%; top: 17%; width: 70%; transform: translateX(-50%);
@@ -375,7 +375,7 @@ kbd {
   .screen { aspect-ratio: 4 / 3.6; border-width: 4px; border-radius: 12px; }
   .mb-left span, .mb-right > i, .mb-right > span:not(.mb-icon) { display: none; }
   .notch { width: 16%; }
-  .island { min-width: calc(16% + 20px); height: 30px; padding-bottom: 5px; font-size: 10px; }
+  .island { min-width: calc(16% + 10px); height: 24px; padding: 0 8px 4px; font-size: 9px; }
   .win { top: 15%; width: 86%; }
   .win-body { padding: 8px 16px 24px; min-height: 150px; }
   .win-h { font-size: 18px; line-height: 24px; }
