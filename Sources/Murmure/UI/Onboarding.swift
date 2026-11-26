@@ -14,7 +14,10 @@ final class OnboardingWindow: NSObject, NSWindowDelegate {
             let root = OnboardingView { [weak self] in self?.finish() }
                 .environmentObject(AppController.shared)
                 .environmentObject(Settings.shared)
-            let window = NSWindow(contentViewController: NSHostingController(rootView: root))
+            let controller = NSHostingController(rootView: root)
+            // Taille fixe : la vue passe sous la barre de titre transparente, sans marge ajoutée en bas.
+            controller.sizingOptions = []
+            let window = NSWindow(contentViewController: controller)
             window.styleMask = [.titled, .closable, .fullSizeContentView]
             window.titlebarAppearsTransparent = true
             window.titleVisibility = .hidden
@@ -503,6 +506,7 @@ private struct NoteArt: View {
                     TextEditor(text: $text)
                         .font(.system(size: 15))
                         .scrollContentBackground(.hidden)
+                        .scrollIndicators(.never)
                         .focused($focused)
                         .onAppear { focused = true }
                     if text.isEmpty {

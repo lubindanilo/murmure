@@ -26,6 +26,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             Task { @MainActor in exit(await SelfTest.run(CommandLine.arguments)) }
             return
         }
+        // Captures d'écran en CI : `-demoDark YES` force l'apparence sombre.
+        if UserDefaults.standard.bool(forKey: "demoDark") { NSApp.appearance = NSAppearance(named: .darkAqua) }
         Task { @MainActor in
             AppController.shared.start()
             if let demo = UserDefaults.standard.string(forKey: "demoSettings") {
