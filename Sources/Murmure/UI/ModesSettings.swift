@@ -24,7 +24,8 @@ struct ModeEditor: View {
             Section {
                 HStack(spacing: 10) {
                     SymbolPicker(symbol: mode.symbol)
-                    TextField("Nom", text: mode.name)
+                    TextField("Nom", text: mode.name, prompt: Text("Nom du mode"))
+                        .labelsHidden()
                         .textFieldStyle(.plain)
                         .font(.title3.weight(.semibold))
                 }

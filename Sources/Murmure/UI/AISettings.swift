@@ -56,7 +56,8 @@ struct LicenseView: View {
                         }
                     } else {
                         Button("Déjà acheté ? Restaurer un achat") { showRestore = true }
-                            .buttonStyle(.link)
+                            .buttonStyle(.plain)
+                            .foregroundStyle(Theme.voice)
                             .frame(maxWidth: .infinity)
                     }
                 } footer: {

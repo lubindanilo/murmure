@@ -198,11 +198,11 @@ struct PanelView: View {
             case .corrections:
                 CorrectionsSettings()
                     .subpage(title: "Corrections", back: "Murmure") { router.path.removeAll() }
-                    .frame(height: PanelController.size.height)
+                    .frame(height: 380)
             case .license:
                 LicenseView()
                     .subpage(title: "Licence", back: "Murmure") { router.path.removeAll() }
-                    .frame(height: PanelController.size.height)
+                    .frame(height: 420)
             }
         }
         .frame(width: PanelController.size.width)
