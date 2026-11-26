@@ -1,6 +1,6 @@
 #!/bin/bash
 # Installe (ou met à jour) Murmure dans /Applications.
-#   curl -fsSL https://murmure-mac.vercel.app/install.sh | bash
+#   curl -fsSL https://murmure-ai.com/install.sh | bash
 set -euo pipefail
 
 URL="https://github.com/lubindanilo/murmure-releases/releases/latest/download/Murmure.zip"

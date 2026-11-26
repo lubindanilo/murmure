@@ -3,7 +3,7 @@ import CryptoKit
 import Foundation
 import IOKit
 
-/// Essai gratuit de 7 jours puis licence payante (Paddle).
+/// Essai gratuit de 14 jours puis abonnement payant (Paddle, 9,99 € par mois).
 ///
 /// Le serveur de licences enregistre la date de première ouverture de chaque Mac
 /// (une réinstallation ne relance pas l'essai) et signe un jeton Ed25519 que l'app vérifie
@@ -12,11 +12,11 @@ import IOKit
 final class LicenseManager: ObservableObject {
     static let shared = LicenseManager()
 
-    static let trialDays = 7
+    static let trialDays = 14
     /// Clé publique Ed25519 du serveur (base64, 32 octets). La clé privée ne vit que sur le serveur.
     static let publicKey = "UO9AMUGsHz7myfveHliePomBEKowpyo6s7+UcIPubbE="
     static var server: URL {
-        URL(string: UserDefaults.standard.string(forKey: "licenseServer") ?? "https://murmure-mac.vercel.app/api")!
+        URL(string: UserDefaults.standard.string(forKey: "licenseServer") ?? "https://murmure-ai.com/api")!
     }
 
     enum State: Equatable {

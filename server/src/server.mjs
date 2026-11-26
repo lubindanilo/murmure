@@ -1,4 +1,4 @@
-// Serveur de licences Murmure : essai de 7 jours par Mac, achats Paddle, jetons signés Ed25519.
+// Serveur de licences Murmure : essai de 14 jours par Mac, achats Paddle, jetons signés Ed25519.
 // Node 24, aucune dépendance (http, crypto et sqlite intégrés).
 import { createServer } from 'node:http';
 import { createHmac, createPrivateKey, sign, timingSafeEqual } from 'node:crypto';
@@ -21,7 +21,7 @@ const config = {
   port: Number(env('PORT', '8787')),
   publicURL: env('PUBLIC_URL', 'http://localhost:8787').replace(/\/$/, ''),
   dbPath: env('DB_PATH', join(here, '..', 'data', 'murmure.db')),
-  trialDays: Number(env('TRIAL_DAYS', '7')),
+  trialDays: Number(env('TRIAL_DAYS', '14')),
   maxDevices: Number(env('MAX_DEVICES', '3')),
   paddleEnv: env('PADDLE_ENV', 'sandbox'),
   paddleClientToken: env('PADDLE_CLIENT_TOKEN', ''),

@@ -1,12 +1,12 @@
 # Serveur de licences Murmure + Caddy (HTTPS automatique) sur l'IP publique du VPS.
-# Vercel relaie https://murmure-mac.vercel.app/api/* vers ce serveur.
+# Vercel relaie https://murmure-ai.com/api/* vers ce serveur.
 services:
   licenses:
     build: .
     restart: unless-stopped
     env_file: .env
     environment:
-      PUBLIC_URL: https://murmure-mac.vercel.app/api
+      PUBLIC_URL: https://murmure-ai.com/api
     volumes:
       - ./data:/data
     mem_limit: 256m

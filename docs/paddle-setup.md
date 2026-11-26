@@ -1,7 +1,7 @@
 # Brancher Paddle (environ 20 minutes)
 
 Le serveur de licences est déjà en ligne et attend seulement les clés Paddle. Tant qu'elles manquent,
-le bouton « Acheter » de l'app affiche « Bientôt disponible » : l'essai de 7 jours fonctionne quand même.
+le bouton « Acheter » de l'app affiche « Bientôt disponible » : l'essai de 14 jours fonctionne quand même.
 
 ## 1. Créer le compte (sandbox d'abord)
 
@@ -12,15 +12,17 @@ le bouton « Acheter » de l'app affiche « Bientôt disponible » : l'essai de 
 ## 2. Créer le produit et le prix
 
 Catalogue > Produits > Nouveau produit : « Murmure », type standard, catégorie logiciel.
-Ajouter un prix, au choix :
-- abonnement (ex. 5 €/mois ou 48 €/an) : le serveur suit les renouvellements et les résiliations ;
-- paiement unique (« à vie ») : la licence ne expire jamais.
+Ajouter **un seul prix** (décision du 26/11) :
+- type : récurrent, **mensuel**, **9,99 EUR** (Paddle convertit pour les autres pays) ;
+- **période d'essai : aucune**. Les 14 jours gratuits sont déjà gérés par notre serveur, sans carte.
+  Un essai côté Paddle s'ajouterait aux 14 jours et demanderait la carte dès le départ.
+- prix TTC ou HT : TTC conseillé pour que le client paie exactement 9,99 € en France.
 Copier l'identifiant du prix (`pri_…`).
 
 ## 3. Approuver le domaine du paiement
 
-Paramètres > Paiement > Domaines approuvés (en production) : ajouter `murmure-mac.vercel.app`.
-Lien de paiement par défaut : `https://murmure-mac.vercel.app/api/buy`.
+Paramètres > Paiement > Domaines approuvés (en production) : ajouter `murmure-ai.com`.
+Lien de paiement par défaut : `https://murmure-ai.com/api/buy`.
 
 ## 4. Clés
 
@@ -31,7 +33,7 @@ Lien de paiement par défaut : `https://murmure-mac.vercel.app/api/buy`.
 ## 5. Webhook
 
 Notifications > Nouvelle destination :
-- URL : `https://murmure-mac.vercel.app/api/v1/paddle/webhook`
+- URL : `https://murmure-ai.com/api/v1/paddle/webhook`
 - Événements : `transaction.completed`, `subscription.created`, `subscription.activated`,
   `subscription.updated`, `subscription.past_due`, `subscription.paused`, `subscription.resumed`,
   `subscription.canceled`, `adjustment.created`, `adjustment.updated`.
@@ -59,6 +61,6 @@ Ou bien : donner ces valeurs à Claude dans une session sur le VPS, il les met e
 
 ## 7. Vérifier
 
-- `curl https://murmure-mac.vercel.app/api/buy` ne doit plus afficher « Bientôt disponible ».
+- `curl https://murmure-ai.com/api/buy` ne doit plus afficher « Bientôt disponible ».
 - Dans l'app : Réglages > Licence > Acheter Murmure. Après le paiement, l'app passe en « Murmure est activé »
   en moins d'une minute (elle interroge le serveur toutes les 5 secondes pendant 15 minutes).
