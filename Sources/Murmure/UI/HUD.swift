@@ -155,7 +155,7 @@ struct HUDView: View {
             Image(systemName: "exclamationmark.circle").font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.wave)
             Text("Erreur")
             Rectangle().fill(Color.white.opacity(0.25)).frame(width: 1, height: 14)
-            Text(message).foregroundStyle(Color.white.opacity(0.65)).lineLimit(1).frame(maxWidth: 260)
+            Text(message).foregroundStyle(Color.white.opacity(0.65)).lineLimit(1).fixedSize()
         case .idle:
             EmptyView()
         }

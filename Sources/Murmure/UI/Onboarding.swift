@@ -50,7 +50,7 @@ enum OnboardingStep: Int, CaseIterable {
 }
 
 struct OnboardingView: View {
-    static let size = CGSize(width: 500, height: 470)
+    static let size = CGSize(width: 500, height: 440)
 
     let onFinish: () -> Void
     @EnvironmentObject var app: AppController
