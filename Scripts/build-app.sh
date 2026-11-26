@@ -29,6 +29,7 @@ install_name_tool -add_rpath "@executable_path/../Frameworks" "$APP/Contents/Mac
 # Illustrations de l'interface : le ruban fixe et ses images en mouvement.
 cp "$ROOT/Resources/Ribbon.png" "$APP/Contents/Resources/Ribbon.png"
 cp "$ROOT/Resources/RibbonMotion.webp" "$APP/Contents/Resources/RibbonMotion.webp"
+cp -R "$ROOT/Resources/Sounds" "$APP/Contents/Resources/"
 
 if [ -f "$ROOT/Resources/AppIcon.png" ] && command -v iconutil >/dev/null; then
   ICONSET="$ROOT/build/AppIcon.iconset"; rm -rf "$ICONSET"; mkdir -p "$ICONSET"

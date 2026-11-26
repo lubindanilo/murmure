@@ -44,8 +44,8 @@ enum RibbonMotion {
         return image
     }
 
-    /// Vitesse de lecture : un peu plus lente au silence, jusqu'à deux fois plus rapide quand la voix monte.
-    static func speed(level: Float) -> Double { 0.75 + 1.25 * Double(min(max(level, 0), 1)) }
+    /// Vitesse de lecture : vive au silence (une boucle en 1,1 s), jusqu'à trois fois plus rapide quand la voix monte.
+    static func speed(level: Float) -> Double { 1.35 + 2.4 * Double(min(max(level, 0), 1)) }
 }
 
 /// Avance dans la boucle à une vitesse qui peut changer à chaque image, sans saut.

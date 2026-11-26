@@ -76,6 +76,7 @@ final class AppController: ObservableObject {
         license.refresh()
         // Tout ce que le premier appui coûterait : fenêtre du bandeau, images du ruban, micro.
         hud.prepare()
+        _ = Self.sounds
         DispatchQueue.global(qos: .userInitiated).async { _ = RibbonMotion.frames }
         recorder.prewarm()
     }
@@ -363,8 +364,29 @@ final class AppController: ObservableObject {
         }
     }
 
+    /// Sons de Murmure (Resources/Sounds, synthétisés par Scripts/sounds/make-sounds.swift),
+    /// chargés une fois : jouer ne coûte alors rien au moment de l'appui.
+    private static let sounds: [String: NSSound] = {
+        var map: [String: NSSound] = [:]
+        for name in ["start", "stop", "cancel"] {
+            if let url = Bundle.main.url(forResource: name, withExtension: "wav", subdirectory: "Sounds"),
+               let sound = NSSound(contentsOf: url, byReference: false) {
+                sound.volume = 0.9
+                map[name] = sound
+            }
+        }
+        return map
+    }()
+
     private func play(_ name: String) {
         guard settings.playSounds else { return }
-        NSSound(named: NSSound.Name(name))?.play()
+        // Noms historiques (sons système) vers les sons de Murmure ; repli sur le son système si absent.
+        let own = ["Tink": "start", "Pop": "stop", "Funk": "cancel"][name] ?? name
+        if let sound = Self.sounds[own] {
+            sound.stop()
+            sound.play()
+        } else {
+            NSSound(named: NSSound.Name(name))?.play()
+        }
     }
 }
