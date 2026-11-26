@@ -226,7 +226,7 @@ struct ModeEditor: View {
             }
         }
         .formStyle(.grouped)
-        .navigationTitle(mode.wrappedValue.name)
+        .subpage(title: mode.wrappedValue.name, back: "Modes") { dismiss() }
         .confirmationDialog("Supprimer « \(mode.wrappedValue.name) » ?", isPresented: $confirmDelete) {
             Button("Supprimer", role: .destructive) {
                 store.delete(mode.wrappedValue)

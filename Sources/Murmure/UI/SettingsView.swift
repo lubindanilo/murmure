@@ -92,7 +92,7 @@ struct SettingsView: View {
                         case .license: LicenseView()
                         }
                     }
-                    .navigationTitle(section.title)
+                    .subpage(title: section.title, back: "Réglages") { nav.path.removeAll() }
                 }
         }
         .tint(Theme.voice)
@@ -102,6 +102,7 @@ struct SettingsView: View {
 // MARK: - Général
 
 struct GeneralSettings: View {
+    @EnvironmentObject var nav: SettingsNavigation
     @EnvironmentObject var settings: Settings
     @EnvironmentObject var app: AppController
     @State private var micStatus = AudioRecorder.permission
@@ -130,7 +131,7 @@ struct GeneralSettings: View {
                             .foregroundStyle(.secondary)
                     }
                     Spacer()
-                    NavigationLink(value: SettingsSection.license) { LicenseBadge() }
+                    Button { nav.open(.license) } label: { LicenseBadge() }
                         .buttonStyle(.plain)
                 }
                 .padding(.vertical, 4)
@@ -206,6 +207,53 @@ struct GeneralSettings: View {
             if trusted && !axTrusted { app.restartHotkey() }
             axTrusted = trusted
         }
+    }
+}
+
+/// Barre du haut des sous-pages : retour à gauche, titre au centre.
+/// La fenêtre n'a pas de barre d'outils ; le retour est donc dans le contenu.
+struct SubpageBar: View {
+    let title: String
+    let back: String
+    let action: () -> Void
+
+    var body: some View {
+        ZStack {
+            Text(title)
+                .font(.system(size: 13, weight: .semibold))
+                .lineLimit(1)
+                .frame(maxWidth: 260)
+            HStack {
+                Button(action: action) {
+                    HStack(spacing: 3) {
+                        Image(systemName: "chevron.left").font(.system(size: 12, weight: .semibold))
+                        Text(back)
+                    }
+                    .padding(.horizontal, 8)
+                    .frame(height: 26)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(Theme.voice)
+                .keyboardShortcut("[", modifiers: .command)
+                .help("Retour (⌘[)")
+                Spacer()
+            }
+        }
+        .padding(.horizontal, 12)
+        .frame(height: 36)
+    }
+}
+
+extension View {
+    /// Sous-page : barre de retour en haut, contenu en dessous, sans bouton système.
+    func subpage(title: String, back: String, action: @escaping () -> Void) -> some View {
+        VStack(spacing: 0) {
+            SubpageBar(title: title, back: back, action: action)
+            Divider().opacity(0.5)
+            self
+        }
+        .navigationBarBackButtonHidden(true)
     }
 }
 
