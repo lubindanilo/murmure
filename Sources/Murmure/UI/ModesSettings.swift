@@ -143,7 +143,7 @@ struct ModeEditor: View {
                             Button("Annuler") { confirmDelete = false }
                             Button("Supprimer", role: .destructive) {
                                 store.delete(mode.wrappedValue)
-                                dismiss()
+                                PanelController.shared.router.path.removeAll()
                             }
                             .buttonStyle(.borderedProminent)
                         }
@@ -155,7 +155,7 @@ struct ModeEditor: View {
             }
         }
         .formStyle(.grouped)
-        .subpage(title: mode.wrappedValue.name, back: "Murmure") { dismiss() }
+        .subpage(title: mode.wrappedValue.name, back: "Murmure") { PanelController.shared.router.path.removeAll() }
     }
 
     private func addWebsite(_ mode: Binding<Mode>) {

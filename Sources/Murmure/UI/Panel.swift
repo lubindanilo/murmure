@@ -165,13 +165,21 @@ final class PanelController: NSObject {
         var x = screen.maxX - size.width - 8
         if let button = statusItem?.button, let window = buttonWindow {
             let anchor = window.convertToScreen(button.convert(button.bounds, to: nil))
-            if anchor.width > 0, screen.minX...screen.maxX ~= anchor.midX {
+            // Les icônes de la barre des menus sont toujours dans la moitié droite ; sinon, position pas encore connue.
+            if anchor.width > 0, anchor.midX > screen.midX, anchor.midX < screen.maxX {
                 x = anchor.midX - size.width / 2
             }
         }
         x = min(max(x, screen.minX + 8), screen.maxX - size.width - 8)
-        let y = screen.maxY - size.height - 6
-        panel.setFrame(NSRect(x: x, y: y, width: size.width, height: size.height), display: true)
+        let height = panel.frame.height > 0 ? panel.frame.height : size.height
+        panel.setFrame(NSRect(x: x, y: screen.maxY - height - 6, width: size.width, height: height), display: true)
+    }
+
+    /// La page d'accueil prend la hauteur de son contenu ; le haut du panneau reste sous la barre des menus.
+    func resize(height: CGFloat) {
+        guard let panel, abs(panel.frame.height - height) > 0.5 else { return }
+        let top = panel.frame.maxY
+        panel.setFrame(NSRect(x: panel.frame.minX, y: top - height, width: panel.frame.width, height: height), display: true)
     }
 }
 
@@ -181,26 +189,30 @@ struct PanelView: View {
     @EnvironmentObject var router: PanelRouter
 
     var body: some View {
-        NavigationStack(path: $router.path) {
-            HomePage()
-                .navigationDestination(for: PanelRoute.self) { route in
-                    switch route {
-                    case .mode(let id):
-                        ModeEditor(modeID: id)
-                    case .corrections:
-                        CorrectionsSettings()
-                            .subpage(title: "Corrections", back: "Murmure") { router.path.removeAll() }
-                    case .license:
-                        LicenseView()
-                            .subpage(title: "Licence", back: "Murmure") { router.path.removeAll() }
-                    }
-                }
+        Group {
+            switch router.path.last {
+            case .none:
+                HomePage().fixedSize(horizontal: false, vertical: true)
+            case .mode(let id):
+                ModeEditor(modeID: id).frame(height: PanelController.size.height)
+            case .corrections:
+                CorrectionsSettings()
+                    .subpage(title: "Corrections", back: "Murmure") { router.path.removeAll() }
+                    .frame(height: PanelController.size.height)
+            case .license:
+                LicenseView()
+                    .subpage(title: "Licence", back: "Murmure") { router.path.removeAll() }
+                    .frame(height: PanelController.size.height)
+            }
         }
-        .frame(width: PanelController.size.width, height: PanelController.size.height)
+        .frame(width: PanelController.size.width)
         .background(Palette.panel)
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Color.primary.opacity(0.12), lineWidth: 0.5))
         .tint(Theme.voice)
+        .onGeometryChange(for: CGFloat.self, of: { $0.size.height }) { height in
+            PanelController.shared.resize(height: height)
+        }
     }
 }
 
@@ -231,7 +243,6 @@ struct HomePage: View {
                 if let last = history.entries.first { lastDictation(last) }
             }
             .padding(.horizontal, 12)
-            Spacer(minLength: 12)
             VStack(spacing: 2) {
                 if updater.available != nil {
                     PanelRow(title: "Nouvelle version disponible", value: "Installer", accent: true) { updater.install() }
@@ -241,6 +252,7 @@ struct HomePage: View {
                 }
             }
             .padding(.horizontal, 6)
+            .padding(.top, 14)
             Divider().padding(.horizontal, 12).padding(.top, 6)
             footer
         }
