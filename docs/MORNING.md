@@ -12,7 +12,7 @@
 
 | Élément | Vérification |
 |---|---|
-| App Murmure 0.1.1 (Swift natif, barre de menus) | compilée et signée en CI sur macOS 15 |
+| App Murmure 0.2.0 (Swift natif, barre de menus, interface refaite le 26 au matin) | compilée et signée en CI sur macOS 15 |
 | Transcription Parakeet Ultra, installée toute seule au 1er lancement | autotest en CI sur un audio français |
 | Nettoyage par IA locale (Qwen 2.5 1.5B, 1,1 Go, installé tout seul) | comparatif de 4 modèles, voir `docs/llm-comparatif.md` |
 | Garde-fou anti-dérapage de l'IA (si elle répond ou traduit, on colle la transcription) | testé sur 20 sorties réelles |
