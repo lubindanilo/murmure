@@ -202,7 +202,7 @@ struct PanelView: View {
             case .license:
                 LicenseView()
                     .subpage(title: "Licence", back: "Murmure") { router.path.removeAll() }
-                    .frame(height: 420)
+                    .frame(height: 300)
             }
         }
         .frame(width: PanelController.size.width)
