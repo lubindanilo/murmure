@@ -5,7 +5,12 @@ import Security
 enum Keychain {
     private static let service = "app.murmure.api-keys"
 
+    /// Les bancs en ligne de commande (binaire non signé) ne touchent pas au trousseau : macOS y
+    /// bloquerait le test derrière une demande d'autorisation. Ils n'utilisent que des modèles locaux.
+    private static let disabled = CommandLine.arguments.contains { ["--selftest", "--llmtest", "--cleanuptest", "--guardtest"].contains($0) }
+
     static func get(_ account: String) -> String? {
+        guard !disabled else { return nil }
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
@@ -21,6 +26,7 @@ enum Keychain {
     }
 
     static func set(_ value: String?, for account: String) {
+        guard !disabled else { return }
         let base: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,

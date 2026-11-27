@@ -17,6 +17,7 @@ enum SelfTest {
         if args.contains("--licensetest") { return await licenseTest() }
         if let path = value("--cleanup-model") { CleanupModel.overridePath = path }
         if let path = value("--cleanuptest") { return await cleanupTest(path) }
+        if let path = value("--guardtest") { return guardTest(path) }
         if let textsPath = value("--llmtest") {
             return await llmTest(textsPath, llms: value("--llm") ?? "", settings: settings,
                                  tone: value("--tone").flatMap(AutoTone.init(rawValue:)))
@@ -52,7 +53,7 @@ enum SelfTest {
             let raw = try await engine.transcribe(samples, language: language, vocabulary: settings.dictionary)
             print("[\(model.name)] \(String(format: "%.2f", Date().timeIntervalSince(t))) s")
             print("Brut : \(TextProcessing.apply(raw, replacements: settings.replacements))")
-            if await ensureCleanupModel() {
+            if await ensureCleanupModel(), await CleanupModel.shared.waitUntilReady() {
                 let r = await CleanupModel.shared.clean(TextProcessing.apply(raw, replacements: []))
                 print("[Cleanup 1] \(String(format: "%.2f", r.seconds)) s\(r.usedModel ? "" : " · repli : \(r.fallbackReason)")")
                 print("Nettoyé : \(r.text)")
@@ -129,6 +130,20 @@ extension SelfTest {
 }
 
 extension SelfTest {
+    /// Rejoue la réparation et le garde-fou de Cleanup 1 sur des sorties déjà calculées ({"raw", "out"} par
+    /// ligne) : une ligne « décision<TAB>texte réparé » par entrée (comparaison avec evaluate.py).
+    static func guardTest(_ path: String) -> Int32 {
+        guard let content = try? String(contentsOfFile: path, encoding: .utf8) else { return 2 }
+        for line in content.split(separator: "\n") {
+            guard let obj = try? JSONSerialization.jsonObject(with: Data(line.utf8)) as? [String: Any],
+                  let raw = obj["raw"] as? String, let out = obj["out"] as? String else { continue }
+            let repaired = CleanupModel.repair(output: out, input: raw)
+            let problem = CleanupModel.guardProblem(output: repaired, input: raw)
+            print("\(problem == nil ? "ok" : "rejet")\t\(repaired)")
+        }
+        return 0
+    }
+
     /// Télécharge Cleanup 1 si besoin. Faux si le téléchargement échoue.
     static func ensureCleanupModel() async -> Bool {
         let cleanup = CleanupModel.shared
@@ -161,7 +176,7 @@ extension SelfTest {
         guard await ensureCleanupModel() else { return 1 }
         let cleanup = CleanupModel.shared
         var t = Date()
-        cleanup.warmUp()
+        guard await cleanup.waitUntilReady() else { print("Chargement impossible"); return 1 }
         _ = await cleanup.clean("ok")
         print("Chargement : \(String(format: "%.2f", Date().timeIntervalSince(t))) s")
         var times: [Double] = [], fallbacks = 0, exact = 0, rulesExact = 0

@@ -329,7 +329,7 @@ def add_restart(text, other, lang, rng):
 
 # --------------------------------------------------------------------------- bruit oral
 
-FR_FILLERS = [("euh", 40), ("heu", 4), ("euh euh", 3), ("hum", 8), ("hmm", 2), ("bah", 6), ("ben", 6), ("genre", 7),
+FR_FILLERS = [("euh", 40), ("heu", 4), ("euh euh", 3), ("hum", 8), ("hmm", 2), ("bah", 6), ("ben", 6), ("genre", 4),
               ("tu vois", 3), ("euh bah", 2), ("hein", 2), ("euh ben", 1)]
 EN_FILLERS = [("um", 30), ("uh", 30), ("uhm", 4), ("er", 3), ("like", 8), ("you know", 6), ("um like", 2), ("hmm", 3)]
 START_FILLERS = {"fr": [("euh", 10), ("bah", 3), ("ben", 3), ("hum", 3), ("euh euh", 1), ("hum euh", 1)],
@@ -351,6 +351,10 @@ def insert_fillers(words, lang, rng, n):
             continue
         i = rng.randint(1, max(1, len(words) - 1))
         f = wchoice(rng, FR_FILLERS if lang == "fr" else EN_FILLERS)
+        # « genre de », « like a » : constructions réelles, le tic ne s'y glisse pas.
+        nxt = words[i].lower() if i < len(words) else ""
+        if f in ("genre", "like") and re.match(r"(de|d'|du|des|a|an|the)$", nxt):
+            f = "euh" if lang == "fr" else "uh"
         words.insert(i, f)
     return words
 
@@ -471,6 +475,9 @@ def make_raw(clean, lang, rng, lower_vocab, others):
         raw = raw[0].upper() + raw[1:]
     return raw, kind
 
+MARKERS_KEPT = {"fr": ["Donc,", "Alors,", "Ok,", "Bon,", "Du coup,", "En fait,", "Bref,", "D'accord,", "Et puis", "Mais"],
+                "en": ["So,", "Okay,", "Well,", "Anyway,", "Actually,", "Also,", "But", "And"]}
+
 def load_lines(folder):
     data = []
     for f in sorted(Path(folder).glob("*.txt")):
@@ -511,15 +518,32 @@ def main():
     rng.shuffle(idx)
     n_test = max(40, len(lines) // 14)
     test_ids, valid_ids = set(idx[:n_test]), set(idx[n_test:n_test + n_test // 2])
+    # --holdout test.meta.jsonl : les textes d'un ancien jeu de test restent en test (comparaisons honnêtes).
+    if "--holdout" in sys.argv:
+        keep = set()
+        for i, a in enumerate(sys.argv):
+            if a == "--holdout":
+                keep |= {json.loads(l)["ref"] for l in open(sys.argv[i + 1], encoding="utf-8") if l.strip()}
+        held = {i for i, l in enumerate(lines) if l[1] in keep}
+        test_ids = held | {i for i in idx[:n_test] if i not in held and len(held) < n_test}
+        valid_ids -= test_ids
     split = {"train": [], "valid": [], "test": []}
-    by_lang = {"fr": [l for l in lines if l[0] == "fr"], "en": [l for l in lines if l[0] == "en"]}
     for i, (lang, clean, src) in enumerate(lines):
         part = "test" if i in test_ids else "valid" if i in valid_ids else "train"
-        pool = [l[1] for l in by_lang[lang]]
+        # Les messages composés ne piochent jamais une phrase de test.
+        pool = [l[1] for j, l in enumerate(lines) if l[0] == lang and j not in test_ids]
         nv = variants if part == "train" else 1
         for _ in range(nv):
             raw, kind = make_raw(clean, lang, rng, vocab, pool)
             split[part].append({**chat(raw, clean), "lang": lang, "kind": kind})
+        # Mots de liaison qui ont un sens en début de phrase : ils restent (« Donc, », « Ok, »).
+        if part == "train" and rng.random() < 0.12:
+            first = clean.split()[0]
+            if first.lower().strip(",.!?") in vocab and not first.isupper():
+                marker = rng.choice(MARKERS_KEPT[lang])
+                kept = marker + " " + clean[0].lower() + clean[1:]
+                raw, kind = make_raw(kept, lang, rng, vocab, pool)
+                split[part].append({**chat(raw, kept), "lang": lang, "kind": kind + ["liaison"]})
         # Messages composés de plusieurs lignes (dictées longues d'une traite).
         if part == "train" and rng.random() < 0.5:
             parts = [clean] + [rng.choice(pool) for _ in range(rng.randint(1, 3))]

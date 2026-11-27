@@ -89,7 +89,14 @@ jobs:
           build/Murmure.app/Contents/MacOS/Murmure --selftest Tests/fixtures/fr.wav --model parakeet-ultra --llm qwen2.5-1.5b 2>&1 \
             | grep -vE "^(llama|load|print_info|ggml|graph|llm_load|common)" | tee selftest.txt
           grep -q "^Brut : ." selftest.txt
+          grep -q "^Nettoyé : ." selftest.txt
           grep -q "^IA : ." selftest.txt
+
+      - name: Banc Murmure Cleanup 1
+        run: |
+          build/Murmure.app/Contents/MacOS/Murmure --cleanuptest Tests/cleanup-bench/eval.jsonl 2>&1 \
+            | grep -vE "^(llama|load|print_info|ggml|graph|llm_load|common)" | tee cleanup.txt
+          grep -q "^Identiques à la référence" cleanup.txt
 
       - name: Licence (serveur de production)
         run: build/Murmure.app/Contents/MacOS/Murmure --licensetest
@@ -156,6 +163,7 @@ jobs:
             build/Murmure.zip
             build/Murmure.dmg
             selftest.txt
+            cleanup.txt
             llm-compare.txt
             tones.txt
           if-no-files-found: ignore

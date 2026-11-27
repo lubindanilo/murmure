@@ -54,23 +54,148 @@ def letter_words(s):
     # Les lettres collées à un chiffre (« 15h », « 1er ») viennent de l'écriture des nombres : ignorées.
     return re.findall(r"(?<![\p{N}\p{L}])\p{L}+", s)
 
+# Mots-nombres (forme sans accents). « un/une » et « a » sont aussi des articles : ils ne gênent pas,
+# l'ensemble des valeurs permises est volontairement large ; on veut attraper 15 000 → 1 500.
+UNITS = {"zero": 0, "un": 1, "une": 1, "deux": 2, "trois": 3, "quatre": 4, "cinq": 5, "six": 6, "sept": 7,
+         "huit": 8, "neuf": 9, "dix": 10, "onze": 11, "douze": 12, "treize": 13, "quatorze": 14, "quinze": 15,
+         "seize": 16, "vingt": 20, "vingts": 20, "trente": 30, "quarante": 40, "cinquante": 50, "soixante": 60,
+         "premier": 1, "premiere": 1, "midi": 12, "minuit": 0, "demie": 30, "demi": 30, "quart": 15,
+         "one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "seven": 7, "eight": 8, "nine": 9, "ten": 10,
+         "eleven": 11, "twelve": 12, "thirteen": 13, "fourteen": 14, "fifteen": 15, "sixteen": 16,
+         "seventeen": 17, "eighteen": 18, "nineteen": 19, "twenty": 20, "thirty": 30, "forty": 40, "fifty": 50,
+         "sixty": 60, "seventy": 70, "eighty": 80, "ninety": 90, "oh": 0, "noon": 12, "midnight": 0,
+         "first": 1, "second": 2, "third": 3, "fourth": 4, "fifth": 5, "sixth": 6, "seventh": 7, "eighth": 8,
+         "ninth": 9, "tenth": 10, "eleventh": 11, "twelfth": 12, "thirteenth": 13, "fourteenth": 14,
+         "fifteenth": 15, "sixteenth": 16, "seventeenth": 17, "eighteenth": 18, "nineteenth": 19,
+         "twentieth": 20, "thirtieth": 30, "half": 30, "quarter": 15}
+SCALES = {"cent": 100, "cents": 100, "hundred": 100, "mille": 1000, "thousand": 1000, "k": 1000,
+          "million": 1_000_000, "millions": 1_000_000, "milliard": 10**9, "milliards": 10**9, "billion": 10**9}
+JOINERS = {"et", "and"}
+# Mots qu'on retire légitimement : hésitations, marqueurs de correction, unités devenues symboles.
+DROPPABLE = {"euh", "heu", "hum", "hmm", "bah", "ben", "genre", "hein", "um", "uh", "uhm", "er", "erm", "like",
+             "enfin", "non", "pardon", "plutot", "attends", "veux", "dire", "trompe", "fait", "mean", "sorry",
+             "no", "wait", "actually", "rather", "scratch", "that", "heures", "heure", "euros", "euro", "pour",
+             "percent", "dollars", "dollar", "pounds", "virgule", "point", "dot", "arobase", "at", "slash",
+             "tiret", "dash", "hyphen", "underscore", "bas", "pm", "am", "clock", "vois", "know", "you", "tu"}
+
+def norm_words(s):
+    s = unicodedata.normalize("NFKD", s.lower())
+    s = "".join(c for c in s if not unicodedata.combining(c))
+    return re.findall(r"\p{L}+|\p{N}+", s)
+
+def spoken_numbers(inp):
+    """Toutes les valeurs que la dictée peut désigner : chiffres écrits et suites de mots-nombres."""
+    vals = set()
+    for m in re.finditer(r"\d{1,3}(?:[ ,\u202f\u00a0.]\d{3})+|\d+", inp):
+        vals.add(int(re.sub(r"\D", "", m.group(0))))
+        for part in re.findall(r"\d+", m.group(0)):
+            vals.add(int(part))
+            if len(part) >= 7:                     # numéro dicté d'un bloc : « 0612345678 » → 06 12 34…
+                for k in range(1, 5):
+                    for i in range(len(part) - k + 1):
+                        vals.add(int(part[i:i + k]))
+    # Une hésitation au milieu d'un nombre ne le coupe pas : « one hundred, uh, and forty ».
+    inp = re.sub(r"(?i)[,\s]*(?<![\p{L}])(euh+|heu+|hum+|hmm+|bah|ben|uh+|um+|uhm|er)(?![\p{L}])[,\s]*", " ", inp)
+    words = re.findall(r"\p{L}+|\p{N}+|[,.;:!?]", unicodedata.normalize("NFKD", inp.lower()))
+    words = ["".join(c for c in w if not unicodedata.combining(c)) for w in words]
+    total, current, active = 0, 0, False
+    def flush():
+        nonlocal total, current, active
+        if active:
+            vals.add(total + current)
+        total, current, active = 0, 0, False
+    for w in words:
+        if w in UNITS:
+            v = UNITS[w]
+            vals.add(v)
+            r = current % 100
+            if w in ("vingt", "vingts") and r == 4:
+                current += 76                      # quatre-vingt
+            elif not active or r == 0 or (r % 10 == 0 and v < 10) or (r in (60, 80) and 10 <= v <= 19):
+                current += v                       # vingt et un, soixante-dix, cent deux…
+            else:
+                flush()                            # « trente-quatre cinquante-six » : deux nombres
+                current = v
+            active = True
+            vals.add(total + current)
+        elif w in SCALES:
+            sc = SCALES[w]
+            vals.add(sc)
+            if sc == 100:
+                current = max(current, 1) * 100
+            else:
+                total += max(current, 1) * sc
+                current = 0
+            active = True
+            vals.add(total + current)
+        elif w in JOINERS and active:
+            continue
+        else:
+            flush()
+    flush()
+    return vals
+
+def written_numbers(out):
+    nums = []
+    for m in re.finditer(r"\d{1,3}(?:[ ,\u202f\u00a0]\d{3})+(?![\d])|\d+", out):
+        nums.append(int(re.sub(r"\D", "", m.group(0))))
+    return nums
+
+def fold(w):
+    w = unicodedata.normalize("NFKD", w.lower())
+    return "".join(c for c in w if not unicodedata.combining(c))
+
+def repair(output, inp):
+    """Un mot de sortie absent de la dictée mais à une ou deux lettres d'un mot dicté est une coquille
+    du modèle (« Envoye » pour « envoie ») : on remet le mot dicté, avec la majuscule de la sortie."""
+    originals = {}
+    for m in re.finditer(r"(?<![\p{N}\p{L}])\p{L}+", inp):
+        originals.setdefault(fold(m.group(0)), m.group(0))
+    a = list(originals)
+    joined = set(a) | {x + y for x, y in zip(letter_words(inp), letter_words(inp)[1:])}
+    def fix(m):
+        w = m.group(0)
+        f = fold(w)
+        if f in joined or len(f) < 3:
+            return w
+        best, dist = None, 3
+        for c in a:
+            if (abs(len(c) - len(f)) <= 2 and c[:1] == f[:1]) or (len(f) > 3 and len(c) > 3 and c[1:3] == f[1:3]):
+                d = edit(list(f), list(c))
+                if d < dist and d <= max(1, len(c) // 3):
+                    best, dist = c, d
+        if best is None:
+            return w
+        rep = originals[best]
+        return rep[:1].upper() + rep[1:] if w[:1].isupper() else rep
+    return re.sub(r"(?<![\p{N}\p{L}])\p{L}+", fix, output)
+
 def cleanup_guard(output, inp):
-    """Garde-fou de Cleanup 1 (identique à CleanupModel.swift) : la sortie ne doit presque rien
-    contenir de nouveau (les nombres et symboles écrits en chiffres ne comptent pas) et rester
-    d'une longueur plausible. Renvoie (accepté, raison)."""
+    """Garde-fou de Cleanup 1 (identique à CleanupModel.swift). Renvoie (accepté, raison)."""
     if not output.strip():
         return False, "vide"
     a, b = letter_words(inp), letter_words(output)
     # Deux ou trois mots dictés recollés (« git hub » → « GitHub ») ne sont pas nouveaux.
     src = set(a) | {x + y for x, y in zip(a, a[1:])} | {x + y + z for x, y, z in zip(a, a[1:], a[2:])}
     novel = [w for w in b if w not in src]
-    if len(novel) > len(b) // 12:
+    if len(novel) > len(b) // 20:
         return False, "mots nouveaux : " + " ".join(novel[:5])
+    # Chaque nombre écrit doit venir de la dictée (en chiffres ou en lettres).
+    allowed = spoken_numbers(inp)
+    wrong = [n for n in written_numbers(output) if n not in allowed]
+    if wrong:
+        return False, "nombre inventé : " + " ".join(map(str, wrong[:3]))
     ci, co = len(inp), len(output)
     if co > ci * 1.25 + 12:
         return False, "trop long"
-    if len(a) >= 4 and len(b) < len(a) * 0.35:
+    # Mots porteurs de sens (sans hésitations, marqueurs de correction ni mots-nombres).
+    content = [w for w in a if w not in DROPPABLE and w not in UNITS and w not in SCALES and len(w) > 1]
+    kept = [w for w in b if w not in UNITS and w not in SCALES]
+    if len(content) >= 4 and len(kept) < len(content) * 0.5:
         return False, "trop court"
+    # La fin de la dictée ne doit pas disparaître (sortie coupée trop tôt).
+    if content and content[-1] not in b and content[-1] not in "".join(b):
+        return False, "fin perdue : " + content[-1]
     return True, ""
 
 # ----------------------------------------------------------------------------- mesures
@@ -130,6 +255,7 @@ def run_server(raw, url, prompt):
         msgs = [{"role": "system", "content": SYSTEM}, {"role": "user", "content": raw}]
         n_in = len(raw)
         out, s, _ = call(url, msgs, max_tokens=int(n_in / 2.2) + 24)
+        out = repair(out, raw)
         ok, why = cleanup_guard(out, raw)
         return (out if ok else remove_fillers(raw)), s, why
     pre = remove_fillers(raw)
