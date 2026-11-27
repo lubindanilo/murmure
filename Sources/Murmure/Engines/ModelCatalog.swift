@@ -220,5 +220,5 @@ struct LocalLLM: Identifiable, Hashable {
 
 /// Taille du fichier publié (affichée pendant l'installation).
 enum CleanupModelFile {
-    static let sizeBytes: Int64 = 400_000_000
+    static let sizeBytes: Int64 = 505_736_384
 }

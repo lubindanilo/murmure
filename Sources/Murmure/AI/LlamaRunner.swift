@@ -86,6 +86,98 @@ actor LlamaRunner {
         return String(decoding: output, as: UTF8.self)
     }
 
+    /// Génération gloutonne accélérée pour un texte qui recopie surtout son entrée (nettoyage de dictée) :
+    /// à chaque pas, on propose les tokens qui suivent, dans le prompt, les derniers tokens produits
+    /// (« prompt lookup »), et le modèle les vérifie en un seul passage. Un token proposé n'est gardé que
+    /// s'il est exactement celui que le modèle aurait choisi : la sortie est identique à `generate` à
+    /// température nulle, en trois à cinq fois moins de passages.
+    func generateCopying(messages: [(role: String, content: String)], maxTokens: Int, deadline: Date? = nil,
+                         draftLength: Int = 10) throws -> String {
+        guard let model, let context, let vocab else { throw MurmureError.llm("modèle non chargé.") }
+        let prompt = formatChat(model: model, messages: messages)
+        var tokens = tokenize(vocab: vocab, text: prompt)
+        let nCtx = Int(llama_n_ctx(context))
+        guard tokens.count + maxTokens + draftLength < nCtx else { throw MurmureError.llm("texte trop long pour le modèle local.") }
+        let memory = llama_get_memory(context)
+        llama_memory_clear(memory, true)
+        let nVocab = Int(llama_vocab_n_tokens(vocab))
+
+        var status = tokens.withUnsafeMutableBufferPointer { buf in
+            llama_decode(context, llama_batch_get_one(buf.baseAddress, Int32(buf.count)))
+        }
+        guard status == 0 else { throw MurmureError.llm("échec du décodage (\(status)).") }
+
+        func argmax(_ index: Int32) -> llama_token {
+            guard let logits = llama_get_logits_ith(context, index) else { return 0 }
+            var best = 0
+            var bestValue = logits[0]
+            for i in 1..<nVocab where logits[i] > bestValue { bestValue = logits[i]; best = i }
+            return llama_token(best)
+        }
+
+        /// Tokens qui suivent, dans le prompt, la plus longue fin (3, 2 puis 1 token) de la sortie.
+        func draft(after generated: [llama_token]) -> [llama_token] {
+            for n in stride(from: min(3, generated.count), through: 1, by: -1) {
+                let tail = Array(generated.suffix(n))
+                var i = tokens.count - n
+                while i >= 0 {
+                    if Array(tokens[i..<i + n]) == tail {
+                        let start = i + n
+                        let end = min(tokens.count, start + draftLength)
+                        if start < end { return Array(tokens[start..<end]) }
+                    }
+                    i -= 1
+                }
+            }
+            return []
+        }
+
+        var batch = llama_batch_init(Int32(draftLength + 1), 0, 1)
+        defer { llama_batch_free(batch) }
+        var generated: [llama_token] = []
+        var nPast = Int32(tokens.count)
+        var next = argmax(-1)
+        lastIncomplete = true
+        while generated.count < maxTokens {
+            if let deadline, Date() > deadline { throw MurmureError.llm("délai dépassé.") }
+            if llama_vocab_is_eog(vocab, next) { lastIncomplete = false; break }
+            generated.append(next)
+            let proposal = Array(draft(after: generated).prefix(maxTokens - generated.count))
+            let input = [next] + proposal
+            batch.n_tokens = Int32(input.count)
+            for (i, token) in input.enumerated() {
+                batch.token[i] = token
+                batch.pos[i] = nPast + Int32(i)
+                batch.n_seq_id[i] = 1
+                batch.seq_id[i]![0] = 0
+                batch.logits[i] = 1
+            }
+            status = llama_decode(context, batch)
+            if status != 0 { break }
+            var accepted = 0
+            var candidate = argmax(0)
+            var finished = false
+            while accepted < proposal.count, candidate == proposal[accepted] {
+                if llama_vocab_is_eog(vocab, candidate) { finished = true; break }
+                generated.append(candidate)
+                accepted += 1
+                candidate = argmax(Int32(accepted))
+            }
+            nPast += Int32(1 + accepted)
+            // Les tokens proposés puis refusés sortent du cache.
+            if accepted < proposal.count { _ = llama_memory_seq_rm(memory, 0, nPast, -1) }
+            if finished { lastIncomplete = false; break }
+            next = candidate
+        }
+        var output = [UInt8]()
+        var piece = [CChar](repeating: 0, count: 256)
+        for token in generated {
+            let n = llama_token_to_piece(vocab, token, &piece, Int32(piece.count), 0, false)
+            if n > 0 { output += piece[0..<Int(n)].map { UInt8(bitPattern: $0) } }
+        }
+        return String(decoding: output, as: UTF8.self)
+    }
+
     private func tokenize(vocab: OpaquePointer, text: String) -> [llama_token] {
         let utf8Count = Int32(text.utf8.count)
         let needed = -llama_tokenize(vocab, text, utf8Count, nil, 0, true, true)

@@ -86,7 +86,7 @@ final class CleanupModel {
         let maxTokens = Int(Double(input.count) / 2.2) + 24
         let output: String
         do {
-            output = try await runner.generate(messages: messages, maxTokens: maxTokens, deadline: deadline)
+            output = try await runner.generateCopying(messages: messages, maxTokens: maxTokens, deadline: deadline)
         } catch {
             return fallback(error.localizedDescription)
         }
