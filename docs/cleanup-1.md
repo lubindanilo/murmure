@@ -151,6 +151,9 @@ Pour couper Cleanup 1 : désactiver l'IA dans les réglages (la dictée garde al
 - **Langues** : entraîné en français et en anglais seulement. Une dictée dans une autre langue passe en
   général le garde-fou inchangée ou retombe sur les règles.
 - **M1** : la latence n'a pas été mesurée sur M1 (estimation ci-dessus).
+- **Sans GPU** (VM de la CI) : le modèle dépasse son délai et la dictée retombe sur les règles (49 fois sur
+  50 en CI). La lecture du prompt n'est pas interruptible : sur une telle machine, l'attente peut atteindre
+  2 à 6 s avant le repli. Sans conséquence sur un Mac Apple silicon (Metal), où elle prend ~30 ms.
 - **Évaluation** : 5 des 50 dictées réalistes avaient une phrase reprise telle quelle dans le corpus
   (exemples donnés aux agents) ; les chiffres « sans fuite » les excluent.
 
