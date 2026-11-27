@@ -3,7 +3,9 @@ import Foundation
 
 /// Vérification de bout en bout sans micro ni interface :
 ///   Murmure --selftest fichier.wav [--model parakeet-v3] [--llm qwen2.5-1.5b] [--mode Nettoyage]
-/// Télécharge les modèles si besoin, transcrit le fichier, puis applique l'IA locale.
+///   Murmure --cleanuptest dictees.txt|eval.jsonl [--cleanup-model fichier.gguf]
+/// Télécharge les modèles si besoin, transcrit le fichier, le nettoie avec Murmure Cleanup 1,
+/// puis applique l'IA locale si --llm est donné.
 @MainActor
 enum SelfTest {
     static func run(_ args: [String]) async -> Int32 {
@@ -13,6 +15,8 @@ enum SelfTest {
         }
         let settings = Settings.shared
         if args.contains("--licensetest") { return await licenseTest() }
+        if let path = value("--cleanup-model") { CleanupModel.overridePath = path }
+        if let path = value("--cleanuptest") { return await cleanupTest(path) }
         if let textsPath = value("--llmtest") {
             return await llmTest(textsPath, llms: value("--llm") ?? "", settings: settings,
                                  tone: value("--tone").flatMap(AutoTone.init(rawValue:)))
@@ -48,6 +52,11 @@ enum SelfTest {
             let raw = try await engine.transcribe(samples, language: language, vocabulary: settings.dictionary)
             print("[\(model.name)] \(String(format: "%.2f", Date().timeIntervalSince(t))) s")
             print("Brut : \(TextProcessing.apply(raw, replacements: settings.replacements))")
+            if await ensureCleanupModel() {
+                let r = await CleanupModel.shared.clean(TextProcessing.apply(raw, replacements: []))
+                print("[Cleanup 1] \(String(format: "%.2f", r.seconds)) s\(r.usedModel ? "" : " · repli : \(r.fallbackReason)")")
+                print("Nettoyé : \(r.text)")
+            }
 
             if let llmID = value("--llm"), let llm = LocalLLM.model(llmID) {
                 let ai = PostProcessor.shared
@@ -114,6 +123,65 @@ extension SelfTest {
                     print("#\(i + 1) ERREUR \(error.localizedDescription)")
                 }
             }
+        }
+        return 0
+    }
+}
+
+extension SelfTest {
+    /// Télécharge Cleanup 1 si besoin. Faux si le téléchargement échoue.
+    static func ensureCleanupModel() async -> Bool {
+        let cleanup = CleanupModel.shared
+        if cleanup.isInstalled { return true }
+        let ai = PostProcessor.shared
+        print("Téléchargement de \(LocalLLM.cleanup.name)…")
+        ai.download(.cleanup)
+        while !cleanup.isInstalled {
+            if ai.downloadProgress[LocalLLM.cleanup.id] == nil, let e = ai.lastError { print("Échec : \(e)"); return false }
+            try? await Task.sleep(nanoseconds: 300_000_000)
+        }
+        return true
+    }
+
+    /// Banc de Murmure Cleanup 1 : une dictée brute par ligne (.txt), ou des objets {"raw", "ref"} (.jsonl).
+    /// Affiche le résultat, le temps et les replis, puis la latence médiane et le taux de replis.
+    ///   Murmure --cleanuptest Tests/cleanup-bench/eval.jsonl
+    static func cleanupTest(_ path: String) async -> Int32 {
+        setvbuf(stdout, nil, _IONBF, 0)
+        guard let content = try? String(contentsOfFile: path, encoding: .utf8) else { print("Fichier illisible"); return 2 }
+        var cases: [(raw: String, ref: String?)] = []
+        for line in content.split(separator: "\n").map(String.init) where !line.isEmpty {
+            if path.hasSuffix(".jsonl"), let data = line.data(using: .utf8),
+               let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any], let raw = obj["raw"] as? String {
+                cases.append((raw, obj["ref"] as? String))
+            } else {
+                cases.append((line, nil))
+            }
+        }
+        guard await ensureCleanupModel() else { return 1 }
+        let cleanup = CleanupModel.shared
+        var t = Date()
+        cleanup.warmUp()
+        _ = await cleanup.clean("ok")
+        print("Chargement : \(String(format: "%.2f", Date().timeIntervalSince(t))) s")
+        var times: [Double] = [], fallbacks = 0, exact = 0, rulesExact = 0
+        for (i, c) in cases.enumerated() {
+            t = Date()
+            let r = await cleanup.clean(c.raw)
+            times.append(Date().timeIntervalSince(t))
+            if !r.usedModel { fallbacks += 1 }
+            print("#\(i + 1) [\(String(format: "%.3f", times.last!)) s]\(r.usedModel ? "" : " [repli : \(r.fallbackReason)]") \(r.text)")
+            if let ref = c.ref {
+                if r.text == ref { exact += 1 }
+                if TextProcessing.removeFillers(c.raw) == ref { rulesExact += 1 }
+                if r.text != ref { print("   attendu : \(ref)") }
+            }
+        }
+        let sorted = times.sorted()
+        print(String(format: "\n%d dictées · médiane %.3f s · p90 %.3f s · max %.3f s · replis %d",
+                     cases.count, sorted[sorted.count / 2], sorted[Int(Double(sorted.count) * 0.9)], sorted.last!, fallbacks))
+        if cases.contains(where: { $0.ref != nil }) {
+            print("Identiques à la référence : Cleanup 1 \(exact)/\(cases.count), règles \(rulesExact)/\(cases.count)")
         }
         return 0
     }

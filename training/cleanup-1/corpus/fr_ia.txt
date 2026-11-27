@@ -1,0 +1,293 @@
+Écris un mail à Sarah pour décaler la réunion de jeudi à vendredi 10h, ton cordial mais direct.
+Ouvre lib/db.ts, il manque la fermeture de la connexion à la fin de la requête.
+Peux-tu me trouver un article récent sur le RAG avec des embeddings ?
+Supprime le dossier node_modules et le fichier package-lock.json, puis relance npm install.
+Pourquoi la page /login renvoie une erreur 500 quand le mot de passe contient un accent ?
+Écris la documentation de la fonction sendInvoice en deux phrases.
+Dis-moi simplement si je peux merger cette PR ou pas.
+Prépare un résumé de 100 mots de cet article pour la newsletter de vendredi.
+Fais une branche qui s'appelle fix/login-accent et pousse-la sur GitHub.
+Mets à jour la dépendance stripe vers la dernière version et vérifie que rien ne casse.
+Retiens bien que le client s'appelle Hyperstack et pas Hyperstock.
+Je te donne trois règles : pas d'emoji, pas de jargon, et toujours une conclusion en une phrase.
+Vérifie que le site s'affiche bien sur un iPhone, en largeur 375 pixels.
+Lance le serveur en local sur le port 3000 et dis-moi quand c'est prêt.
+Ça marche pas.
+Est-ce qu'on peut remplacer axios par fetch sans casser les intercepteurs ?
+Résume ce PDF en une page, avec les chiffres clés en premier.
+Écris un mail pour Inès, pour lui demander la facture n°2026-118 avant vendredi.
+Ce commentaire de Karim sur la PR, tu peux y répondre poliment en disant qu'on corrige demain matin ?
+Pourquoi git me dit que ma branche a divergé ? Je n'ai rien fait de spécial.
+Pose-moi une question à la fois, et attends ma réponse avant de passer à la suivante.
+Utilise Tailwind plutôt que du CSS à la main, et garde les mêmes couleurs que sur la maquette Figma.
+Passe en revue les 25 derniers commits et résume ce qui a changé côté API.
+Cursor, ajoute un état de chargement sur le bouton d'envoi.
+Peux-tu me résumer cette page de documentation en gardant seulement les étapes d'installation ?
+Commit avec le message fix: corrige le calcul de la TVA, puis push sur la branche feature/invoices.
+Ouvre le fichier docker-compose.yml et vérifie que le port 5432 est bien exposé.
+Dis-moi ce qui a changé entre la version 14 et la version 15 de Next.js.
+Ajoute un test qui vérifie que la route /api/health renvoie bien un statut 200.
+Bonjour Claude, j'ai un souci avec mon formulaire de contact, il envoie deux fois le mail.
+Pourquoi le build Vercel prend huit minutes alors qu'en local ça en prend deux ?
+Check les logs Vercel du dernier déploiement et dis-moi pourquoi il a échoué.
+Je veux que tu réécrives le prompt système pour qu'il soit plus court et plus direct.
+Supprime tous les console.log avant que je pousse en production.
+Utilise TypeScript strict, pas de any, et pas de librairie en plus.
+Ton résumé est trop long, il me faut dix lignes maximum.
+Reformule ma demande de manière plus claire avant de l'exécuter.
+Peux-tu vérifier que le site s'affiche bien sur mobile, surtout la page tarifs ?
+Je veux un résumé de la réunion d'hier avec les décisions, les responsables et les dates limites.
+Peux-tu relire le fichier src/app.ts et me dire pourquoi le build plante ?
+Je voudrais une fonction qui prend un tableau de clients et renvoie ceux qui n'ont pas payé depuis plus de 30 jours.
+Parfait, tu peux merger.
+Dans Cursor, ajoute un hook useDebounce qui prend une valeur et un délai en millisecondes.
+Relance le serveur de dev sur le port 3001, le 3000 est déjà pris.
+Reprends depuis le début, mais cette fois garde la structure actuelle du dossier src.
+Compare les deux approches et donne-moi ta recommandation, pas un pavé.
+Rédige un message Slack pour annoncer que le déploiement est prévu à 17h30, avec un point de rollback si besoin.
+Je te redonne le contexte, parce que tu l'as perdu : on migre l'app de Heroku vers Vercel avant la fin du mois.
+Trouve la cause du memory leak, je pense que ça vient du setInterval dans le composant Timer.
+Génère une réponse polie pour refuser le devis de 8 000 €, on a pas le budget ce trimestre.
+Rédige un mail à Manon pour décaler la réunion de jeudi à vendredi 10h.
+Rédige une réponse à Chloé : on accepte sa proposition, mais on voudrait une facture avant le 15 décembre.
+Dans le script scripts/seed.ts, ajoute 50 utilisateurs de test avec des noms et des mails réalistes.
+Ajoute un bouton Exporter en CSV sur la page des factures.
+Merci, c'est parfait.
+Tu es un assistant commercial. Tu réponds toujours en français, tu poses une question à la fois et tu ne promets jamais de remise.
+Dis-moi simplement oui ou non : est-ce que le bug vient de la base de données ?
+Annule le dernier commit mais garde les modifications.
+Fais un git stash, passe sur main, puis pull.
+Dans le fichier tailwind.config.ts, ajoute une couleur brand avec la valeur bleue de la charte.
+Tu as oublié d'importer useState en haut du fichier.
+Dans le fichier styles/globals.css, supprime les règles qui ne sont plus utilisées.
+Utilise le fichier CLAUDE.md pour retrouver les conventions du projet.
+Fais plus court.
+Utilise Playwright pour tester le parcours d'inscription de bout en bout.
+Lance les tests avec npm test et corrige ceux qui échouent, un par un.
+Rédige une description de PR avec le contexte, les changements et comment tester.
+Convertis ce composant de classe en composant fonctionnel avec des hooks.
+Fais attention, la clé API ne doit jamais apparaître dans le code, uniquement dans les variables d'environnement.
+Écris le code de la route DELETE, mais demande une confirmation avant de supprimer quoi que ce soit.
+Dans le fichier hooks/useAuth.ts, la session expire au bout de 15 minutes, passe-la à une heure.
+Attention, ne supprime surtout pas le dossier migrations.
+Prends en compte que 80 % de nos utilisateurs sont sur mobile, donc pense mobile first.
+Ajoute un champ phone au schéma Zod dans lib/validation.ts, optionnel, avec un format français.
+Quel est le meilleur moyen de stocker un secret avec GitHub Actions ?
+Je voudrais une réponse en trois parties : le problème, la cause, la solution.
+Peux-tu relire cette PR et me dire s'il y a un risque de régression sur le paiement Stripe ?
+Ajoute un index sur la colonne email dans la table users, avec une migration Supabase.
+Cherche sur le web quelle est la dernière version stable de Node et dis-moi si on peut migrer sans risque.
+Le hook useEffect dans Dashboard.tsx se déclenche en boucle, trouve pourquoi.
+Mets à jour la version de Node dans le fichier .nvmrc, on passe à la 22.
+Ok, mais explique-moi d'abord ce que tu vas changer avant de toucher au code.
+Traduis ce message en anglais, ton professionnel mais pas trop formel.
+Le bouton Valider reste grisé même quand tous les champs sont remplis, trouve la cause.
+Tu veux bien me dire quelle librairie tu utiliserais pour les dates ? Je pense à date-fns.
+Fais une recherche sur les meilleures pratiques pour gérer les tokens JWT côté serveur, et donne-moi les sources.
+Ajoute un commentaire JSDoc sur chaque fonction exportée de lib/utils.ts.
+Fais une recherche rapide sur Doctolib : comment ils gèrent la prise de rendez-vous en ligne ?
+Compare le prix de l'abonnement Zoom Pro et celui de Google Meet pour une équipe de 12 personnes.
+Corrige la typo dans le titre de la page d'accueil.
+Ajoute un fichier .gitignore avec node_modules, .env et dist.
+Lance le build en production, et dis-moi la taille du bundle principal en Ko.
+Merci, mais j'ai dit sans les emojis.
+Je suis dans le dossier hyperstack-site, lance le projet et ouvre-le dans le navigateur.
+Dans le fichier config.py, change la valeur de MAX_RETRIES à 5 et ajoute un commentaire pour expliquer pourquoi.
+Explique-moi cette erreur comme si j'avais cinq ans : Cannot read properties of undefined.
+Génère trois variantes de ce texte pour la page d'accueil, une sérieuse, une drôle, une très courte.
+Cherche sur le web le prix actuel de l'API de Claude et compare avec celui de ChatGPT.
+Je te laisse faire, préviens-moi juste quand c'est terminé.
+Réponds simplement oui ou non, est-ce que ce code est thread-safe ?
+Vérifie l'accessibilité de la page d'accueil, surtout le contraste des boutons et les labels des champs.
+Je veux que le code soit simple, pas de sur-ingénierie, pas d'abstraction inutile.
+Trouve-moi le numéro de la dernière facture dans le dossier Google Drive Compta 2026.
+Ajoute un test unitaire pour la fonction parseDate dans utils/date.ts, avec trois cas limites.
+Fais une revue de sécurité du fichier auth.ts, et classe les problèmes par gravité.
+Pourquoi j'ai une erreur 404 sur la route /api/users ? Regarde dans app/api/users/route.ts.
+Dans le README, ajoute une section pour expliquer comment lancer le projet en local, avec les commandes.
+Dans le hook useAuth, retourne aussi le rôle de l'utilisateur, pas seulement son email.
+Fais un résumé de la réunion d'hier à partir de mes notes, avec les décisions et les actions à faire.
+Fais une pause et résume où on en est, ce qui est fait et ce qu'il reste à faire.
+Lance pnpm test et montre-moi seulement les tests qui échouent.
+Qu'est-ce qui a changé dans le fichier middleware.ts depuis la semaine dernière ?
+Prépare un plan avant de coder, et attends mon feu vert.
+Merci, je regarde ça cet après-midi et je te redis.
+Non, pas comme ça. Reprends depuis le début.
+Là, t'as cassé le test de paiement, annule ce que tu viens de faire.
+Passe le typage en strict dans tsconfig.json et corrige les erreurs qui apparaissent, une par une.
+Bonne idée, continue comme ça.
+Je voudrais que tu optimises la requête SQL de la page dashboard, elle prend presque 4 secondes.
+Crée une fonction slugify qui enlève les accents et remplace les espaces par des tirets.
+Non, garde la version d'avant, elle était mieux.
+Écris un README en français pour le projet, avec l'installation, les variables d'environnement et la commande npm run dev.
+Déplace la logique métier hors du composant, dans un fichier services/invoice.ts.
+Fais-moi un résumé de l'article que je viens de coller, et dis-moi si ça vaut la peine de le lire en entier.
+Vérifie que l'URL de l'API est bien https://api.hyperstack.studio/v2 dans tous les fichiers de config.
+Tu peux refactorer la fonction handleSubmit ? Elle fait plus de 80 lignes, c'est illisible.
+Ça prend trop de temps, passe directement à la solution.
+Teste le formulaire avec un email invalide, un champ vide et un mot de passe de trois caractères.
+Dans mon fichier .env, il y a une clé qui traîne, vérifie qu'elle n'est pas commitée dans l'historique.
+Claude, ouvre src/app.ts et dis-moi pourquoi le build plante.
+Peux-tu vérifier si la clé API est pas exposée côté client ?
+Ouvre une branche fix/login-redirect, corrige la redirection après connexion, puis ouvre une PR.
+Tu t'es trompé de fichier, je voulais components/Header.tsx, pas Footer.tsx.
+Reformule ce paragraphe pour qu'il soit moins long, sans perdre l'information sur le prix de 49,90 €.
+Cherche si une librairie existe déjà pour générer des PDF de factures en Node, avant qu'on la code nous-mêmes.
+Ajoute une variable d'environnement NEXT_PUBLIC_API_URL dans le fichier .env.local et utilise-la dans lib/api.ts.
+Rédige trois tweets pour annoncer la nouvelle version de Murmure, ton léger, pas de hashtags.
+Cherche dans tout le repo où on utilise la variable isLoading.
+Dans la PR de Mehdi, le nom de la fonction handleStuff est pas clair, propose mieux.
+Tu peux m'expliquer la différence entre useMemo et useCallback ? Avec un exemple concret, s'il te plaît.
+Stop, annule la dernière modification.
+Active le mode strict dans le fichier tsconfig.json et liste-moi toutes les erreurs que ça fait remonter.
+Résume-moi ce mail en deux phrases, et dis-moi s'il y a une deadline.
+Je veux que le texte de l'onboarding soit plus chaleureux, mais toujours en vouvoiement.
+Mets un timeout de 30 secondes sur la requête vers l'API de HubSpot.
+Je suis dans le dossier components, crée-moi un fichier Modal.tsx avec un fond sombre et un bouton pour fermer.
+Ajoute un loader pendant le chargement de la liste, un simple spinner suffit.
+Cherche des exemples de landing pages de SaaS B2B qui convertissent bien, avec des chiffres si possible.
+Rajoute un try catch autour de l'appel à fetch, et log l'erreur dans la console.
+Pourquoi tu as supprimé ma fonction ? Remets-la comme avant.
+Écris la fonction slugify dans lib/slug.ts, elle doit enlever les accents et remplacer les espaces par des tirets.
+Crée un composant React qui affiche une liste de 20 clients avec une barre de recherche.
+Est-ce que tu peux me trouver des articles récents sur le RGPD et les outils d'IA ?
+Pourquoi ce composant se re-rend 12 fois à chaque clic ? Utilise le profiler pour trouver la cause.
+Pourquoi le test auth.test.ts échoue seulement sur la CI ?
+Cherche les dépendances obsolètes avec npm outdated, mais ne les mets pas à jour sans me demander.
+Écris une petite doc pour expliquer comment lancer les migrations, à destination d'un développeur junior.
+Relance la commande avec le flag --verbose et montre-moi la sortie complète.
+Lance npx prisma migrate dev et dis-moi si la migration passe.
+Ajoute une règle dans CLAUDE.md : toujours lancer les tests avant de proposer un commit.
+Crée un composant Button dans components/ui/button.tsx avec trois variantes : primary, secondary et ghost.
+Explique-moi en deux minutes comment marche l'authentification avec les JWT.
+Écris-moi un prompt pour ChatGPT qui génère des idées de posts LinkedIn sur l'IA en entreprise.
+Refais ton résumé, il est trop long, je veux cinq lignes maximum.
+Fais-moi une liste de dix noms possibles pour cette fonctionnalité, en un mot si possible.
+Le problème, c'est que le webhook Stripe est appelé deux fois, donc ajoute une vérification d'idempotence.
+Explique-moi ce que fait la regex dans validators.ts, ligne par ligne.
+Relis ma réponse à Karim, et dis-moi si le ton est trop sec.
+Fais-moi un tableau comparatif entre Linear et Jira, avec le prix par utilisateur et les points forts.
+Réponds en français, de manière courte, sans blabla.
+Écris un prompt pour ChatGPT qui lui demande de jouer le rôle d'un client mécontent, pour que je m'entraîne.
+Ne touche pas au fichier .env, je l'ai déjà configuré.
+Fais un diff entre la branche main et la branche feature/pricing, et résume-moi les changements importants.
+Peux-tu écrire un mail en anglais à un client américain pour lui dire que la démo est confirmée le 3 décembre à 4 pm ?
+Utilise le thème sombre par défaut, et garde la préférence de l'utilisateur dans le localStorage.
+Compare les deux approches et recommande-moi-en une, pas dix.
+Ajoute un index sur la colonne created_at de la table orders, ça rame trop sur la liste.
+Tu peux ajouter un log au début de la fonction syncContacts pour voir quand elle est appelée ?
+Est-ce que cette regex valide bien les numéros comme 06 12 34 56 78 ?
+Corrige le bug.
+Vérifie que le certificat SSL de murmure-ai.com ne expire pas avant 2027.
+Écris un mail pour Inès avec le récap de la journée, en quatre phrases maximum.
+Ajoute des tests pour tous les cas où le panier est vide ou contient plus de 100 articles.
+Dans l'onglet Network, la requête vers /api/orders met 4 secondes, c'est quoi le problème ?
+Résume-moi ce mail de Julien en trois lignes maximum.
+Mets à jour le fichier CHANGELOG.md avec les modifs de cette semaine.
+Écris-moi un prompt système pour un assistant de support client, poli, concis, et qui ne promet jamais de remboursement.
+Regarde la PR numéro 42, elle touche à la facturation, donc relis-la deux fois.
+Rédige un mail court à Chloé pour lui dire que la maquette Figma est validée, et qu'on passe au développement lundi.
+Génère-moi un message de commit clair pour les changements que tu viens de faire.
+Regarde le fichier logs/error.log et dis-moi quelle est l'erreur qui revient le plus souvent.
+Dis-moi ce que fait la fonction getUserById, je comprends pas pourquoi elle renvoie null.
+Je veux une explication courte, pas un cours.
+Remplace tous les console.log par un vrai logger, mais seulement dans le dossier src/server.
+Rédige un mail de relance pour Mehdi, il n'a pas répondu depuis dix jours, reste aimable.
+Pourquoi le build passe en local mais échoue sur Vercel ?
+Utilise l'API de Notion pour récupérer toutes les pages modifiées depuis lundi 24 novembre.
+Alors, voilà ce que je veux : une petite app qui lit un fichier Excel et envoie un récap par mail tous les lundis à 8h.
+Cherche un tutoriel sur les webhooks Stripe en Node, de préférence en français.
+Décris-moi l'architecture actuelle du dossier src, sans lire chaque fichier en détail.
+Explique-moi ce que fait ce useEffect, il se déclenche en boucle et je comprends pas pourquoi.
+Relis le diff une dernière fois, et si tout est bon, merge avec squash.
+Dans Claude Code, lance npm run lint puis corrige toutes les erreurs que tu peux régler sans toucher à la logique.
+Ajoute une variable NEXT_PUBLIC_API_URL dans le fichier .env.local et mets à jour le README.
+Dans le fichier package.json, passe la version de Next à 15 et relance npm install.
+Je voudrais que tu écrives un mail pour remercier Sarah de son aide sur le dossier, sans que ce soit trop formel.
+Relis cette PR, je veux surtout que tu regardes la gestion des erreurs dans api/users.ts.
+Crée une table users avec un id, un email unique, un nom, et une date de création.
+Ajoute la gestion des erreurs réseau, avec un bouton Réessayer dans l'interface.
+C'est quoi la complexité de cette fonction ?
+Ouvre le fichier config/routes.ts et dis-moi combien de routes sont protégées par le middleware.
+Regarde pourquoi le cookie de session disparaît après 2 minutes, je pense que c'est maxAge.
+Peux-tu me générer un jeu de données de test avec 50 clients fictifs, noms français, emails et téléphones ?
+Fais-moi un résumé de ce PDF en cinq points, avec les chiffres clés en premier.
+Peux-tu me dire combien de fichiers TypeScript il y a dans le dossier src ?
+Propose-moi trois objets de mail pour relancer un client qui n'a pas répondu depuis deux semaines.
+Ça fait 20 minutes que tu tournes en rond, change de méthode.
+Réécris ce message pour Louis, il est un peu vexé, donc sois diplomate.
+Peux-tu renommer la fonction getUser en fetchUserById partout dans le projet ?
+Le composant Header fait 400 lignes, découpe-le en plusieurs petits composants.
+Supprime la dépendance moment et utilise date-fns à la place.
+Le linter râle sur src/utils/format.ts, corrige les warnings sans changer le comportement.
+Utilise une transaction pour que les deux insertions réussissent ou échouent ensemble.
+Dans Cursor, ouvre le fichier components/Button.tsx et ajoute une prop disabled.
+Dans la PR de Hugo, regarde surtout le fichier middleware.ts, je crois qu'il y a une faille.
+Corrige l'orthographe de ce texte, mais ne change pas mon style.
+Ne modifie pas le fichier package.json, c'est important.
+Fais une recherche sur les tarifs de Stripe en Europe et compare avec ceux de Qonto.
+Le bouton Valider reste grisé même quand le formulaire est rempli, regarde le state dans components/Form.tsx.
+Dans la revue de code, signale-moi seulement les problèmes de sécurité, pas le style.
+Pourquoi tu as changé le nom du fichier ? Remets-le comme avant.
+Fais un git diff et explique-moi les changements en langage simple.
+Pas besoin de tout réécrire, change juste la ligne 42.
+Ajoute un champ téléphone au formulaire d'inscription, avec une validation pour les numéros français comme 06 12 34 56 78.
+Pose-moi une question si tu hésites, ne devine pas.
+Explique-moi ce message d'erreur comme si j'avais dix ans : Cannot read properties of undefined.
+Ajoute une page 404 qui renvoie vers l'accueil, avec un petit message sympa.
+Rédige trois objets de mail possibles pour la newsletter de décembre, courts et sans majuscules inutiles.
+Utilise le skill frontend pour créer la page de connexion, et respecte les couleurs du fichier DESIGN.md.
+Réécris cette phrase pour qu'elle sonne moins robotique.
+Écris un script bash qui sauvegarde le dossier data/ dans une archive datée, chaque nuit à 3h.
+Ne touche pas aux fichiers de test, je les ai déjà écrits.
+Crée un agent qui surveille ma boîte Gmail et me prévient quand un client écrit le mot urgent.
+Je veux que tu te mettes à ma place et que tu me poses trois questions avant de commencer.
+Mets un timeout de 10 secondes sur la requête, et affiche un message d'erreur clair à l'utilisateur.
+Passe la requête en async await, et supprime les then.
+Écris un message Slack pour prévenir l'équipe que le déploiement sur Vercel est reporté à demain.
+Génère un schéma de la base de données à partir du fichier schema.prisma, en format Mermaid.
+Regarde si la fonction parseDate gère bien le cas où la chaîne est vide.
+Renomme la variable tmp en userCount dans utils/stats.ts, partout où elle apparaît.
+Donne-moi une liste de dix idées de noms pour l'application, en français, courts et faciles à retenir.
+Ajoute une GitHub Action qui lance les tests et le linter à chaque push sur main.
+Réponds en français, de façon courte, et sans faire de liste.
+Stop, arrête-toi là, tu pars dans la mauvaise direction.
+Lance git status et dis-moi quels fichiers ont changé depuis hier.
+Je veux que tu lises le fichier README.md avant de toucher à quoi que ce soit.
+Rédige une réponse pour un candidat : on a bien reçu son dossier, on revient vers lui d'ici dix jours.
+Je te donne le contexte : on a une app Next.js hébergée sur Vercel, avec une base Supabase.
+Je veux que tu me poses des questions avant de commencer, pas après.
+Peux-tu me faire un tableau comparatif entre Webflow, Framer et Shopify pour un petit site vitrine ?
+Reprends le même style que dans le fichier lib/api.ts, avec des fonctions async et pas de classes.
+Prends le CSV que je viens de te donner et transforme-le en JSON, une entrée par client.
+Cherche les trois meilleurs outils pour automatiser la facturation, et dis-moi lesquels se branchent sur Pennylane.
+Tu peux m'expliquer la différence entre useMemo et useCallback, avec un exemple simple ?
+Cherche si la bibliothèque zod gère les dates au format ISO, et montre-moi un exemple.
+Ajoute une pagination de 20 éléments par page sur la liste des commandes, avec les boutons précédent et suivant.
+Fais-moi une liste de questions à poser à Emma pour l'entretien de jeudi.
+Lance npm run build et colle-moi seulement les erreurs.
+Vérifie que la fonction calculateTotal gère bien les remises de 15 % et de 20 %.
+Écris-moi un script bash qui sauvegarde le dossier data tous les soirs à 23h.
+Fais un mail court pour relancer Yanis, il doit me renvoyer le contrat signé avant lundi.
+Je voudrais que tu me fasses une revue de code très stricte, comme si tu étais le tech lead.
+Écris un test unitaire pour la fonction formatPrice, avec les cas 0, 1 500 et 12 000,50.
+Utilise la commande docker compose up pour relancer la base de données en local.
+Crée un endpoint POST sur /api/contact qui envoie un mail via Resend et renvoie un code 200.
+Non, pas comme ça.
+Tu peux traduire ce paragraphe en anglais, mais en gardant un ton décontracté ?
+Écris un message pour Nathan : la maquette Figma est prête, il peut commencer l'intégration.
+Peux-tu relire mon mail avant que je l'envoie à Arthur ? J'ai peur d'être un peu sec.
+Fais-moi un plan en cinq étapes pour migrer la base de Airtable vers Supabase.
+Dans pages/index.tsx, remplace le titre par Bienvenue chez Hyperstack et mets-le en gras.
+Fais-moi une synthèse des retours clients de novembre, avec les trois problèmes les plus cités.
+Rédige une réponse à Thomas qui refuse poliment sa proposition de 4 500 €, mais qui laisse la porte ouverte.
+Peux-tu regarder si la fonction formatPrice affiche bien 1 500 € avec une espace et pas une virgule ?
+Compare les performances de Postgres et de MongoDB pour notre cas, un millier d'écritures par minute.
+Ça compile, mais l'appli reste sur un écran blanc, regarde la console du navigateur.
+Quand tu as fini, lance npm run build et préviens-moi si ça passe.
+Fais-moi un script Python qui renomme tous les fichiers du dossier avec la date du jour devant.
+Remplace les couleurs en dur par des variables CSS, c'est plus propre pour le thème.
+Fais un commit avec le message fix: corrige le calcul de la TVA à 20 %, puis pousse.
+Fais un résumé de cette conversation Slack, en gardant que ce qui me concerne.
+Ajoute un try catch autour de l'appel à fetch et logue l'erreur avec console.error.
+Ajoute un loader dans le composant InvoiceTable pendant que les données se chargent.

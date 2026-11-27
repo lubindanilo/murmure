@@ -320,7 +320,7 @@ struct HomePage: View {
                 }
                 .help("Mail : soigné · Slack, Messages : naturel · ChatGPT, Claude, Cursor : prompt clair")
                 if let last = history.entries.first {
-                    LastDictationCard(text: last.text).padding(.top, 6).padding(.bottom, 4)
+                    LastDictationCard(text: last.text, raw: last.rawText).padding(.top, 6).padding(.bottom, 4)
                 }
                 Button { router.path = [.corrections] } label: {
                     HStack {
@@ -566,15 +566,28 @@ struct Segmented: View {
 
 struct LastDictationCard: View {
     let text: String
+    /// Transcription avant nettoyage (nil si identique).
+    var raw: String? = nil
     @State private var copied = false
+    @State private var showRaw = false
+
+    private var shown: String { showRaw ? (raw ?? text) : text }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text("Dernière dictée").font(.system(size: 11, weight: .medium)).foregroundStyle(Palette.muted)
+            HStack(spacing: 8) {
+                Text(showRaw ? "Transcription brute" : "Dernière dictée")
+                    .font(.system(size: 11, weight: .medium)).foregroundStyle(Palette.muted)
                 Spacer()
+                if raw != nil {
+                    Button(showRaw ? "Voir le texte nettoyé" : "Voir l'original") { showRaw.toggle() }
+                        .buttonStyle(.plain)
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(Theme.voice)
+                        .help("Comparer avec ce que Murmure a entendu, avant nettoyage")
+                }
                 Button {
-                    HomePage.copy(text)
+                    HomePage.copy(shown)
                     copied = true
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) { copied = false }
                 } label: {
@@ -591,11 +604,13 @@ struct LastDictationCard: View {
                 .foregroundStyle(Palette.muted)
                 .help("Copier")
             }
-            Text(text)
+            Text(shown)
                 .font(.system(size: 14))
+                .foregroundStyle(showRaw ? Palette.muted : Color.primary)
                 .lineLimit(3)
                 .textSelection(.enabled)
         }
+        .onChange(of: text) { showRaw = false }
         .padding(.horizontal, 11)
         .padding(.vertical, 9)
         .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Palette.card))

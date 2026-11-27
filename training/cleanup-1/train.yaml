@@ -1,0 +1,26 @@
+# Murmure Cleanup 1 : affinage complet de Qwen2.5-0.5B-Instruct avec MLX-LM (Apple silicon, 16 Go).
+#   python -m mlx_lm lora -c train.yaml
+# Chemins relatifs au dossier de travail (~/murmure-cleanup).
+model: base/qwen05
+train: true
+data: data
+fine_tune_type: full
+optimizer: adamw
+mask_prompt: true
+num_layers: -1
+batch_size: 16
+iters: 1400
+learning_rate: 2.0e-5
+lr_schedule:
+  name: cosine_decay
+  warmup: 80
+  warmup_init: 1.0e-7
+  arguments: [2.0e-5, 1400, 2.0e-6]
+steps_per_report: 20
+steps_per_eval: 200
+val_batches: -1
+save_every: 200
+adapter_path: runs/full-v1
+max_seq_length: 1024
+grad_checkpoint: false
+seed: 7

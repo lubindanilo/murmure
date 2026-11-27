@@ -260,9 +260,17 @@ final class AppController: ObservableObject {
             }
             guard !text.isEmpty else { finishQuietly(); return }
 
-            if mode.cleanup || !mode.instructions.isEmpty { text = TextProcessing.removeFillers(text) }
-            guard !text.isEmpty else { finishQuietly(); return }
+            // Transcription brute de Parakeet : l'historique la garde à côté du texte nettoyé.
             let rawText = text
+            let hasInstructions = !mode.instructions.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            if mode.cleanup, !hasInstructions, settings.aiEnabled {
+                // Dictée simple : Murmure Cleanup 1 (0,1 à 0,3 s). Repli sur les règles s'il est absent,
+                // trop lent ou si sa sortie s'éloigne du texte dicté.
+                text = await CleanupModel.shared.clean(text).text
+            } else if mode.cleanup || hasInstructions {
+                text = TextProcessing.removeFillers(text)
+            }
+            guard !text.isEmpty else { finishQuietly(); return }
             var output = mode.outputMode
             var skipAI = false
             let audioFile = (mode.scriptBefore.isEmpty && mode.scriptAfter.isEmpty) ? nil : saveAudio(samples)
@@ -285,10 +293,8 @@ final class AppController: ObservableObject {
 
             // Ton automatique : seulement pour le mode principal, sans consignes personnalisées.
             let tone = settings.autoTone && mode.isMain ? AutoTone.detect(bundleID: context.appBundleID) : nil
-            // La dictée simple ne passe plus par le LLM : Parakeet ponctue déjà, et le nettoyage par règles
-            // retire hésitations et répétitions en quelques millisecondes (le LLM prenait 0,7 à 3 s, et
-            // réécrivait parfois des mots). Le LLM reste pour les modes qui ont des consignes.
-            let hasInstructions = !mode.instructions.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            // La dictée simple ne passe pas par le LLM généraliste (0,7 à 3 s, et il réécrivait des mots) :
+            // Cleanup 1 l'a déjà nettoyée plus haut. Le LLM reste pour les modes qui ont des consignes.
             if let tone, !hasInstructions { text = tone.applyLight(text) }
             if settings.aiEnabled, hasInstructions, !skipAI {
                 phase = .polishing(tone?.label ?? mode.name)

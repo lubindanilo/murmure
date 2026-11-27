@@ -26,7 +26,7 @@ final class PostProcessor: ObservableObject {
     func path(for llm: LocalLLM) -> URL { Self.directory.appendingPathComponent(llm.file) }
 
     func refreshInstalled() {
-        installed = Set(LocalLLM.all.filter { FileManager.default.fileExists(atPath: path(for: $0).path) }.map(\.id))
+        installed = Set(LocalLLM.downloadable.filter { FileManager.default.fileExists(atPath: path(for: $0).path) }.map(\.id))
     }
 
     // MARK: Traitement

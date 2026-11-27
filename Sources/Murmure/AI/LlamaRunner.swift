@@ -8,10 +8,12 @@ actor LlamaRunner {
     private var context: OpaquePointer?
     private var vocab: OpaquePointer?
     private(set) var loadedPath: String?
+    /// Vrai si la dernière génération n'a pas atteint la fin du texte (limite de tokens, erreur) : sortie tronquée.
+    private(set) var lastIncomplete = false
 
     private static let backendReady: Void = { llama_backend_init() }()
 
-    func load(path: String) throws {
+    func load(path: String, contextSize: UInt32 = 4096) throws {
         if loadedPath == path, context != nil { return }
         unload()
         _ = Self.backendReady
@@ -22,8 +24,8 @@ actor LlamaRunner {
             throw MurmureError.llm("impossible de charger le modèle.")
         }
         var ctxParams = llama_context_default_params()
-        ctxParams.n_ctx = 4096
-        ctxParams.n_batch = 4096
+        ctxParams.n_ctx = contextSize
+        ctxParams.n_batch = contextSize
         let threads = Int32(max(2, min(8, ProcessInfo.processInfo.activeProcessorCount - 2)))
         ctxParams.n_threads = threads
         ctxParams.n_threads_batch = threads
@@ -43,7 +45,9 @@ actor LlamaRunner {
         context = nil; model = nil; vocab = nil; loadedPath = nil
     }
 
-    func generate(messages: [(role: String, content: String)], maxTokens: Int, temperature: Float = 0) throws -> String {
+    /// `deadline` : au-delà, la génération s'arrête et lève une erreur (le texte partiel n'est pas utilisable).
+    func generate(messages: [(role: String, content: String)], maxTokens: Int, temperature: Float = 0,
+                  deadline: Date? = nil) throws -> String {
         guard let model, let context, let vocab else { throw MurmureError.llm("modèle non chargé.") }
 
         let prompt = formatChat(model: model, messages: messages)
@@ -69,9 +73,11 @@ actor LlamaRunner {
 
         var output = [UInt8]()
         var piece = [CChar](repeating: 0, count: 256)
+        lastIncomplete = true
         for _ in 0..<maxTokens {
+            if let deadline, Date() > deadline { throw MurmureError.llm("délai dépassé.") }
             var token = llama_sampler_sample(sampler, context, -1)
-            if llama_vocab_is_eog(vocab, token) { break }
+            if llama_vocab_is_eog(vocab, token) { lastIncomplete = false; break }
             let n = llama_token_to_piece(vocab, token, &piece, Int32(piece.count), 0, false)
             if n > 0 { output += piece[0..<Int(n)].map { UInt8(bitPattern: $0) } }
             status = llama_decode(context, llama_batch_get_one(&token, 1))
