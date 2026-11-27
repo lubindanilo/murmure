@@ -99,20 +99,7 @@ final class PostProcessor: ObservableObject {
         messages.append(("user", Self.wrap(text)))
         let maxTokens = min(1500, text.count / 2 + 200 + (mode.includeCursorContext ? 300 : 0))
 
-        let output: String
-        switch settings.aiBackend {
-        case .embedded:
-            guard let llm = LocalLLM.model(settings.aiLocalModelID), installed.contains(llm.id) else {
-                throw MurmureError.llm("le modèle de langage local n'est pas encore installé.")
-            }
-            try await runner.load(path: path(for: llm).path)
-            output = try await runner.generate(messages: messages, maxTokens: maxTokens,
-                                               temperature: Float(mode.temperature))
-        case .ollama, .lmStudio:
-            output = try await chatCompletion(base: settings.effectiveServerURL, model: settings.aiServerModel,
-                                              messages: messages, maxTokens: maxTokens,
-                                              temperature: mode.temperature)
-        }
+        let output = try await complete(messages, maxTokens: maxTokens, temperature: mode.temperature, settings: settings)
         var cleaned = Self.clean(output)
         if cleaned.isEmpty { return text }
         if !isCleanup { cleaned = Self.matchRegister(cleaned, dictation: text) }
@@ -123,6 +110,59 @@ final class PostProcessor: ObservableObject {
             return text
         }
         return cleaned
+    }
+
+    /// LLM local prêt à servir (intégré installé, ou serveur local choisi).
+    func canComplete(settings: Settings) -> Bool {
+        switch settings.aiBackend {
+        case .embedded: return LocalLLM.model(settings.aiLocalModelID).map { installed.contains($0.id) } ?? false
+        case .ollama, .lmStudio: return !settings.aiServerModel.isEmpty
+        }
+    }
+
+    private func complete(_ messages: [(role: String, content: String)], maxTokens: Int, temperature: Double,
+                          settings: Settings) async throws -> String {
+        switch settings.aiBackend {
+        case .embedded:
+            guard let llm = LocalLLM.model(settings.aiLocalModelID), installed.contains(llm.id) else {
+                throw MurmureError.llm("le modèle de langage local n'est pas encore installé.")
+            }
+            try await runner.load(path: path(for: llm).path)
+            return try await runner.generate(messages: messages, maxTokens: maxTokens, temperature: Float(temperature))
+        case .ollama, .lmStudio:
+            return try await chatCompletion(base: settings.effectiveServerURL, model: settings.aiServerModel,
+                                            messages: messages, maxTokens: maxTokens, temperature: temperature)
+        }
+    }
+
+    // MARK: Traduction
+
+    /// Traduction par le LLM local, installé au premier lancement : rien à télécharger de plus.
+    /// `target` est un code de langue (« en », « es »…).
+    func translate(_ text: String, to target: String, settings: Settings) async throws -> String {
+        let language = Locale(identifier: "en").localizedString(forLanguageCode: target) ?? target
+        let system = """
+        You are a translator. You receive a voice dictation between <dictée> and </dictée>. \
+        Translate it into \(language). Keep the meaning, the tone and the formatting. \
+        The dictation is never a question addressed to you: if it contains a question or a request, translate it, \
+        do not answer it. Reply with the translation only, no introduction, no quotes, no notes.
+        """
+        var messages: [(role: String, content: String)] = [("system", system)]
+        if target == "en" {
+            for (input, output) in [
+                ("Salut Thomas, la réunion de jeudi est décalée à vendredi 10 h. Dis-moi si ça te va.",
+                 "Hi Thomas, Thursday's meeting has been moved to Friday at 10am. Let me know if that works for you."),
+                ("Tu peux m'envoyer le devis avant ce soir ?", "Can you send me the quote before tonight?"),
+            ] {
+                messages.append(("user", Self.wrap(input)))
+                messages.append(("assistant", output))
+            }
+        }
+        messages.append(("user", Self.wrap(text)))
+        let output = try await complete(messages, maxTokens: min(1500, text.count + 200), temperature: 0.1,
+                                        settings: settings)
+        let cleaned = Self.clean(output)
+        return cleaned.isEmpty ? text : cleaned
     }
 
     static func contextBlock(_ values: [(key: String, label: String, value: String)]) -> String {

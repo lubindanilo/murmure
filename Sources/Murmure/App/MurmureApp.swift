@@ -17,7 +17,7 @@ struct MurmureApp: App {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
-        if CommandLine.arguments.contains(where: { ["--selftest", "--llmtest", "--licensetest", "--cleanuptest", "--guardtest", "--addmode"].contains($0) }) {
+        if CommandLine.arguments.contains(where: { ["--selftest", "--llmtest", "--licensetest", "--cleanuptest", "--guardtest", "--addmode", "--translatetest"].contains($0) }) {
             Task { @MainActor in AppDelegate.quit(await SelfTest.run(CommandLine.arguments)) }
             return
         }
