@@ -92,7 +92,7 @@ jobs:
           grep -q "^Nettoyé : ." selftest.txt
           grep -q "^IA : ." selftest.txt
 
-      - name: Banc Murmure Cleanup 1
+      - name: Banc Murmure Cleanup 2
         run: |
           build/Murmure.app/Contents/MacOS/Murmure --cleanuptest Tests/cleanup-bench/eval.jsonl 2>&1 \
             | grep -vE "^(llama|load|print_info|ggml|graph|llm_load|common)" | tee cleanup.txt

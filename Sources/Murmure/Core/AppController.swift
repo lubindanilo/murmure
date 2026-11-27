@@ -275,7 +275,7 @@ final class AppController: ObservableObject {
             let rawText = text
             let hasInstructions = !mode.instructions.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             if mode.cleanup, !hasInstructions, settings.aiEnabled {
-                // Dictée simple : Murmure Cleanup 1 (0,1 à 0,3 s). Repli sur les règles s'il est absent,
+                // Dictée simple : Murmure Cleanup 2 (0,1 à 0,3 s). Repli sur les règles s'il est absent,
                 // trop lent ou si sa sortie s'éloigne du texte dicté.
                 text = await CleanupModel.shared.clean(text).text
             } else if mode.cleanup || hasInstructions {
@@ -307,7 +307,7 @@ final class AppController: ObservableObject {
             }
 
             // La dictée simple ne passe pas par le LLM généraliste (0,7 à 3 s, et il réécrivait des mots) :
-            // Cleanup 1 l'a déjà nettoyée plus haut. Le LLM reste pour les modes qui ont des consignes.
+            // Cleanup 2 l'a déjà nettoyée plus haut. Le LLM reste pour les modes qui ont des consignes.
             // Traduire, écrire un mail : c'est le rôle des modes, chacun sur sa touche.
             if settings.aiEnabled, hasInstructions, !skipAI {
                 phase = .polishing(mode.name)

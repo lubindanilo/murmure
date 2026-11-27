@@ -1,7 +1,7 @@
 import Foundation
 
-/// Murmure Cleanup 1 : petit modèle maison (Qwen 2.5 0.5B affiné, voir training/cleanup-1 et
-/// docs/cleanup-1.md) qui nettoie la dictée simple : hésitations, répétitions, corrections dites
+/// Murmure Cleanup 2 : petit modèle maison (Qwen 2.5 0.5B affiné, voir training/cleanup-1, training/cleanup-2,
+/// docs/cleanup-1.md et docs/cleanup-2.md) qui nettoie la dictée simple : hésitations, répétitions, corrections dites
 /// à voix haute, ponctuation, nombres en chiffres, adresses mail et sites. Il garde les mots dictés.
 ///
 /// Repli sûr, comme Spokenly : si le modèle n'est pas installé, dépasse le délai, tronque sa sortie
@@ -70,7 +70,7 @@ final class CleanupModel {
         let started = Date()
         let rules = TextProcessing.removeFillers(raw)
         func fallback(_ reason: String) -> Result {
-            NSLog("Murmure Cleanup 1 : repli sur les règles (\(reason))")
+            NSLog("Murmure Cleanup 2 : repli sur les règles (\(reason))")
             return Result(text: rules, usedModel: false, fallbackReason: reason, seconds: Date().timeIntervalSince(started))
         }
         let input = raw.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -96,7 +96,7 @@ final class CleanupModel {
         return Result(text: cleaned, usedModel: true, fallbackReason: "", seconds: Date().timeIntervalSince(started))
     }
 
-    // MARK: Garde-fou (identique à training/cleanup-1/evaluate.py)
+    // MARK: Garde-fou (identique à training/cleanup-2/evaluate.py)
 
     static func fold(_ s: String) -> String {
         s.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil)
@@ -310,6 +310,68 @@ final class CleanupModel {
         if content.count >= 4, Double(kept.count) < Double(content.count) * 0.5 { return "sortie trop courte" }
         // La fin de la dictée ne doit pas disparaître (sortie coupée trop tôt).
         if let last = content.last, !b.contains(last), !b.joined().contains(last) { return "fin perdue : \(last)" }
+        // Un passage dicté entier ne doit pas disparaître (le modèle saute parfois d'une reprise à l'autre).
+        if let lost = lostPassage(input: a, output: b) { return "passage perdu : " + String(lost.prefix(60)) }
+        return nil
+    }
+
+    // MARK: Passages perdus (identique à lost_passage dans training/cleanup-2/evaluate.py)
+
+    /// Marqueurs de correction orale : le passage corrigé les précède (« vendredi, enfin non, jeudi »).
+    static let correctionMarkers: Set<String> = [
+        "non", "pardon", "plutot", "attends", "dire", "trompe", "mean", "sorry", "no", "wait",
+        "actually", "rather", "scratch", "that", "fait", "enfin",
+    ]
+    static let fillerWords: Set<String> = [
+        "euh", "heu", "hum", "hmm", "bah", "ben", "genre", "hein", "um", "uh", "uhm", "er", "erm", "like",
+        "enfin", "bon", "voila", "quoi", "ouais", "vois", "tu", "know", "you", "so", "well", "fin",
+    ]
+
+    /// Passages de `a` absents de `b` selon la plus longue sous-suite commune, en intervalles [début, fin).
+    static func missingRuns(_ a: [String], _ b: [String]) -> [Range<Int>] {
+        let n = a.count, m = b.count
+        guard n > 0 else { return [] }
+        var dp = Array(repeating: Array(repeating: 0, count: m + 1), count: n + 1)
+        for i in stride(from: n - 1, through: 0, by: -1) {
+            for j in stride(from: m - 1, through: 0, by: -1) {
+                dp[i][j] = a[i] == b[j] ? dp[i + 1][j + 1] + 1 : max(dp[i + 1][j], dp[i][j + 1])
+            }
+        }
+        var runs: [Range<Int>] = []
+        var i = 0, j = 0
+        var start: Int?
+        while i < n {
+            if j < m, a[i] == b[j] {
+                if let s = start { runs.append(s..<i); start = nil }
+                i += 1; j += 1
+            } else if j < m, dp[i][j + 1] >= dp[i + 1][j] {
+                j += 1
+            } else {
+                if start == nil { start = i }
+                i += 1
+            }
+        }
+        if let s = start { runs.append(s..<n) }
+        return runs
+    }
+
+    /// Au moins quatre mots porteurs de sens d'affilée ont disparu, sans être une hésitation, une répétition
+    /// collée, un faux départ ni une correction orale. Renvoie le passage perdu.
+    static func lostPassage(input a: [String], output b: [String], limit: Int = 4) -> String? {
+        var kept = Set(b)
+        for k in b.indices.dropLast() { kept.insert(b[k] + b[k + 1]) }
+        for run in missingRuns(a, b) {
+            let seg = Array(a[run])
+            if seg.suffix(3).contains(where: correctionMarkers.contains) { continue }
+            let before = a[max(0, run.lowerBound - seg.count - 2)..<run.lowerBound]
+            let after = a[run.upperBound..<min(a.count, run.upperBound + seg.count + 4)]
+            let near = Set(before).union(after)
+            let core = seg.filter {
+                !fillerWords.contains($0) && units[$0] == nil && scales[$0] == nil && !droppable.contains($0)
+                    && !near.contains($0) && !kept.contains($0) && $0.count > 1
+            }
+            if core.count >= limit { return seg.joined(separator: " ") }
+        }
         return nil
     }
 }
