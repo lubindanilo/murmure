@@ -40,7 +40,11 @@ final class HUDController {
     }
 
     func prepare() {
-        place(ensurePanel())
+        let panel = ensurePanel()
+        place(panel)
+        // Garder la fenêtre transparente entre deux dictées évite de devoir la réafficher
+        // sur un tour de boucle AppKit avant que le serveur de rendu puisse l'animer.
+        panel.orderFrontRegardless()
     }
 
     func show() {
@@ -101,7 +105,6 @@ final class HUDController {
         CATransaction.setCompletionBlock { [weak self] in
             Task { @MainActor in
                 guard let self, self.transition == closing else { return }
-                self.panel?.orderOut(nil)
                 self.row.display(.idle, started: nil)
                 CATransaction.begin()
                 CATransaction.setDisableActions(true)
