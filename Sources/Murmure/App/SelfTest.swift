@@ -3,6 +3,7 @@ import Foundation
 
 /// Vérification de bout en bout sans micro ni interface :
 ///   Murmure --selftest fichier.wav [--model parakeet-v3] [--llm qwen2.5-1.5b] [--mode Nettoyage]
+///   Murmure --translatetest "texte" [--to en]
 ///   Murmure --cleanuptest dictees.txt|eval.jsonl [--cleanup-model fichier.gguf]
 /// Télécharge les modèles si besoin, transcrit le fichier, le nettoie avec Murmure Cleanup 2,
 /// puis applique l'IA locale si --llm est donné.
@@ -23,6 +24,17 @@ enum SelfTest {
             let mode = ModeStore.shared.add(from: t, mainKey: settings.triggerKey)
             print("\(mode.name) : \(mode.shortcut?.label ?? "aucune touche")")
             return 0
+        }
+        // Murmure --translatetest "texte" [--to en] : traduit comme le mode Traduction.
+        if let text = value("--translatetest") {
+            do {
+                let t = Date()
+                let out = try await Translator.shared.translate(text, from: settings.language, to: value("--to") ?? "en")
+                print("\(String(format: "%.2f", Date().timeIntervalSince(t))) s : \(out)")
+                return 0
+            } catch {
+                print("Erreur : \(error.localizedDescription)"); return 1
+            }
         }
         if let path = value("--cleanup-model") { CleanupModel.overridePath = path }
         if let path = value("--cleanuptest") { return await cleanupTest(path) }

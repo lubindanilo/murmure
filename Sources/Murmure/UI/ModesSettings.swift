@@ -33,9 +33,6 @@ struct ModeEditor: View {
                             Text(lang.name).tag(String?.some(lang.code))
                         }
                     }
-                    if let target = mode.wrappedValue.translateTo {
-                        TranslationDownloadButton(source: settings.language, target: target)
-                    }
                 }
             }
 

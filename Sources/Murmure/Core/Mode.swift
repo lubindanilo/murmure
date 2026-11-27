@@ -38,7 +38,7 @@ struct Mode: Codable, Identifiable, Hashable {
     var instructions: String = ""
     /// Nettoyage local (hésitations, ponctuation) quand il n'y a pas d'instructions.
     var cleanup = true
-    /// Code de langue cible pour la traduction d'Apple, ou nil.
+    /// Code de langue cible de la traduction (Apple si la langue est déjà sur le Mac, sinon le LLM local), ou nil.
     var translateTo: String?
     var outputMode: OutputMode = .paste
 
@@ -121,15 +121,28 @@ enum ModeTemplates {
              ]),
         Mode(name: "Message", symbol: "bubble.left.and.bubble.right",
              instructions: """
-             Transforme la dictée en message court et naturel pour une messagerie, dans la langue de la dictée. \
-             Garde le ton et le sens, n'ajoute ni salutation ni formule de politesse, \
-             pas de point final sur une phrase unique.
+             Remets la dictée en forme pour un message (SMS, WhatsApp, Slack), dans la langue de la dictée. \
+             Reformule les phrases mal construites pour qu'elles se lisent bien : remets la syntaxe d'aplomb, \
+             coupe les phrases qui s'enchaînent sans fin, retire les répétitions et les tics de langage \
+             (« en fait », « du coup », « genre », « voilà ») qui n'apportent rien, et relie les idées dans un ordre logique. \
+             Garde un ton oral et détendu : ne remplace jamais un mot familier par un mot soutenu \
+             (« kiffer », « t'es », « mec », « truc » restent tels quels), tutoiement ou vouvoiement tel quel. \
+             Garde tout le sens et toutes les informations, n'ajoute rien. Une question reste une question, \
+             et une cause reste une cause : ne transforme pas un « parce que » en « donc ». \
+             Pas de salutation ni de formule de fin si la dictée n'en a pas. \
+             Si le message est long, sépare les idées en paragraphes courts. Pas de point final sur une phrase unique.
              """,
              examples: [
-                ModeExample(input: "ok je regarde ça et je te redis dans dix minutes",
-                            output: "Ok, je regarde ça et je te redis dans 10 minutes"),
-                ModeExample(input: "trop bien merci pour hier soir on remet ça la semaine pro",
-                            output: "Trop bien, merci pour hier soir ! On remet ça la semaine pro"),
+                ModeExample(input: "mec t'as vu le match hier soir c'était un truc de ouf",
+                            output: "Mec, t'as vu le match hier soir ? C'était un truc de ouf"),
+                ModeExample(input: "du coup on fait quoi ce soir on se capte chez toi ou on va direct au bar moi je m'en fiche",
+                            output: "On fait quoi ce soir ? On se capte chez toi ou on va direct au bar ? Moi je m'en fiche"),
+                ModeExample(input: "alors en fait je voulais te dire que le colis il est arrivé mais du coup il manque une pièce parce que le vendeur s'est planté",
+                            output: "Le colis est arrivé, mais il manque une pièce parce que le vendeur s'est planté"),
+                ModeExample(input: "ouais alors pour samedi en fait c'est bon pour moi mais du coup faut voir avec Julie parce que elle elle bosse le matin je crois enfin je suis pas sûr donc demande-lui et tu me dis",
+                            output: "Ouais, samedi c'est bon pour moi ! Par contre faut voir avec Julie : je crois qu'elle bosse le matin, mais je suis pas sûr. Demande-lui et tu me dis"),
+                ModeExample(input: "hello alors j'ai regardé le devis que tu m'as envoyé et globalement c'est bon le truc c'est que la partie hébergement elle est un peu chère enfin je trouve et aussi il manque la maintenance qu'on avait dit au téléphone donc est-ce que tu peux me renvoyer une version avec ça et on valide dans la foulée",
+                            output: "Hello ! J'ai regardé le devis que tu m'as envoyé, globalement c'est bon.\n\nPar contre je trouve la partie hébergement un peu chère, et il manque la maintenance dont on avait parlé au téléphone. Tu peux me renvoyer une version avec ça ? On valide dans la foulée."),
              ]),
         translation,
     ]

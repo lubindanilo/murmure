@@ -3,8 +3,8 @@ import AppKit
 import SwiftUI
 import Translation
 
-/// Traduction avec le moteur d'Apple (macOS 15) : gratuite, sur l'appareil, hors ligne
-/// une fois la langue téléchargée.
+/// Traduction sur le Mac : le moteur d'Apple (macOS 15) quand la langue est déjà installée sur le système,
+/// sinon le LLM local de Murmure. Rien à télécharger pour l'utilisateur.
 ///
 /// Le framework ne fournit une session de traduction qu'à une vue SwiftUI (.translationTask) :
 /// on garde donc une vue invisible dans une fenêtre transparente, et on lui confie les textes.
@@ -23,12 +23,15 @@ final class Translator: ObservableObject {
         let dst = Locale.Language(identifier: target)
         if let src, src.languageCode == dst.languageCode { return text }
 
+        // Le moteur d'Apple ne sert que si macOS a déjà la langue. Sinon le LLM local, installé avec
+        // l'app, traduit : on ne demande jamais de télécharger une langue.
         let status = await LanguageAvailability().status(from: src ?? Locale.Language(identifier: "fr"), to: dst)
-        if status == .unsupported {
-            throw MurmureError.unsupported("La traduction vers \(Languages.name(target)) n'est pas prise en charge.")
-        }
-        if status == .supported {
-            throw MurmureError.unsupported("Téléchargez la langue \(Languages.name(target)) depuis la page du mode.")
+        if status != .installed {
+            let settings = Settings.shared
+            guard PostProcessor.shared.canComplete(settings: settings) else {
+                throw MurmureError.unsupported("La traduction attend la fin de l'installation du modèle de langage.")
+            }
+            return try await PostProcessor.shared.translate(text, to: target, settings: settings)
         }
 
         ensureHost()
@@ -52,11 +55,6 @@ final class Translator: ObservableObject {
                 job.continuation.resume(throwing: error)
             }
         }
-    }
-
-    static func status(from source: String, to target: String) async -> LanguageAvailability.Status {
-        await LanguageAvailability().status(from: Locale.Language(identifier: source == "auto" ? "fr" : source),
-                                            to: Locale.Language(identifier: target))
     }
 
     private func ensureHost() {
@@ -84,42 +82,5 @@ private struct TranslationHost: View {
             .translationTask(translator.configuration) { session in
                 await translator.drain(session)
             }
-    }
-}
-
-/// Bouton visible qui télécharge une paire de langues (le système affiche sa propre feuille).
-struct TranslationDownloadButton: View {
-    let source: String
-    let target: String
-    @State private var configuration: TranslationSession.Configuration?
-    @State private var status: LanguageAvailability.Status?
-
-    var body: some View {
-        HStack(spacing: 8) {
-            switch status {
-            case .installed:
-                Label("Langue installée, fonctionne hors ligne", systemImage: "checkmark.circle.fill")
-                    .foregroundStyle(.secondary)
-                    .font(.caption)
-            case .supported:
-                Button("Télécharger \(Languages.name(target))") {
-                    configuration = TranslationSession.Configuration(
-                        source: Locale.Language(identifier: source == "auto" ? "fr" : source),
-                        target: Locale.Language(identifier: target))
-                }
-                .controlSize(.small)
-            case .unsupported:
-                Text("Paire de langues non prise en charge par Apple").font(.caption).foregroundStyle(Theme.voice)
-            case nil:
-                ProgressView().controlSize(.small)
-            @unknown default:
-                EmptyView()
-            }
-        }
-        .translationTask(configuration) { session in
-            try? await session.prepareTranslation()
-            status = await Translator.status(from: source, to: target)
-        }
-        .task(id: target) { status = await Translator.status(from: source, to: target) }
     }
 }
