@@ -1,0 +1,13 @@
+# Murmure
+
+> Murmure est une application de dictée pour Mac. On maintient une touche, on parle, on relâche : un texte propre s'écrit là où se trouve le curseur. La transcription et le nettoyage du texte tournent sur le Mac, hors ligne ; la voix ne quitte jamais l'ordinateur.
+
+- Essai gratuit de 14 jours, sans carte bancaire, puis 9,99 € par mois, résiliable à tout moment.
+- Un abonnement s'active sur 3 Mac au maximum.
+- Internet sert seulement à télécharger les modèles une fois et à vérifier la licence.
+
+## Pages
+
+- [Accueil](https://murmure-ai.com/) : présentation et installation
+- [Confidentialité](https://murmure-ai.com/confidentialite) : ce qui reste sur le Mac et ce qui est envoyé
+- [Conditions](https://murmure-ai.com/conditions) : essai, licence, paiement
