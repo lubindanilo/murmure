@@ -35,6 +35,48 @@ enum TextInserter {
         }
     }
 
+    /// Le curseur est-il dans un champ où coller ? true : oui ; false : sûrement pas (bureau, liste,
+    /// page web sans champ actif) ; nil : impossible à dire, l'app n'expose pas son interface. Dans le doute, on colle.
+    static func focusedFieldAcceptsText() -> Bool? {
+        guard AXIsProcessTrusted() else { return false }
+        let system = AXUIElementCreateSystemWide()
+        AXUIElementSetMessagingTimeout(system, 0.25)
+        var focused: CFTypeRef?
+        let error = AXUIElementCopyAttributeValue(system, kAXFocusedUIElementAttribute as CFString, &focused)
+        guard error == .success, let focused, CFGetTypeID(focused) == AXUIElementGetTypeID() else {
+            // Rien n'a le focus : c'est sûr seulement si l'app au premier plan n'a pas non plus de fenêtre active
+            // (bureau, app sans fenêtre). Sinon l'app n'expose simplement pas son interface (Zed, Ghostty…).
+            guard error == .noValue, let pid = NSWorkspace.shared.frontmostApplication?.processIdentifier else { return nil }
+            let app = AXUIElementCreateApplication(pid)
+            AXUIElementSetMessagingTimeout(app, 0.25)
+            var window: CFTypeRef?
+            let windowError = AXUIElementCopyAttributeValue(app, kAXFocusedWindowAttribute as CFString, &window)
+            return windowError == .noValue ? false : nil
+        }
+        let element = focused as! AXUIElement
+        AXUIElementSetMessagingTimeout(element, 0.25)
+        let role = attribute(element, kAXRoleAttribute) as? String ?? ""
+        if textRoles.contains(role) { return true }
+        // Chromium et Electron : un élément dans une zone éditable (contenteditable) l'indique ainsi.
+        if attribute(element, "AXEditableAncestor") != nil { return true }
+        if nonTextRoles.contains(role) { return false }
+        return nil
+    }
+
+    private static let textRoles: Set<String> = [
+        kAXTextFieldRole, kAXTextAreaRole, kAXComboBoxRole, "AXSearchField",
+    ]
+    private static let nonTextRoles: Set<String> = [
+        kAXListRole, kAXOutlineRole, kAXTableRole, kAXBrowserRole, kAXButtonRole, kAXImageRole, kAXRowRole,
+        kAXCellRole, kAXCheckBoxRole, kAXRadioButtonRole, kAXPopUpButtonRole, kAXMenuButtonRole, kAXSliderRole,
+        kAXStaticTextRole, kAXScrollAreaRole, kAXTabGroupRole, kAXToolbarRole, "AXWebArea", "AXLink",
+    ]
+
+    private static func attribute(_ element: AXUIElement, _ name: String) -> CFTypeRef? {
+        var value: CFTypeRef?
+        return AXUIElementCopyAttributeValue(element, name as CFString, &value) == .success ? value : nil
+    }
+
     private static func postKey(_ key: UInt16, flags: CGEventFlags) {
         let source = CGEventSource(stateID: .combinedSessionState)
         let down = CGEvent(keyboardEventSource: source, virtualKey: key, keyDown: true)

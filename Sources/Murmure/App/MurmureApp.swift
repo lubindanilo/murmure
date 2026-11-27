@@ -17,8 +17,8 @@ struct MurmureApp: App {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
-        if CommandLine.arguments.contains(where: { ["--selftest", "--llmtest", "--licensetest", "--cleanuptest", "--guardtest"].contains($0) }) {
-            Task { @MainActor in exit(await SelfTest.run(CommandLine.arguments)) }
+        if CommandLine.arguments.contains(where: { ["--selftest", "--llmtest", "--licensetest", "--cleanuptest", "--guardtest", "--addmode"].contains($0) }) {
+            Task { @MainActor in AppDelegate.quit(await SelfTest.run(CommandLine.arguments)) }
             return
         }
         // Captures d'écran en CI : `-demoDark YES` force l'apparence sombre.
@@ -42,7 +42,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 AppController.shared.showDemoHUD(hud)
             } else if let demo = UserDefaults.standard.string(forKey: "demoSettings") {
                 PanelController.shared.show(SettingsSection(rawValue: demo) ?? .general)
-                if demo == "mode" { PanelController.shared.router.path = [.mode(ModeStore.shared.main.id)] }
+                if demo == "mode" { PanelController.shared.router.path = [.mode((ModeStore.shared.modes.first { !$0.isMain } ?? ModeStore.shared.main).id)] }
             } else if !Settings.shared.hasCompletedOnboarding {
                 OnboardingWindow.shared.show()
             } else if !HotkeyMonitor.isTrusted || AudioRecorder.permission != .authorized {
@@ -76,6 +76,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 }
             }
         }
+    }
+
+    /// llama.cpp libère le GPU dans les destructeurs de sortie alors que les modèles sont encore chargés,
+    /// et s'arrête sur une assertion (rapport de plantage à chaque « Quitter »). On sort sans ces destructeurs.
+    func applicationWillTerminate(_ notification: Notification) {
+        AppDelegate.quit(0)
+    }
+
+    static func quit(_ code: Int32) -> Never {
+        UserDefaults.standard.synchronize()
+        fflush(stdout)
+        fflush(stderr)
+        _exit(code)
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {

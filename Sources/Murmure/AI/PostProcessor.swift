@@ -90,6 +90,11 @@ final class PostProcessor: ObservableObject {
                 messages.append(("user", Self.wrap(input)))
                 messages.append(("assistant", output))
             }
+        } else {
+            for example in mode.examples ?? [] {
+                messages.append(("user", Self.wrap(example.input)))
+                messages.append(("assistant", example.output))
+            }
         }
         messages.append(("user", Self.wrap(text)))
         let maxTokens = min(1500, text.count / 2 + 200 + (mode.includeCursorContext ? 300 : 0))
@@ -108,8 +113,9 @@ final class PostProcessor: ObservableObject {
                                               messages: messages, maxTokens: maxTokens,
                                               temperature: mode.temperature)
         }
-        let cleaned = Self.clean(output)
+        var cleaned = Self.clean(output)
         if cleaned.isEmpty { return text }
+        if !isCleanup { cleaned = Self.matchRegister(cleaned, dictation: text) }
         // Garde-fou : un nettoyage doit garder les mots dictés. Sinon le modèle a répondu,
         // traduit ou résumé : on garde la transcription.
         if isCleanup, !Self.isFaithful(cleaned, to: text) {
@@ -159,12 +165,49 @@ final class PostProcessor: ObservableObject {
         return kept >= 0.75
     }
 
+    /// Un petit modèle mélange les registres d'un e-mail : « Bonjour » pour un « Salut » dicté,
+    /// « Bien à vous » en tutoyant. On aligne la salutation et la formule de fin sur la dictée.
+    static func matchRegister(_ output: String, dictation: String) -> String {
+        var lines = output.components(separatedBy: "\n")
+        guard lines.count >= 3 else { return output }
+        let spoken = dictation.lowercased()
+        func has(_ words: [String]) -> Bool {
+            words.contains { spoken.range(of: "\\b\($0)\\b", options: .regularExpression) != nil }
+        }
+        let tutoie = has(["tu", "te", "toi", "ton", "ta", "tes", "t'"]) || spoken.contains("t'")
+        let vouvoie = has(["vous", "votre", "vos"])
+        // Salutation familière dictée en premier mot.
+        let first = spoken.split(separator: " ").first.map(String.init) ?? ""
+        let casual = ["salut": "Salut", "hello": "Hello", "coucou": "Coucou", "hey": "Hey", "yo": "Yo"]
+        if let greeting = casual[first], lines[0].hasPrefix("Bonjour") {
+            lines[0] = greeting + lines[0].dropFirst("Bonjour".count)
+        }
+        // Formule de fin : la dernière ligne non vide, si elle est courte et finit par une virgule.
+        if let i = lines.lastIndex(where: { !$0.trimmingCharacters(in: .whitespaces).isEmpty }), i > 0 {
+            let closing = lines[i].trimmingCharacters(in: .whitespaces)
+            let formal = ["Bien à vous,", "Cordialement,", "Bien cordialement,"]
+            if closing.count < 30, closing.hasSuffix(",") {
+                if tutoie, !vouvoie, formal.contains(closing) { lines[i] = "À plus," }
+                if vouvoie, !tutoie, closing == "À plus," { lines[i] = "Bien à vous," }
+            }
+        }
+        return lines.joined(separator: "\n")
+    }
+
     /// Retire les balises de raisonnement et les guillemets que certains modèles ajoutent.
     static func clean(_ raw: String) -> String {
         var s = raw
         if let end = s.range(of: "</think>") { s = String(s[end.upperBound...]) }
         s = s.replacingOccurrences(of: "<dictée>", with: "").replacingOccurrences(of: "</dictée>", with: "")
         s = s.trimmingCharacters(in: .whitespacesAndNewlines)
+        // Signatures à trous que les petits modèles ajoutent : « [Votre prénom] ».
+        s = s.components(separatedBy: "\n")
+            .filter { line in
+                let t = line.trimmingCharacters(in: .whitespaces)
+                return !(t.hasPrefix("[") && t.hasSuffix("]") && t.count < 40)
+            }
+            .joined(separator: "\n")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
         for (open, close) in [("\"", "\""), ("«", "»"), ("“", "”")] where s.hasPrefix(open) && s.hasSuffix(close) && s.count > 2 {
             s = String(s.dropFirst().dropLast()).trimmingCharacters(in: .whitespaces)
         }

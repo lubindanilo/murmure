@@ -154,6 +154,9 @@ final class AppController: ObservableObject {
             fail("Murmure n'a pas accès au micro. Autorisez-le dans Réglages Système > Confidentialité > Micro.")
             return
         }
+        DropCardController.shared.dismiss()
+        // Le mode d'une touche dédiée est connu tout de suite : le bandeau l'affiche dès l'appui.
+        currentMode = modes.mode(forcedModeID) ?? pressedKey.flatMap { key in modes.modes.first { $0.shortcut == key } }
         // Le bandeau d'abord : il doit apparaître à l'instant où la touche est enfoncée.
         let started = Date()
         recordingStart = started
@@ -203,6 +206,7 @@ final class AppController: ObservableObject {
     }
 
     func cancel(silently: Bool = false) {
+        DropCardController.shared.dismiss()
         guard case .recording = phase else { return }
         recorder.stop()
         phase = .idle
@@ -278,6 +282,7 @@ final class AppController: ObservableObject {
                 text = TextProcessing.removeFillers(text)
             }
             guard !text.isEmpty else { finishQuietly(); return }
+            // Les nouveaux modes collent par défaut. Les modes existants gardent leur sortie enregistrée.
             var output = mode.outputMode
             var skipAI = false
             let audioFile = (mode.scriptBefore.isEmpty && mode.scriptAfter.isEmpty) ? nil : saveAudio(samples)
@@ -294,26 +299,27 @@ final class AppController: ObservableObject {
                 guard !r.output.isEmpty else { finishQuietly(); return }
                 text = r.output
                 skipAI = r.skipAI
-                if let name = r.switchMode, let next = modes.mode(named: name) { mode = next; output = next.outputMode }
+                if let name = r.switchMode, let next = modes.mode(named: name) {
+                    mode = next
+                    output = next.outputMode
+                }
                 if let o = r.outputMode { output = o }
             }
 
-            // Ton automatique : seulement pour le mode principal, sans consignes personnalisées.
-            let tone = settings.autoTone && mode.isMain ? AutoTone.detect(bundleID: context.appBundleID) : nil
             // La dictée simple ne passe pas par le LLM généraliste (0,7 à 3 s, et il réécrivait des mots) :
             // Cleanup 1 l'a déjà nettoyée plus haut. Le LLM reste pour les modes qui ont des consignes.
-            if let tone, !hasInstructions { text = tone.applyLight(text) }
+            // Traduire, écrire un mail : c'est le rôle des modes, chacun sur sa touche.
             if settings.aiEnabled, hasInstructions, !skipAI {
-                phase = .polishing(tone?.label ?? mode.name)
+                phase = .polishing(mode.name)
                 do {
-                    text = try await ai.process(text, mode: mode, context: context, settings: settings, tone: tone)
+                    text = try await ai.process(text, mode: mode, context: context, settings: settings)
                 } catch {
                     // L'IA n'est pas disponible : on insère quand même la transcription.
                     NSLog("Murmure IA : \(error.localizedDescription)")
                 }
             }
 
-            if let target = mode.translateTo ?? (settings.writeInEnglish ? "en" : nil) {
+            if let target = mode.translateTo {
                 phase = .translating(Languages.name(target))
                 text = try await Translator.shared.translate(text, from: settings.language, to: target)
             }
@@ -330,14 +336,19 @@ final class AppController: ObservableObject {
                 text = TextProcessing.apply(text, replacements: settings.replacements)
             }
 
+            // Aucun champ de texte sous le curseur : coller ne mènerait nulle part. Le texte est copié
+            // et une carte le propose à glisser dans le champ voulu.
+            let nowhere = output == .paste && TextInserter.focusedFieldAcceptsText() == false
+            if nowhere { output = .copy }
             TextInserter.insert(text, mode: output, restoreClipboard: settings.restoreClipboard)
+            if nowhere { DropCardController.shared.show(text) }
             lastText = text
             history.add(HistoryEntry(date: Date(), text: text, rawText: text == rawText ? nil : rawText,
                                      modelName: model.name, modeName: mode.isMain ? nil : mode.name,
                                      duration: duration, processingTime: Date().timeIntervalSince(started)),
                         limit: settings.historyLimit)
-            phase = .done(output == .copy ? "Copié" : output == .historyOnly ? "Enregistré" : "Collé")
-            hud.hide(after: output == .copy || output == .historyOnly ? 1.4 : 0.5)
+            phase = .done(nowhere ? "À glisser" : output == .copy ? "Copié" : output == .historyOnly ? "Enregistré" : "Collé")
+            hud.hide(after: nowhere ? 0.5 : output == .copy || output == .historyOnly ? 1.4 : 0.5)
         } catch {
             fail(error.localizedDescription)
         }
@@ -362,6 +373,10 @@ final class AppController: ObservableObject {
 
     /// Captures d'écran en CI : affiche l'indicateur dans un état donné, sans enregistrer.
     func showDemoHUD(_ state: String) {
+        if state == "drop" {
+            DropCardController.shared.show("Salut Léa, je t'envoie les photos ce soir. On se cale un appel demain, ça te va ?")
+            return
+        }
         switch state {
         case "polishing": phase = .polishing("Ton soigné")
         case "done": phase = .done("Collé")

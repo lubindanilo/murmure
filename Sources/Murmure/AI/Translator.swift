@@ -28,7 +28,7 @@ final class Translator: ObservableObject {
             throw MurmureError.unsupported("La traduction vers \(Languages.name(target)) n'est pas prise en charge.")
         }
         if status == .supported {
-            throw MurmureError.unsupported("Téléchargez la langue \(Languages.name(target)) dans Réglages > Modes > Traduction.")
+            throw MurmureError.unsupported("Téléchargez la langue \(Languages.name(target)) depuis la page du mode.")
         }
 
         ensureHost()

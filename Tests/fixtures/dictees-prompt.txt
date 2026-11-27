@@ -1,0 +1,2 @@
+ajoute un bouton pour exporter l'historique en CSV dans la page des réglages et mets à jour les tests et aussi le fichier README
+écris moi un script python qui renomme toutes les photos d'un dossier avec leur date de prise de vue

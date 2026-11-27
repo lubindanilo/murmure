@@ -15,12 +15,22 @@ enum SelfTest {
         }
         let settings = Settings.shared
         if args.contains("--licensetest") { return await licenseTest() }
+        // Murmure --addmode E-mail : ajoute un mode depuis un modèle, avec la première touche libre.
+        if let name = value("--addmode") {
+            guard let t = ModeTemplates.all.first(where: { $0.name.caseInsensitiveCompare(name) == .orderedSame }) else {
+                print("Modèle de mode inconnu : \(name)"); return 2
+            }
+            let mode = ModeStore.shared.add(from: t, mainKey: settings.triggerKey)
+            print("\(mode.name) : \(mode.shortcut?.label ?? "aucune touche")")
+            return 0
+        }
         if let path = value("--cleanup-model") { CleanupModel.overridePath = path }
         if let path = value("--cleanuptest") { return await cleanupTest(path) }
         if let path = value("--guardtest") { return guardTest(path) }
         if let textsPath = value("--llmtest") {
             return await llmTest(textsPath, llms: value("--llm") ?? "", settings: settings,
-                                 tone: value("--tone").flatMap(AutoTone.init(rawValue:)))
+                                 tone: value("--tone").flatMap(AutoTone.init(rawValue:)),
+                                 template: value("--template"), value: value)
         }
         guard let path = value("--selftest") else { return 2 }
         let modelID = value("--model") ?? settings.selectedModelID
@@ -94,13 +104,24 @@ enum SelfTest {
 extension SelfTest {
     /// Compare des LLM sur des transcriptions brutes (une par ligne) :
     ///   Murmure --llmtest textes.txt --llm qwen2.5-1.5b,gemma-3-1b
-    static func llmTest(_ path: String, llms: String, settings: Settings, tone: AutoTone? = nil) async -> Int32 {
+    ///   Murmure --llmtest textes.txt --llm qwen2.5-1.5b --template E-mail   (consignes d'un modèle de mode)
+    static func llmTest(_ path: String, llms: String, settings: Settings, tone: AutoTone? = nil,
+                        template: String? = nil, value: (String) -> String? = { _ in nil }) async -> Int32 {
         // Sortie non mise en tampon : un test interrompu garde les lignes déjà produites.
         setvbuf(stdout, nil, _IONBF, 0)
         guard let content = try? String(contentsOfFile: path, encoding: .utf8) else { print("Fichier illisible"); return 2 }
         let texts = content.split(separator: "\n").map(String.init).filter { !$0.isEmpty }
         let ai = PostProcessor.shared
-        let mode = Mode.main()
+        var mode = Mode.main()
+        if let template {
+            guard let t = ModeTemplates.all.first(where: { $0.name.caseInsensitiveCompare(template) == .orderedSame }) else {
+                print("Modèle de mode inconnu : \(template)"); return 2
+            }
+            mode = t
+        }
+        if let file = value("--instructions"), let text = try? String(contentsOfFile: file, encoding: .utf8) {
+            mode.instructions = text
+        }
         for id in llms.split(separator: ",").map(String.init) {
             guard let llm = LocalLLM.model(id) else { print("LLM inconnu : \(id)"); continue }
             if !ai.installed.contains(llm.id) {

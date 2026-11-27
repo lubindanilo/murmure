@@ -43,8 +43,22 @@ struct DictationContext {
         ctx.appName = app?.localizedName
         ctx.appBundleID = app?.bundleIdentifier
         ctx.clipboard = NSPasteboard.general.string(forType: .string)
+        if let app { exposeWebInterface(app) }
         readCursor(into: &ctx)
         return ctx
+    }
+
+    /// Chrome et les apps Electron (Slack, Notion, VS Code…) ne publient leur interface aux outils
+    /// d'accessibilité que sur demande. Sans elle, Murmure ne saurait pas si le curseur est dans un champ.
+    private static func exposeWebInterface(_ app: NSRunningApplication) {
+        let chromium = app.bundleIdentifier.map { browsers[$0] == "chrome" } ?? false
+        let electron = app.bundleURL.map {
+            FileManager.default.fileExists(atPath: $0.appendingPathComponent("Contents/Frameworks/Electron Framework.framework").path)
+        } ?? false
+        guard chromium || electron, AXIsProcessTrusted() else { return }
+        let element = AXUIElementCreateApplication(app.processIdentifier)
+        AXUIElementSetMessagingTimeout(element, 0.25)
+        AXUIElementSetAttributeValue(element, "AXManualAccessibility" as CFString, kCFBooleanTrue)
     }
 
     /// Texte sélectionné et texte autour du curseur, via l'API d'accessibilité.
