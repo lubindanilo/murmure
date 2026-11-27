@@ -283,8 +283,19 @@ img { display: block; }
 
 .footer {
   max-width: 1200px; margin: 0 auto; padding: 32px 32px 48px; border-top: 1px solid var(--line);
-  display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: 14px; line-height: 20px;
+  color: var(--muted); font-size: 14px; line-height: 20px;
 }
+.footer-row { display: flex; justify-content: space-between; align-items: center; }
+.final-price { margin: -24px auto 40px; font-size: 15px; line-height: 22px; color: var(--muted); }
+
+/* Textes légaux : invisibles tant qu'on n'a pas suivi un lien du pied de page (ou une adresse #remboursement…). */
+.legal-panel { display: none; max-width: 760px; margin: 0 auto; padding: 48px 0 16px; scroll-margin-top: 24px; }
+.legal-panel:target { display: block; }
+.legal-panel h2 { font-size: 20px; line-height: 28px; font-weight: 600; color: var(--fg); margin: 0 0 8px; }
+.legal-panel h3 { font-size: 15px; line-height: 22px; font-weight: 600; color: var(--fg); margin: 24px 0 4px; }
+.legal-panel p { margin: 0; font-size: 15px; line-height: 24px; }
+.legal-panel p a { text-decoration: underline; text-underline-offset: 3px; }
+.legal-close { display: inline-block; margin-top: 24px; font-weight: 500; }
 .footer .brand { font-size: 16px; line-height: 24px; }
 .footer .mark { width: 18px; height: 18px; }
 .footer nav { display: flex; gap: 24px; }
@@ -374,7 +385,9 @@ kbd {
   .mode-card { padding: 24px; }
   .mode-out { font-size: 18px; line-height: 28px; }
   .final .ribbon { width: 240px; }
-  .footer { flex-direction: column; gap: 16px; padding: 32px 16px 48px; }
+  .footer { padding: 32px 16px 48px; }
+  .footer-row { flex-direction: column; gap: 16px; }
+  .footer nav { flex-wrap: wrap; justify-content: center; column-gap: 20px; row-gap: 8px; }
   .sheet { padding: 32px 24px; }
 }
 /* Sur téléphone ou tablette tactile : la fenêtre d'installation propose de s'envoyer le lien. */

@@ -9,5 +9,5 @@
 ## Pages
 
 - [Accueil](https://murmure-ai.com/) : présentation et installation
-- [Confidentialité](https://murmure-ai.com/confidentialite) : ce qui reste sur le Mac et ce qui est envoyé
-- [Conditions](https://murmure-ai.com/conditions) : essai, licence, paiement
+- [Confidentialité](https://murmure-ai.com/#confidentialite) : ce qui reste sur le Mac et ce qui est envoyé
+- [Conditions](https://murmure-ai.com/#conditions) : essai, licence, paiement

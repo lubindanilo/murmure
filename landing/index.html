@@ -21,7 +21,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/style.css?v=legal1">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
 {"@type":"Question","name":"Le Mac refuse d'ouvrir Murmure ?","acceptedAnswer":{"@type":"Answer","text":"Murmure n'est pas encore notarisé par Apple. Au premier lancement, ouvrez Réglages Système, Confidentialité et sécurité, puis cliquez sur « Ouvrir quand même »."}},
@@ -175,6 +175,7 @@
     <img class="ribbon" src="/ribbon.png" alt="" width="360" height="302" loading="lazy">
     <h2 id="final-title" class="h2">Essayez Murmure.</h2>
     <p class="final-lead">Deux minutes pour l'installer. Le reste, vous le dictez.</p>
+    <p class="final-price" id="prix">Gratuit 14 jours, sans carte. Ensuite 9,99 € par mois, résiliable à tout moment.</p>
     <div class="cta">
       <a class="button" href="https://github.com/lubindanilo/murmure-releases/releases/latest/download/Murmure.dmg" data-install><i class="ph ph-download-simple" aria-hidden="true"></i>Installer sur Mac</a>
     </div>
@@ -182,8 +183,62 @@
 </main>
 
 <footer class="footer">
-  <span class="brand"><img class="mark" src="/favicon.svg" alt="" width="22" height="22">Murmure</span>
-  <nav aria-label="Informations légales"><a href="/confidentialite">Confidentialité</a><a href="/conditions">Conditions</a></nav>
+  <div class="footer-row">
+    <span class="brand"><img class="mark" src="/favicon.svg" alt="" width="22" height="22">Murmure</span>
+    <nav aria-label="Informations légales"><a href="#conditions">Conditions</a><a href="#confidentialite">Confidentialité</a><a href="#remboursement">Remboursement</a><a href="#mentions-legales">Mentions légales</a><a href="mailto:lubindanilo2@gmail.com">Contact</a></nav>
+  </div>
+  <section class="legal-panel" id="conditions" aria-labelledby="conditions-title">
+    <h2 id="conditions-title">Conditions d'utilisation</h2>
+    <h3>Essai</h3>
+<p>Murmure est utilisable gratuitement pendant 14 jours sur un Mac, sans carte bancaire. À la fin de l&#39;essai, la dictée nécessite un abonnement à 9,99 € par mois, résiliable à tout moment. Vos réglages et votre historique sont conservés.</p>
+<h3>Licence</h3>
+<p>Un abonnement est personnel et peut être activé sur 3 Mac au maximum. Les paiements, factures, renouvellements et remboursements sont gérés par Paddle, revendeur officiel.</p>
+<h3>Résiliation et remboursement</h3>
+<p>L&#39;abonnement est résiliable à tout moment depuis Murmure ou le reçu Paddle ; il reste actif jusqu&#39;à la fin de la période payée. Le premier paiement est remboursé sur simple demande dans les 14 jours : voir la <a href="#remboursement">politique de remboursement</a>.</p>
+<h3>Logiciel</h3>
+<p>Murmure est fourni tel quel. La qualité de la transcription dépend du micro, de l&#39;environnement et de la langue. Relisez les textes importants avant de les envoyer.</p>
+<h3>Modèles tiers</h3>
+<p>Murmure utilise des modèles ouverts (Parakeet de NVIDIA, Qwen) et le traducteur de macOS, chacun soumis à sa propre licence.</p>
+<h3>Éditeur et contact</h3>
+<p>Murmure est édité par Lubin Danilo, entrepreneur individuel, SIRET 935 377 812 00018 (<a href="#mentions-legales">mentions légales</a>). Pour toute question : <a href="mailto:lubindanilo2@gmail.com">lubindanilo2@gmail.com</a>.</p>
+    <a class="legal-close" href="#">Fermer</a>
+  </section>
+  <section class="legal-panel" id="confidentialite" aria-labelledby="confidentialite-title">
+    <h2 id="confidentialite-title">Confidentialité</h2>
+    <p>Murmure est conçu pour que votre voix et vos textes restent sur votre Mac.</p>
+<h3>Ce qui reste sur votre Mac</h3>
+<p>L&#39;audio que vous dictez, les transcriptions, les textes reformulés par l&#39;IA locale, vos modes, votre dictionnaire et votre historique. Rien de tout cela n&#39;est envoyé, ni à nous ni à un tiers.</p>
+<h3>Ce que Murmure envoie</h3>
+<p>Pour gérer l&#39;essai et la licence, l&#39;app envoie à notre serveur un identifiant anonyme de votre Mac (une empreinte qui ne permet pas de retrouver le numéro de série), la version de l&#39;app et la date de première ouverture. Au premier lancement, elle télécharge ses modèles depuis Hugging Face.</p>
+<h3>Paiement</h3>
+<p>Les paiements sont traités par Paddle, revendeur officiel de Murmure, qui collecte votre adresse e-mail et vos informations de paiement selon sa propre politique de confidentialité. Nous recevons votre e-mail et l&#39;état de votre abonnement, jamais vos données bancaires.</p>
+<h3>Vos droits</h3>
+<p>Vous pouvez demander la suppression des données liées à votre Mac ou à votre achat en écrivant à l&#39;adresse indiquée sur votre reçu Paddle.</p>
+    <a class="legal-close" href="#">Fermer</a>
+  </section>
+  <section class="legal-panel" id="remboursement" aria-labelledby="remboursement-title">
+    <h2 id="remboursement-title">Remboursement</h2>
+    <h3>Premier paiement</h3>
+<p>Si Murmure ne vous convient pas, le premier paiement de votre abonnement est remboursé en totalité, sur simple demande, dans les 14 jours qui suivent. Aucune justification n&#39;est demandée.</p>
+<h3>Paiements suivants</h3>
+<p>L&#39;abonnement est résiliable à tout moment. La résiliation prend effet à la fin de la période déjà payée : Murmure reste actif jusque-là et aucun nouveau prélèvement n&#39;a lieu. Le mois en cours n&#39;est pas remboursé au prorata.</p>
+<h3>Demander un remboursement</h3>
+<p>Répondez au reçu de paiement envoyé par Paddle, ou écrivez à <a href="mailto:lubindanilo2@gmail.com">lubindanilo2@gmail.com</a> avec l&#39;adresse e-mail utilisée pour l&#39;achat. Le remboursement est effectué par Paddle, notre revendeur, sur le moyen de paiement d&#39;origine, généralement sous 5 à 10 jours ouvrés.</p>
+<h3>Résilier</h3>
+<p>Dans Murmure, ouvrez le panneau, puis la licence, et choisissez « Gérer mon abonnement ». Le lien figure aussi dans chaque reçu Paddle.</p>
+    <a class="legal-close" href="#">Fermer</a>
+  </section>
+  <section class="legal-panel" id="mentions-legales" aria-labelledby="mentions-legales-title">
+    <h2 id="mentions-legales-title">Mentions légales</h2>
+    <h3>Éditeur</h3>
+<p>Lubin Danilo, entrepreneur individuel (EI)<br>SIRET 935 377 812 00018<br>8 bis B rue de l&#39;Entrepôt, 59800 Lille, France<br>Contact : <a href="mailto:lubindanilo2@gmail.com">lubindanilo2@gmail.com</a></p>
+<p>Directeur de la publication : Lubin Danilo.</p>
+<h3>Vente</h3>
+<p>Les abonnements à Murmure sont vendus par Paddle.com Market Limited, revendeur officiel, qui encaisse les paiements, émet les factures et gère les taxes.</p>
+<h3>Hébergement</h3>
+<p>Site hébergé par Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, États-Unis.</p>
+    <a class="legal-close" href="#">Fermer</a>
+  </section>
 </footer>
 
 <!-- Sur Mac : le DMG se télécharge et ce guide reste dans un coin pendant qu'on passe au Finder -->
