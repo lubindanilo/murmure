@@ -3,7 +3,7 @@ name: build
 on:
   push:
     branches: [main]
-    paths: ["Sources/**", "Package.*", "Scripts/**", "Resources/**", "Tests/**", ".github/workflows/build.yml"]
+    paths: ["VERSION", "Sources/**", "Package.*", "Scripts/**", "Resources/**", "Tests/**", ".github/workflows/build.yml"]
   workflow_dispatch:
     inputs:
       llms:
