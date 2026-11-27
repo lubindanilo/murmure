@@ -314,7 +314,6 @@ struct HomePage: View {
     private let poll = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     private var needsPermission: Bool { micStatus != .authorized || !axTrusted }
-    private var isTrial: Bool { if case .trial = license.state { return true } else { return false } }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -340,10 +339,9 @@ struct HomePage: View {
             .font(.system(size: 13))
             .padding(.horizontal, 16)
             .padding(.top, 6)
-            // Pendant l'essai, rien : le pied n'apparaît qu'une fois l'essai terminé, ou pour dire que Murmure est activé.
-            if !isTrial {
+            if case .expired = license.state {
                 Divider().overlay(Palette.hairline).padding(.horizontal, 16)
-                footer
+                activationFooter
             }
         }
         .onReceive(poll) { _ in
@@ -446,18 +444,11 @@ struct HomePage: View {
 
     // MARK: Pied
 
-    private var footer: some View {
+    private var activationFooter: some View {
         HStack(spacing: 0) {
             Button { router.path = [.license] } label: {
-                switch license.state {
-                case .licensed:
-                    Text("Murmure est activé").foregroundStyle(Palette.muted)
-                case .trial:
-                    EmptyView()
-                case .expired:
-                    (Text("Essai terminé · ").foregroundColor(Palette.muted)
-                     + Text("Activer").foregroundColor(Theme.voice).fontWeight(.semibold))
-                }
+                (Text("Essai terminé · ").foregroundColor(Palette.muted)
+                 + Text("Activer").foregroundColor(Theme.voice).fontWeight(.semibold))
             }
             .buttonStyle(.plain)
             Spacer()
