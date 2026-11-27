@@ -2,7 +2,7 @@ import Combine
 import Foundation
 
 /// Installation au premier lancement, dans cet ordre : Parakeet Ultra pour la transcription,
-/// Murmure Cleanup 1 pour le nettoyage de la dictée, puis le LLM des modes. Rien à choisir.
+/// Murmure Cleanup 2 pour le nettoyage de la dictée, puis le LLM des modes. Rien à choisir.
 @MainActor
 final class Setup: ObservableObject {
     static let shared = Setup()
@@ -18,11 +18,11 @@ final class Setup: ObservableObject {
     /// Le LLM attend la fin de la transcription : les deux en même temps se partagent la connexion,
     /// et le modèle de transcription (le seul qui bloque la première dictée) mettait trois fois plus longtemps.
     private var llmQueued = false
-    /// Cleanup 1 attend lui aussi la transcription ; le LLM des modes attend Cleanup 1.
+    /// Cleanup 2 attend lui aussi la transcription ; le LLM des modes attend Cleanup 2.
     private var cleanupQueued = false
     private let cleanup = LocalLLM.cleanup
 
-    /// Cleanup 1 installé, ou abandonné (échec) : le LLM des modes peut passer.
+    /// Cleanup 2 installé, ou abandonné (échec) : le LLM des modes peut passer.
     private var cleanupSettled: Bool {
         !settings.aiEnabled || ai.installed.contains(cleanup.id) || (!cleanupQueued && ai.downloadProgress[cleanup.id] == nil)
     }
@@ -78,7 +78,7 @@ final class Setup: ObservableObject {
         refresh()
     }
 
-    /// Transcription prête : Cleanup 1 démarre ; puis, Cleanup 1 prêt, le LLM des modes.
+    /// Transcription prête : Cleanup 2 démarre ; puis, Cleanup 2 prêt, le LLM des modes.
     private func startQueuedLLM() {
         guard models.isReady(speechModel) else { return }
         if cleanupQueued {

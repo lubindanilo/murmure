@@ -207,12 +207,12 @@ struct LocalLLM: Identifiable, Hashable {
 
     static func model(_ id: String) -> LocalLLM? { all.first { $0.id == id } }
 
-    /// Murmure Cleanup 1 : Qwen 2.5 0.5B affiné pour nettoyer la dictée simple (Training/cleanup-1).
+    /// Murmure Cleanup 2 : Qwen 2.5 0.5B affiné pour nettoyer la dictée simple (training/cleanup-1 puis cleanup-2).
     /// Il n'apparaît pas dans la liste des LLM des modes : il ne sait faire que ça.
     static let cleanup = LocalLLM(
-        id: "murmure-cleanup-1", name: "Murmure Cleanup 1", repo: "", file: "murmure-cleanup-1.gguf",
+        id: "murmure-cleanup-2", name: "Murmure Cleanup 2", repo: "", file: "murmure-cleanup-2.gguf",
         sizeBytes: CleanupModelFile.sizeBytes, note: "Nettoyage de la dictée.",
-        directURL: URL(string: "https://github.com/lubindanilo/murmure-releases/releases/download/models-cleanup-1/murmure-cleanup-1.gguf"))
+        directURL: URL(string: "https://github.com/lubindanilo/murmure-releases/releases/download/models-cleanup-2/murmure-cleanup-2.gguf"))
 
     /// Tous les fichiers GGUF que Murmure peut télécharger.
     static var downloadable: [LocalLLM] { all + [cleanup] }

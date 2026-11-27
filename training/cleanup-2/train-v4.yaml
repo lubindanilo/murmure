@@ -1,0 +1,27 @@
+# Cleanup 2 : quatrième passe courte, reprise du point 400 de la troisième, avec des dictées coupées en
+# pleine phrase (la cible finit par « ... », rien d'inventé) et des « non » qui ont un vrai sens.
+#   python -m mlx_lm lora -c train-v4.yaml   (depuis ~/murmure-cleanup)
+model: base/qwen05
+train: true
+data: data-v4
+fine_tune_type: full
+optimizer: adamw
+mask_prompt: true
+num_layers: -1
+batch_size: 8
+iters: 200
+learning_rate: 5.0e-6
+lr_schedule:
+  name: cosine_decay
+  warmup: 10
+  warmup_init: 1.0e-7
+  arguments: [5.0e-6, 200, 1.0e-6]
+resume_adapter_file: runs/full-v3/0000400_adapters.safetensors
+steps_per_report: 20
+steps_per_eval: 100
+val_batches: -1
+save_every: 200
+adapter_path: runs/full-v4
+max_seq_length: 1024
+grad_checkpoint: true
+seed: 17

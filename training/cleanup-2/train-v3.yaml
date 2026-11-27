@@ -1,0 +1,27 @@
+# Cleanup 2 : troisième passe, reprise du point 400 de la deuxième (Cleanup 1 publié) sur data-v3
+# (monologues longs bruités façon Parakeet + une part des données v2).
+#   python -m mlx_lm lora -c train-v3.yaml   (depuis ~/murmure-cleanup)
+model: base/qwen05
+train: true
+data: data-v3
+fine_tune_type: full
+optimizer: adamw
+mask_prompt: true
+num_layers: -1
+batch_size: 8
+iters: 600
+learning_rate: 1.0e-5
+lr_schedule:
+  name: cosine_decay
+  warmup: 30
+  warmup_init: 1.0e-7
+  arguments: [1.0e-5, 600, 1.0e-6]
+resume_adapter_file: runs/full-v2/0000400_adapters.safetensors
+steps_per_report: 20
+steps_per_eval: 200
+val_batches: -1
+save_every: 200
+adapter_path: runs/full-v3
+max_seq_length: 1024
+grad_checkpoint: true
+seed: 13

@@ -4,7 +4,7 @@ import Foundation
 /// Vérification de bout en bout sans micro ni interface :
 ///   Murmure --selftest fichier.wav [--model parakeet-v3] [--llm qwen2.5-1.5b] [--mode Nettoyage]
 ///   Murmure --cleanuptest dictees.txt|eval.jsonl [--cleanup-model fichier.gguf]
-/// Télécharge les modèles si besoin, transcrit le fichier, le nettoie avec Murmure Cleanup 1,
+/// Télécharge les modèles si besoin, transcrit le fichier, le nettoie avec Murmure Cleanup 2,
 /// puis applique l'IA locale si --llm est donné.
 @MainActor
 enum SelfTest {
@@ -65,7 +65,7 @@ enum SelfTest {
             print("Brut : \(TextProcessing.apply(raw, replacements: settings.replacements))")
             if await ensureCleanupModel(), await CleanupModel.shared.waitUntilReady() {
                 let r = await CleanupModel.shared.clean(TextProcessing.apply(raw, replacements: []))
-                print("[Cleanup 1] \(String(format: "%.2f", r.seconds)) s\(r.usedModel ? "" : " · repli : \(r.fallbackReason)")")
+                print("[Cleanup 2] \(String(format: "%.2f", r.seconds)) s\(r.usedModel ? "" : " · repli : \(r.fallbackReason)")")
                 print("Nettoyé : \(r.text)")
             }
 
@@ -151,7 +151,7 @@ extension SelfTest {
 }
 
 extension SelfTest {
-    /// Rejoue la réparation et le garde-fou de Cleanup 1 sur des sorties déjà calculées ({"raw", "out"} par
+    /// Rejoue la réparation et le garde-fou de Cleanup 2 sur des sorties déjà calculées ({"raw", "out"} par
     /// ligne) : une ligne « décision<TAB>texte réparé » par entrée (comparaison avec evaluate.py).
     static func guardTest(_ path: String) -> Int32 {
         guard let content = try? String(contentsOfFile: path, encoding: .utf8) else { return 2 }
@@ -165,7 +165,7 @@ extension SelfTest {
         return 0
     }
 
-    /// Télécharge Cleanup 1 si besoin. Faux si le téléchargement échoue.
+    /// Télécharge Cleanup 2 si besoin. Faux si le téléchargement échoue.
     static func ensureCleanupModel() async -> Bool {
         let cleanup = CleanupModel.shared
         if cleanup.isInstalled { return true }
@@ -179,7 +179,7 @@ extension SelfTest {
         return true
     }
 
-    /// Banc de Murmure Cleanup 1 : une dictée brute par ligne (.txt), ou des objets {"raw", "ref"} (.jsonl).
+    /// Banc de Murmure Cleanup 2 : une dictée brute par ligne (.txt), ou des objets {"raw", "ref"} (.jsonl).
     /// Affiche le résultat, le temps et les replis, puis la latence médiane et le taux de replis.
     ///   Murmure --cleanuptest Tests/cleanup-bench/eval.jsonl
     static func cleanupTest(_ path: String) async -> Int32 {
@@ -217,7 +217,7 @@ extension SelfTest {
         print(String(format: "\n%d dictées · médiane %.3f s · p90 %.3f s · max %.3f s · replis %d",
                      cases.count, sorted[sorted.count / 2], sorted[Int(Double(sorted.count) * 0.9)], sorted.last!, fallbacks))
         if cases.contains(where: { $0.ref != nil }) {
-            print("Identiques à la référence : Cleanup 1 \(exact)/\(cases.count), règles \(rulesExact)/\(cases.count)")
+            print("Identiques à la référence : Cleanup 2 \(exact)/\(cases.count), règles \(rulesExact)/\(cases.count)")
         }
         return 0
     }
