@@ -14,7 +14,14 @@ enum RibbonMotion {
     static let frames: [CGImage] = {
         guard let url = Bundle.main.url(forResource: "RibbonMotion", withExtension: "webp"),
               let source = CGImageSourceCreateWithURL(url as CFURL, nil),
-              let sheet = CGImageSourceCreateImageAtIndex(source, 0, nil) else { return [] }
+              let webp = CGImageSourceCreateImageAtIndex(source, 0, nil),
+              let space = CGColorSpace(name: CGColorSpace.sRGB),
+              let bitmap = CGContext(data: nil, width: webp.width, height: webp.height, bitsPerComponent: 8,
+                                     bytesPerRow: 0, space: space,
+                                     bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return [] }
+        // Les découpes d'un WebP décodé à la demande redécodent toute la planche à chaque rendu.
+        bitmap.draw(webp, in: CGRect(x: 0, y: 0, width: webp.width, height: webp.height))
+        guard let sheet = bitmap.makeImage() else { return [] }
         let rows = (frameCount + columns - 1) / columns
         let w = sheet.width / columns, h = sheet.height / rows
         return (0..<frameCount).compactMap { i in
@@ -110,5 +117,142 @@ struct RibbonLogo: View {
         }
         .frame(height: height)
         .accessibilityHidden(true)
+    }
+}
+
+/// Animation du ruban du bandeau. Les fondus sont composés une fois dans une seule texture Retina.
+@MainActor
+final class HUDRibbon {
+    static let height: CGFloat = 20
+    static var width: CGFloat { (height * RibbonMotion.aspect).rounded() }
+    private static let baseSpeed: Float = 1.15
+
+    nonisolated static let sprite: Sprite? = makeSprite()
+
+    struct Sprite: Sendable {
+        let image: CGImage
+        let cells: [CGRect]
+        let duration: CFTimeInterval
+    }
+
+    nonisolated private static func makeSprite() -> Sprite? {
+        let frames = RibbonMotion.frames
+        guard !frames.isEmpty else { return nil }
+        let steps = 6
+        let count = frames.count * steps
+        let columns = 15
+        let rows = (count + columns - 1) / columns
+        let pixelHeight = 60
+        let pixelWidth = Int((CGFloat(pixelHeight) * RibbonMotion.aspect).rounded())
+        // Deux pixels transparents séparent les cellules, même avec le filtrage bilinéaire.
+        let cellWidth = pixelWidth + 2
+        let cellHeight = pixelHeight + 2
+        let width = columns * cellWidth
+        let height = rows * cellHeight
+        guard let space = CGColorSpace(name: CGColorSpace.sRGB),
+              let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: 8,
+                                      bytesPerRow: 0, space: space,
+                                      bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
+        context.interpolationQuality = .high
+        var cells: [CGRect] = []
+        for index in 0..<count {
+            let current = index / steps
+            let fraction = CGFloat(index % steps) / CGFloat(steps)
+            let x = index % columns * cellWidth + 1
+            let y = index / columns * cellHeight + 1
+            let rect = CGRect(x: x, y: height - y - pixelHeight, width: pixelWidth, height: pixelHeight)
+            context.setBlendMode(.copy)
+            context.setAlpha(1 - fraction)
+            context.draw(frames[current], in: rect)
+            if fraction > 0 {
+                context.setBlendMode(.plusLighter)
+                context.setAlpha(fraction)
+                context.draw(frames[(current + 1) % frames.count], in: rect)
+            }
+            cells.append(CGRect(x: CGFloat(x) / CGFloat(width), y: CGFloat(y) / CGFloat(height),
+                                width: CGFloat(pixelWidth) / CGFloat(width),
+                                height: CGFloat(pixelHeight) / CGFloat(height)))
+        }
+        guard let image = context.makeImage() else { return nil }
+        return Sprite(image: image, cells: cells, duration: Double(frames.count) / RibbonMotion.fps)
+    }
+
+    let layer = CALayer()
+    private let image = CALayer()
+    private var running = false
+    private var speed = HUDRibbon.baseSpeed
+    private var scale: CGFloat = 1
+
+    init() {
+        layer.addSublayer(image)
+    }
+
+    func place(in rect: CGRect, backingScale: CGFloat) {
+        layer.frame = rect
+        image.frame = layer.bounds
+        image.contentsScale = backingScale
+    }
+
+    func start(reduceMotion: Bool) {
+        guard !running else { return }
+        guard let sprite = Self.sprite, let first = sprite.cells.first else {
+            image.contents = Theme.ribbon?.cgImage(forProposedRect: nil, context: nil, hints: nil)
+            return
+        }
+        image.contents = sprite.image
+        image.contentsRect = first
+        guard !reduceMotion else { return }
+
+        running = true
+        let loop = CAKeyframeAnimation(keyPath: "contentsRect")
+        loop.values = (sprite.cells + [first]).map { NSValue(rect: $0) }
+        loop.calculationMode = .discrete
+        loop.duration = sprite.duration
+        loop.repeatCount = .infinity
+        image.speed = speed
+        image.beginTime = layer.convertTime(CACurrentMediaTime(), from: nil)
+        image.add(loop, forKey: "loop")
+    }
+
+    func stop() {
+        guard running else { return }
+        running = false
+        image.removeAnimation(forKey: "loop")
+        image.speed = 1
+        image.timeOffset = 0
+        image.beginTime = 0
+        speed = Self.baseSpeed
+        scale = 1
+        layer.removeAnimation(forKey: "scale")
+        layer.setAffineTransform(.identity)
+    }
+
+    func setLevel(_ level: Float) {
+        guard running else { return }
+        let level = min(max(level, 0), 1)
+        let nextSpeed = speed + (Self.baseSpeed + 1.6 * level - speed) * 0.35
+        let nextScale = 1 + 0.14 * CGFloat(level)
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        if abs(nextSpeed - speed) > 0.02 {
+            // La position locale de la boucle reste la même quand sa vitesse change.
+            let now = CACurrentMediaTime()
+            let elapsed = image.convertTime(now, from: nil)
+            image.speed = nextSpeed
+            image.timeOffset = elapsed
+            image.beginTime = layer.convertTime(now, from: nil)
+            speed = nextSpeed
+        }
+        if nextScale != scale {
+            let animation = CABasicAnimation(keyPath: "transform.scale")
+            animation.fromValue = layer.presentation()?.affineTransform().a ?? scale
+            animation.toValue = nextScale
+            animation.duration = 0.12
+            animation.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            layer.setAffineTransform(CGAffineTransform(scaleX: nextScale, y: nextScale))
+            layer.add(animation, forKey: "scale")
+            scale = nextScale
+        }
+        CATransaction.commit()
     }
 }
