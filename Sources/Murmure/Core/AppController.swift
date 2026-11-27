@@ -51,13 +51,6 @@ final class AppController: ObservableObject {
     }
 
     func start() {
-        recorder.onLevel = { [weak self] value in
-            Task { @MainActor in
-                guard let self else { return }
-                // Lissage : montée rapide, descente douce.
-                self.level = value > self.level ? value : self.level * 0.82 + value * 0.18
-            }
-        }
         hotkey.onPress = { [weak self] key in Task { @MainActor in self?.keyPressed(key) } }
         hotkey.onRelease = { [weak self] key in Task { @MainActor in self?.keyReleased(key) } }
         hotkey.onEscape = { [weak self] in Task { @MainActor in self?.cancel() } }
@@ -77,7 +70,7 @@ final class AppController: ObservableObject {
         // Tout ce que le premier appui coûterait : fenêtre du bandeau, images du ruban, micro.
         hud.prepare()
         _ = Self.sounds
-        DispatchQueue.global(qos: .userInitiated).async { _ = RibbonMotion.frames }
+        DispatchQueue.global(qos: .userInitiated).async { _ = HUDRibbon.sprite }
         recorder.prewarm()
     }
 
@@ -162,10 +155,10 @@ final class AppController: ObservableObject {
             return
         }
         // Le bandeau d'abord : il doit apparaître à l'instant où la touche est enfoncée.
-        recordingStart = Date()
+        let started = Date()
+        recordingStart = started
         phase = .recording(handsFree: handsFree || settings.triggerMode == .toggle)
         hud.show()
-        let started = recordingStart
         // Le son, lui, attend un souffle : ⌘C fait avec ⌘ droite annule avant, sans bip.
         DispatchQueue.main.asyncAfter(deadline: .now() + (handsFree ? 0 : 0.12)) { [weak self] in
             guard let self, case .recording = self.phase, self.recordingStart == started else { return }
@@ -174,12 +167,15 @@ final class AppController: ObservableObject {
 
         context = DictationContext.frontmost()
         currentMode = resolvedMode()
-        do {
-            try recorder.start()
-        } catch {
-            fail(error.localizedDescription)
-            return
-        }
+        recorder.start(onLevel: { [weak self] value in
+            guard let self, self.recordingStart == started, case .recording = self.phase else { return }
+            // Lissage : montée rapide, descente douce.
+            self.level = value > self.level ? value : self.level * 0.82 + value * 0.18
+        }, onFailure: { [weak self] error in
+            guard let self, self.recordingStart == started else { return }
+            self.finishCapture()
+            self.fail(error.localizedDescription)
+        })
         contextTask = Task { [weak self] in
             let details = await Task.detached(priority: .userInitiated) { DictationContext.capture() }.value
             guard let self, self.recordingStart == started else { return }
@@ -194,7 +190,7 @@ final class AppController: ObservableObject {
         if wantsURL, let bundle = context.appBundleID, DictationContext.browsers[bundle] != nil {
             Task {
                 let url = await DictationContext.browserURL(bundleID: bundle)
-                guard case .recording = self.phase else { return }
+                guard self.recordingStart == started, case .recording = self.phase else { return }
                 self.context.browserURL = url
                 self.currentMode = self.resolvedMode()
             }
@@ -209,36 +205,47 @@ final class AppController: ObservableObject {
     func cancel(silently: Bool = false) {
         guard case .recording = phase else { return }
         recorder.stop()
-        level = 0
         phase = .idle
-        forcedModeID = nil
+        finishCapture()
         if !silently { play("Funk") }
         hud.hide()
     }
 
     func finishRecording() {
         guard case .recording = phase else { return }
-        let samples = recorder.stop()
+        let started = recordingStart
+        phase = .transcribing
+        recorder.stop { [weak self] samples in
+            guard let self, self.recordingStart == started, self.phase == .transcribing else { return }
+            self.transcribeRecording(samples)
+        }
         level = 0
         play("Pop")
+    }
+
+    private func transcribeRecording(_ samples: [Float]) {
         let duration = Double(samples.count) / AudioRecorder.sampleRate
         let mode = resolvedMode()
         let forced = forcedModeID != nil
         forcedModeID = nil
-        guard duration > 0.35 else {
-            phase = .idle
-            hud.hide()
-            return
-        }
-        phase = .transcribing
+        guard duration > 0.35 else { finishQuietly(); return }
         let pending = contextTask
         contextTask = nil
         Task { [weak self] in
             await pending?.value
             guard let self else { return }
             let final = forced || !mode.isMain ? mode : self.resolvedMode()
+            self.finishCapture()
             await self.run(samples: samples, duration: duration, mode: final, context: self.context)
         }
+    }
+
+    private func finishCapture() {
+        recordingStart = nil
+        level = 0
+        forcedModeID = nil
+        contextTask?.cancel()
+        contextTask = nil
     }
 
     private func run(samples: [Float], duration: TimeInterval, mode initialMode: Mode, context: DictationContext) async {
@@ -338,6 +345,7 @@ final class AppController: ObservableObject {
 
     private func finishQuietly() {
         phase = .idle
+        finishCapture()
         hud.hide()
     }
 
