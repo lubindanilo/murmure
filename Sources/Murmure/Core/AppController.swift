@@ -148,7 +148,7 @@ final class AppController: ObservableObject {
 
     private func beginRecording(handsFree: Bool = false) {
         guard Setup.shared.isReady(selectedModel) else {
-            fail("Murmure termine l'installation de \(selectedModel.name). Réessayez dans un instant.")
+            fail("Murmure termine son installation. Réessayez dans un instant.")
             PanelController.shared.show(.general)
             return
         }
