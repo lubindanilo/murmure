@@ -7,7 +7,7 @@ enum Keychain {
 
     /// Les bancs en ligne de commande (binaire non signé) ne touchent pas au trousseau : macOS y
     /// bloquerait le test derrière une demande d'autorisation. Ils n'utilisent que des modèles locaux.
-    private static let disabled = CommandLine.arguments.contains { ["--selftest", "--llmtest", "--cleanuptest", "--guardtest"].contains($0) }
+    private static let disabled = CommandLine.arguments.contains { ["--selftest", "--llmtest", "--cleanuptest", "--guardtest", "--addmode"].contains($0) }
 
     static func get(_ account: String) -> String? {
         guard !disabled else { return nil }

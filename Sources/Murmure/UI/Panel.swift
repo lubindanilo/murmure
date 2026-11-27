@@ -105,6 +105,7 @@ final class PanelController: NSObject {
         item.button?.image = Self.restingIcon
         item.button?.target = self
         item.button?.action = #selector(toggle(_:))
+        item.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
         statusItem = item
         phaseWatch = AppController.shared.$phase
             .receive(on: RunLoop.main)
@@ -146,6 +147,17 @@ final class PanelController: NSObject {
     }
 
     @objc private func toggle(_ sender: Any?) {
+        // Clic droit (ou ⌃ clic) : le seul endroit où l'on quitte Murmure, comme les autres apps de la barre des menus.
+        if let event = NSApp.currentEvent,
+           event.type == .rightMouseUp || event.modifierFlags.contains(.control) {
+            hide()
+            let menu = NSMenu()
+            menu.addItem(withTitle: "Quitter Murmure", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+            statusItem?.menu = menu
+            statusItem?.button?.performClick(nil)
+            statusItem?.menu = nil
+            return
+        }
         isVisible ? hide() : show(.general)
     }
 
@@ -302,6 +314,7 @@ struct HomePage: View {
     private let poll = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     private var needsPermission: Bool { micStatus != .authorized || !axTrusted }
+    private var isTrial: Bool { if case .trial = license.state { return true } else { return false } }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -309,16 +322,7 @@ struct HomePage: View {
             Divider().overlay(Palette.hairline).padding(.horizontal, 16)
             VStack(alignment: .leading, spacing: 0) {
                 callouts
-                row("Touche de dictée") { KeyPickerChip() }
-                row("Écrire en") {
-                    Segmented(options: ["Français", "English"],
-                              selection: Binding(get: { settings.writeInEnglish ? 1 : 0 },
-                                                 set: { settings.writeInEnglish = $0 == 1 }))
-                }
-                row("Adapter le ton à l'app") {
-                    Toggle("", isOn: $settings.autoTone).labelsHidden().toggleStyle(.switch).controlSize(.small)
-                }
-                .help("Mail : soigné · Slack, Messages : naturel · ChatGPT, Claude, Cursor : prompt clair")
+                ModesList()
                 if let last = history.entries.first {
                     LastDictationCard(text: last.text).padding(.top, 6).padding(.bottom, 4)
                 }
@@ -336,8 +340,11 @@ struct HomePage: View {
             .font(.system(size: 13))
             .padding(.horizontal, 16)
             .padding(.top, 6)
-            Divider().overlay(Palette.hairline).padding(.horizontal, 16)
-            footer
+            // Pendant l'essai, rien : le pied n'apparaît qu'une fois l'essai terminé, ou pour dire que Murmure est activé.
+            if !isTrial {
+                Divider().overlay(Palette.hairline).padding(.horizontal, 16)
+                footer
+            }
         }
         .onReceive(poll) { _ in
             micStatus = AudioRecorder.permission
@@ -445,9 +452,8 @@ struct HomePage: View {
                 switch license.state {
                 case .licensed:
                     Text("Murmure est activé").foregroundStyle(Palette.muted)
-                case .trial(let days, _):
-                    (Text(days > 1 ? "Essai · \(days) jours · " : "Essai · dernier jour · ").foregroundColor(Palette.muted)
-                     + Text("Acheter").foregroundColor(Theme.voice).fontWeight(.semibold))
+                case .trial:
+                    EmptyView()
                 case .expired:
                     (Text("Essai terminé · ").foregroundColor(Palette.muted)
                      + Text("Activer").foregroundColor(Theme.voice).fontWeight(.semibold))
@@ -455,9 +461,6 @@ struct HomePage: View {
             }
             .buttonStyle(.plain)
             Spacer()
-            Button("Quitter") { NSApp.terminate(nil) }
-                .buttonStyle(.plain)
-                .foregroundStyle(Palette.muted)
         }
         .font(.system(size: 12))
         .padding(.horizontal, 16)
@@ -507,31 +510,156 @@ struct Callout: View {
     }
 }
 
-/// Touche de dictée affichée comme une petite touche ; un clic ouvre la liste.
-struct KeyPickerChip: View {
-    @EnvironmentObject var settings: Settings
+/// Touche affichée comme une petite touche de clavier ; un clic ouvre la liste des touches.
+struct KeyCap<Content: View>: View {
+    let label: String
+    var muted = false
+    @ViewBuilder var menu: () -> Content
 
     var body: some View {
-        Menu {
-            Picker("Touche de dictée", selection: $settings.triggerKey) {
-                ForEach(TriggerKey.allCases) { Text($0.label).tag($0) }
-            }
-            .pickerStyle(.inline)
-        } label: {
-            HStack(spacing: 6) {
-                Text(settings.triggerKey.label).font(.system(size: 12, weight: .medium))
-                Image(systemName: "pencil").font(.system(size: 9, weight: .semibold)).foregroundStyle(Palette.muted)
-            }
-            .padding(.horizontal, 8)
-            .frame(height: 24)
-            .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(Palette.raised))
-            .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).strokeBorder(Palette.hairline, lineWidth: 1))
+        Menu(content: menu) {
+            Text(label)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(muted ? Palette.muted : Palette.ink)
+                .padding(.horizontal, 8)
+                .frame(height: 24)
+                .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(Palette.raised))
+                .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).strokeBorder(Palette.hairline, lineWidth: 1))
         }
         .menuStyle(.button)
         .buttonStyle(.plain)
         .menuIndicator(.hidden)
         .fixedSize()
-        .help("Changer la touche de dictée")
+        .help("Changer la touche")
+    }
+}
+
+/// Choix d'une touche pour la dictée ou pour un mode. Une touche déjà prise passe à l'autre
+/// (échange) : deux modes ne partagent jamais une touche.
+struct KeyMenu: View {
+    /// nil : la dictée principale.
+    let modeID: UUID?
+    @EnvironmentObject var settings: Settings
+    @ObservedObject private var store = ModeStore.shared
+
+    private var current: TriggerKey? { modeID.flatMap { store.mode($0)?.shortcut } ?? (modeID == nil ? settings.triggerKey : nil) }
+
+    var body: some View {
+        ForEach(TriggerKey.allCases) { key in
+            let owner = key == settings.triggerKey ? "Dictée" : store.holder(of: key)?.name
+            let isMine = key == current
+            Toggle(isOn: Binding(get: { isMine }, set: { _ in choose(key) })) {
+                Text(owner == nil || isMine ? key.label : "\(key.label)  ·  \(owner!)")
+            }
+            // La touche de la dictée ne se prend pas depuis un mode qui n'en a pas à rendre.
+            .disabled(modeID != nil && key == settings.triggerKey && current == nil)
+        }
+        if modeID != nil {
+            Divider()
+            Toggle("Aucune touche", isOn: Binding(get: { current == nil }, set: { _ in store.assign(nil, to: modeID!) }))
+        }
+    }
+
+    private func choose(_ key: TriggerKey) {
+        guard key != current else { return }
+        if let modeID {
+            if key == settings.triggerKey, let mine = current {
+                settings.triggerKey = mine
+                store.assign(key, to: modeID)
+            } else {
+                store.assign(key, to: modeID)
+            }
+        } else {
+            let previous = settings.triggerKey
+            if let holder = store.holder(of: key) { store.assign(previous, to: holder.id) }
+            settings.triggerKey = key
+        }
+    }
+}
+
+/// Les modes, une touche chacun : maintenir la touche d'un mode dicte dans ce mode.
+/// La première ligne est la dictée simple.
+struct ModesList: View {
+    @EnvironmentObject var settings: Settings
+    @EnvironmentObject var router: PanelRouter
+    @ObservedObject private var store = ModeStore.shared
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            ForEach(store.modes) { mode in
+                ModeRow(mode: mode, mainKey: settings.triggerKey) { if !mode.isMain { router.path = [.mode(mode.id)] } }
+            }
+            Menu {
+                ForEach(ModeTemplates.all, id: \.name) { template in
+                    Button { add(template) } label: { Label(template.name, systemImage: template.symbol) }
+                }
+                Divider()
+                Button { add(nil) } label: { Label("Mode personnalisé…", systemImage: "slider.horizontal.3") }
+            } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 11, weight: .semibold))
+                        .frame(width: 24, height: 24)
+                    Text("Ajouter un mode")
+                    Spacer()
+                }
+                .foregroundStyle(Theme.voice)
+                .frame(height: 34)
+                .contentShape(Rectangle())
+            }
+            .menuStyle(.button)
+            .buttonStyle(.plain)
+            .menuIndicator(.hidden)
+        }
+    }
+
+    /// Un modèle s'ajoute prêt à servir, avec une touche libre. Un mode personnalisé s'ouvre pour être écrit,
+    /// la traduction pour choisir sa langue.
+    private func add(_ template: Mode?) {
+        let mode = store.add(from: template, mainKey: settings.triggerKey)
+        if template == nil || template?.translateTo != nil { router.path = [.mode(mode.id)] }
+    }
+}
+
+struct ModeRow: View {
+    let mode: Mode
+    let mainKey: TriggerKey
+    let open: () -> Void
+    @State private var hovering = false
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: mode.symbol)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(Theme.voice)
+                .frame(width: 24, height: 24)
+                .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(Theme.voiceSoft))
+            Text(mode.name).lineLimit(1)
+            if let target = mode.translateTo {
+                Text(Languages.name(target)).foregroundStyle(Palette.muted).lineLimit(1)
+            }
+            Spacer(minLength: 8)
+            KeyCap(label: mode.isMain ? mainKey.capLabel : (mode.shortcut?.capLabel ?? "Aucune touche"),
+                   muted: !mode.isMain && mode.shortcut == nil) {
+                KeyMenu(modeID: mode.isMain ? nil : mode.id)
+            }
+            Image(systemName: "chevron.right")
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(Palette.muted)
+                .opacity(mode.isMain ? 0 : 1)
+        }
+        .frame(height: 36)
+        .padding(.horizontal, 6)
+        .background(RoundedRectangle(cornerRadius: 7, style: .continuous)
+            .fill(Palette.card.opacity(hovering && !mode.isMain ? 0.7 : 0)))
+        .padding(.horizontal, -6)
+        .contentShape(Rectangle())
+        .onHover { hovering = $0 }
+        .onTapGesture(perform: open)
+        .animation(Theme.quick, value: hovering)
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(mode.isMain ? [] : .isButton)
+        .accessibilityAction { open() }
     }
 }
 
@@ -607,6 +735,9 @@ struct LastDictationCard: View {
 }
 
 extension TriggerKey {
+    /// Libellé court posé sur la touche dessinée.
+    var capLabel: String { self == .fn ? "fn" : label }
+
     var glyph: String {
         switch self {
         case .fn: return "globe"

@@ -37,6 +37,10 @@ final class HUDController {
         controller.$phase.removeDuplicates().sink { [weak self] phase in self?.phaseChanged(phase) }.store(in: &bag)
         controller.$recordingStart.sink { [weak self] start in self?.start = start }.store(in: &bag)
         controller.$level.sink { [weak self] level in self?.row.ribbon.setLevel(level) }.store(in: &bag)
+        // Un mode autre que la dictée simple s'annonce dans le bandeau (« E-mail » au lieu de « J'écoute »).
+        controller.$currentMode.removeDuplicates { $0?.id == $1?.id && $0?.name == $1?.name }
+            .sink { [weak self] mode in self?.row.setMode(mode.flatMap { $0.isMain ? nil : $0.name }) }
+            .store(in: &bag)
     }
 
     func prepare() {
@@ -242,6 +246,8 @@ private final class HUDRow {
     private var rect = CGRect.zero
     private var timer: Timer?
     private var titleInset: CGFloat = 0
+    private var modeName: String?
+    private var shown: AppController.Phase = .idle
 
     init() {
         title.truncationMode = .end
@@ -271,7 +277,27 @@ private final class HUDRow {
         placeText()
     }
 
+    /// Nom du mode en cours ; change le titre sur place pendant l'écoute, sans relancer le ruban.
+    func setMode(_ name: String?) {
+        guard name != modeName else { return }
+        modeName = name
+        guard case .recording = shown else { return }
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        setTitle(name ?? "J'écoute")
+        CATransaction.commit()
+    }
+
+    private func setTitle(_ label: String) {
+        title.string = NSAttributedString(string: label, attributes: [
+            .font: NSFont.systemFont(ofSize: 14, weight: .semibold),
+            .foregroundColor: NSColor.white
+        ])
+        placeText()
+    }
+
     func display(_ phase: AppController.Phase, started: Date?) {
+        shown = phase
         timer?.invalidate()
         timer = nil
 
@@ -304,11 +330,15 @@ private final class HUDRow {
                 RunLoop.main.add(timer, forMode: .common)
                 self.timer = timer
             }
-            label = "J'écoute"
-        case .transcribing, .polishing:
+            label = modeName ?? "J'écoute"
+        case .transcribing:
             showDots()
             titleInset = 27
             label = "Mise au propre"
+        case .polishing:
+            showDots()
+            titleInset = 27
+            label = modeName.map { "\($0)…" } ?? "Mise au propre"
         case .translating:
             showSymbol("globe", color: .white)
             label = "Traduction"
@@ -324,11 +354,7 @@ private final class HUDRow {
             label = ""
         }
         if ribbon.layer.isHidden { ribbon.stop() }
-        title.string = NSAttributedString(string: label, attributes: [
-            .font: NSFont.systemFont(ofSize: 14, weight: .semibold),
-            .foregroundColor: NSColor.white
-        ])
-        placeText()
+        setTitle(label)
     }
 
     private func placeText() {

@@ -14,6 +14,11 @@ enum ReplacementTiming: String, Codable, CaseIterable, Identifiable {
     }
 }
 
+struct ModeExample: Codable, Hashable {
+    var input: String
+    var output: String
+}
+
 struct AppRef: Codable, Hashable, Identifiable {
     var bundleID: String
     var name: String
@@ -57,6 +62,10 @@ struct Mode: Codable, Identifiable, Hashable {
     var scriptBefore: String = ""
     var scriptAfter: String = ""
 
+    /// Exemples (dictée, résultat) montrés à l'IA avant la dictée : un petit modèle local les suit
+    /// bien mieux que des règles écrites. Optionnel pour relire les modes enregistrés avant leur ajout.
+    var examples: [ModeExample]?
+
     var usesAI: Bool { !instructions.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || cleanup }
     var needsContext: Bool { includeClipboard || includeActiveApp || includeCursorContext || includeBrowserURL }
 
@@ -76,49 +85,60 @@ struct Mode: Codable, Identifiable, Hashable {
 }
 
 /// Modèles de modes proposés à la création (l'utilisateur les modifie ensuite librement).
+/// Un mode s'active par sa touche : les modèles n'ont ni mot déclencheur ni app associée.
 enum ModeTemplates {
     static let all: [Mode] = [
-        Mode(name: "Traduire en anglais", symbol: "globe", cleanup: true, translateTo: "en", triggerWord: "anglais"),
         Mode(name: "E-mail", symbol: "envelope",
              instructions: """
-             Mets en forme la dictée comme le corps d'un e-mail clair et poli, dans la langue de la dictée. \
-             Garde le registre (tu ou vous) et toutes les informations. Paragraphes courts. \
-             Pas d'objet, pas de signature inventée.
+             Transforme la dictée en e-mail, dans la langue de la dictée. \
+             Garde exactement le sens et toutes les informations : n'ajoute rien, n'interprète pas. \
+             Trois parties séparées par une ligne vide : la salutation, le corps en paragraphes courts, la formule de fin. \
+             Reprends la salutation dictée, sinon « Bonjour, ». Garde le tutoiement ou le vouvoiement. \
+             Formule de fin : « À plus, » si la dictée tutoie, « Bien à vous, » si elle vouvoie. \
+             Rien après la formule de fin : ni nom, ni signature. Pas d'objet.
              """,
-             triggerWord: "mail", apps: [AppRef(bundleID: "com.apple.mail", name: "Mail")],
-             websites: ["mail.google.com", "outlook.office.com"]),
+             examples: [
+                ModeExample(input: "salut Léa je t'envoie les photos ce soir et on se cale un appel demain ça te va",
+                            output: "Salut Léa,\n\nJe t'envoie les photos ce soir. On se cale un appel demain, ça te va ?\n\nÀ plus,"),
+                ModeExample(input: "bonjour monsieur Petit je n'ai pas encore reçu votre contrat est-ce que vous pouvez me le renvoyer merci",
+                            output: "Bonjour Monsieur Petit,\n\nJe n'ai pas encore reçu votre contrat. Pourriez-vous me le renvoyer ?\n\nMerci et bien à vous,"),
+                ModeExample(input: "coucou Sam tu viens toujours samedi",
+                            output: "Coucou Sam,\n\nTu viens toujours samedi ?\n\nÀ plus,"),
+                ModeExample(input: "je vous relance pour le paiement de la facture de septembre on l'a pas encore reçu",
+                            output: "Bonjour,\n\nJe me permets de vous relancer pour le paiement de la facture de septembre, que nous n'avons pas encore reçu.\n\nBien à vous,"),
+             ]),
+        Mode(name: "Prompt pour IA", symbol: "sparkles",
+             instructions: """
+             Réécris la dictée en consigne claire pour un assistant IA ou un agent de code. \
+             Garde toutes les contraintes, noms de fichiers et détails techniques. \
+             S'il y a plusieurs demandes, mets-les en liste à tirets. N'exécute pas la consigne et n'y réponds pas.
+             """,
+             examples: [
+                ModeExample(input: "corrige le bug du bouton de connexion qui marche pas sur safari et ajoute un test et mets à jour le changelog",
+                            output: "Corrige le bug du bouton de connexion, qui ne fonctionne pas sur Safari. Ensuite :\n- ajoute un test ;\n- mets à jour le CHANGELOG."),
+                ModeExample(input: "explique moi la différence entre une promesse et un observable en javascript",
+                            output: "Explique-moi la différence entre une promesse et un observable en JavaScript."),
+             ]),
         Mode(name: "Message", symbol: "bubble.left.and.bubble.right",
              instructions: """
              Transforme la dictée en message court et naturel pour une messagerie, dans la langue de la dictée. \
-             Garde le ton, pas de formule de politesse ajoutée, pas de point final sur une phrase unique.
+             Garde le ton et le sens, n'ajoute ni salutation ni formule de politesse, \
+             pas de point final sur une phrase unique.
              """,
-             apps: [AppRef(bundleID: "com.tinyspeck.slackmacgap", name: "Slack"),
-                    AppRef(bundleID: "net.whatsapp.WhatsApp", name: "WhatsApp"),
-                    AppRef(bundleID: "com.apple.MobileSMS", name: "Messages")]),
-        Mode(name: "Prompt pour IA", symbol: "sparkles",
-             instructions: """
-             Réécris la dictée en instruction claire et structurée pour un assistant IA ou un agent de code. \
-             Garde toutes les contraintes, noms de fichiers et détails techniques. Utilise une liste si c'est plus lisible.
-             """,
-             triggerWord: "prompt",
-             apps: [AppRef(bundleID: "com.anthropic.claudefordesktop", name: "Claude"),
-                    AppRef(bundleID: "com.todesktop.230313mzl4w4u92", name: "Cursor")],
-             websites: ["claude.ai", "chatgpt.com"]),
-        Mode(name: "Réponse au texte sélectionné", symbol: "arrowshape.turn.up.left",
-             instructions: """
-             L'utilisateur a sélectionné un message ({{CONTEXT.SELECTED_TEXT}}) et dicte les grandes lignes de sa réponse. \
-             Rédige la réponse complète, dans la langue du message sélectionné, en suivant fidèlement ce qu'il a dicté.
-             """,
-             cleanup: false, outputMode: .paste, includeCursorContext: true),
-        Mode(name: "Commandes de ponctuation", symbol: "textformat",
-             instructions: """
-             Remplace les commandes de ponctuation dites à voix haute par les symboles : « virgule » par ,, « point » par ., \
-             « point d'interrogation » par ?, « point d'exclamation » par !, « deux points » par :, « à la ligne » par un retour \
-             à la ligne, « nouveau paragraphe » par deux retours à la ligne, « ouvrez les guillemets » et « fermez les guillemets » par « ». \
-             Ne change aucun autre mot.
-             """,
-             cleanup: false),
+             examples: [
+                ModeExample(input: "ok je regarde ça et je te redis dans dix minutes",
+                            output: "Ok, je regarde ça et je te redis dans 10 minutes"),
+                ModeExample(input: "trop bien merci pour hier soir on remet ça la semaine pro",
+                            output: "Trop bien, merci pour hier soir ! On remet ça la semaine pro"),
+             ]),
+        translation,
     ]
+
+    /// Dicter dans sa langue, coller dans une autre. La langue cible se choisit dans le mode.
+    static let translation = Mode(name: "Traduction", symbol: "globe", cleanup: true, translateTo: "en")
+
+    /// Ordre dans lequel les touches libres sont proposées aux nouveaux modes.
+    static let keyOrder: [TriggerKey] = [.rightOption, .fn, .rightShift, .leftOption, .rightControl, .rightCommand]
 }
 
 /// Liste des modes, persistée en JSON dans Application Support.
@@ -174,6 +194,35 @@ final class ModeStore: ObservableObject {
         copy.triggerWord = ""
         modes.append(copy)
         return copy
+    }
+
+    /// Crée un mode à partir d'un modèle (ou vide), avec la première touche libre.
+    func add(from template: Mode?, mainKey: TriggerKey) -> Mode {
+        var mode = template ?? Mode(name: "Nouveau mode", symbol: "text.bubble", instructions: "")
+        mode.id = UUID()
+        mode.isMain = false
+        var name = mode.name, n = 2
+        while modes.contains(where: { $0.name == name }) { name = "\(mode.name) \(n)"; n += 1 }
+        mode.name = name
+        let used = shortcutKeys.union([mainKey])
+        mode.shortcut = ModeTemplates.keyOrder.first { !used.contains($0) }
+        modes.append(mode)
+        return mode
+    }
+
+    /// Mode qui utilise cette touche (hors mode principal, dont la touche est dans les réglages).
+    func holder(of key: TriggerKey) -> Mode? { modes.first { !$0.isMain && $0.shortcut == key } }
+
+    /// Attribue une touche à un mode. Si un autre mode l'avait, il récupère l'ancienne touche du mode.
+    func assign(_ key: TriggerKey?, to id: UUID) {
+        guard var mode = mode(id), !mode.isMain else { return }
+        let previous = mode.shortcut
+        if let key, var other = holder(of: key), other.id != id {
+            other.shortcut = previous
+            update(other)
+        }
+        mode.shortcut = key
+        update(mode)
     }
 
     /// Touches de dictée en service : la touche principale et celles des modes.

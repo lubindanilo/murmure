@@ -21,43 +21,55 @@ struct ModeEditor: View {
         let mode = binding
         let isMain = mode.wrappedValue.isMain
         Form {
-            Section {
-                HStack(spacing: 10) {
-                    SymbolPicker(symbol: mode.symbol)
-                    TextField("Nom", text: mode.name, prompt: Text("Nom du mode"))
-                        .labelsHidden()
-                        .textFieldStyle(.plain)
-                        .font(.title3.weight(.semibold))
-                }
-            }
-
-            Section {
-                InstructionsEditor(text: mode.instructions)
-            } header: {
-                Text("Ce que fait ce mode")
-            } footer: {
-                Text("Par exemple : « Rédige un mail poli et concis ». Laissez vide pour dicter tel quel.")
-                    .font(.caption).foregroundStyle(.secondary)
-            }
-
-            Section {
-                Picker("Traduire vers", selection: mode.translateTo) {
-                    Text("Ne pas traduire").tag(String?.none)
-                    ForEach(Languages.all.filter { $0.code != "auto" }, id: \.code) { lang in
-                        Text(lang.name).tag(String?.some(lang.code))
+            if !isMain {
+                Section {
+                    LabeledContent("Touche") {
+                        KeyCap(label: mode.wrappedValue.shortcut?.capLabel ?? "Aucune touche",
+                               muted: mode.wrappedValue.shortcut == nil) { KeyMenu(modeID: modeID) }
+                    }
+                    Picker("Traduire vers", selection: mode.translateTo) {
+                        Text("Ne pas traduire").tag(String?.none)
+                        ForEach(Languages.all.filter { $0.code != "auto" }, id: \.code) { lang in
+                            Text(lang.name).tag(String?.some(lang.code))
+                        }
+                    }
+                    if let target = mode.wrappedValue.translateTo {
+                        TranslationDownloadButton(source: settings.language, target: target)
                     }
                 }
-                if let target = mode.wrappedValue.translateTo {
-                    TranslationDownloadButton(source: settings.language, target: target)
-                }
+            }
+
+            Section("Ce que fait ce mode") {
+                InstructionsEditor(text: mode.instructions)
             }
 
             if !isMain {
-                Section {
+                Section("Essayer") {
+                    ModeTester(mode: mode.wrappedValue)
+                }
+            }
+
+            // Toute la ligne ouvre et ferme la section, pas seulement le chevron.
+            Section {
+                Button { withAnimation(Theme.quick) { showAdvanced.toggle() } } label: {
+                    HStack {
+                        Text("Avancé")
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                            .rotationEffect(.degrees(showAdvanced ? 90 : 0))
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityValue(showAdvanced ? "Ouvert" : "Fermé")
+                if showAdvanced && !isMain {
                     TextField("Mot déclencheur", text: mode.triggerWord, prompt: Text("mail, anglais, prompt…"))
+                        .help("Dit au début de la dictée, il active ce mode et est retiré du texte.")
                     VStack(alignment: .leading, spacing: 6) {
                         HStack {
-                            Text("Apps")
+                            Text("S'active aussi dans")
                             Spacer()
                             AppPickerButton { app in
                                 if !mode.wrappedValue.apps.contains(app) { mode.wrappedValue.apps.append(app) }
@@ -71,92 +83,68 @@ struct ModeEditor: View {
                             }
                         }
                     }
-                } header: {
-                    Text("S'active")
-                } footer: {
-                    Text("Dites le mot au début de la dictée, ou ouvrez l'une de ces apps. Le mot est retiré du texte.")
-                        .font(.caption).foregroundStyle(.secondary)
-                }
-            }
-
-            Section {
-                DisclosureGroup("Avancé", isExpanded: $showAdvanced) {
-                    if !isMain {
-                        Picker("Touche dédiée", selection: mode.shortcut) {
-                            Text("Aucune").tag(TriggerKey?.none)
-                            ForEach(TriggerKey.allCases.filter { $0 != settings.triggerKey }) { key in
-                                let usedBy = store.modes.first { $0.shortcut == key && $0.id != modeID }
-                                Text(usedBy == nil ? key.label : "\(key.label) (\(usedBy!.name))").tag(TriggerKey?.some(key))
-                            }
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            TextField("Sites", text: $newWebsite, prompt: Text("mail.google.com"))
+                                .onSubmit { addWebsite(mode) }
+                            Button("Ajouter") { addWebsite(mode) }.disabled(newWebsite.isEmpty)
                         }
-                        VStack(alignment: .leading, spacing: 6) {
-                            HStack {
-                                TextField("Sites", text: $newWebsite, prompt: Text("mail.google.com"))
-                                    .onSubmit { addWebsite(mode) }
-                                Button("Ajouter") { addWebsite(mode) }.disabled(newWebsite.isEmpty)
-                            }
-                            if !mode.wrappedValue.websites.isEmpty {
-                                WrapLayout(spacing: 6) {
-                                    ForEach(mode.wrappedValue.websites, id: \.self) { site in
-                                        Chip(text: site) { mode.wrappedValue.websites.removeAll { $0 == site } }
-                                    }
+                        if !mode.wrappedValue.websites.isEmpty {
+                            WrapLayout(spacing: 6) {
+                                ForEach(mode.wrappedValue.websites, id: \.self) { site in
+                                    Chip(text: site) { mode.wrappedValue.websites.removeAll { $0 == site } }
                                 }
                             }
                         }
                     }
-                    Picker("Après la dictée", selection: mode.outputMode) {
-                        ForEach(OutputMode.allCases) { Text($0.label).tag($0) }
-                    }
-                    Toggle("Joindre le presse-papiers", isOn: mode.includeClipboard)
-                    Toggle("Joindre le nom de l'app active", isOn: mode.includeActiveApp)
-                    Toggle("Joindre le texte sélectionné", isOn: mode.includeCursorContext)
-                    Toggle("Joindre l'URL de l'onglet actif", isOn: mode.includeBrowserURL)
-                    Picker("Corrections appliquées", selection: mode.replacementTiming) {
-                        ForEach(ReplacementTiming.allCases) { Text($0.label).tag($0) }
-                    }
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Consigne système (remplace celle de Murmure)").font(.callout)
-                        CodeEditor(text: mode.systemPrompt, placeholder: "Laisser vide pour la consigne par défaut", height: 70)
-                    }
-                    HStack {
-                        Text("Température")
-                        Slider(value: mode.temperature, in: 0...1, step: 0.1)
-                        Text(mode.wrappedValue.temperature.formatted(.number.precision(.fractionLength(1))))
-                            .monospacedDigit().foregroundStyle(.secondary).frame(width: 28)
-                    }
-                    ScriptField(title: "Script avant l'IA", script: mode.scriptBefore, mode: mode.wrappedValue)
-                    ScriptField(title: "Script après l'IA", script: mode.scriptAfter, mode: mode.wrappedValue)
-                    ModeTester(mode: mode.wrappedValue)
-                    Button("Copier le lien murmure://") {
-                        NSPasteboard.general.clearContents()
-                        NSPasteboard.general.setString("murmure://start?mode_id=\(modeID.uuidString)", forType: .string)
-                    }
-                    .buttonStyle(.link)
                 }
-            }
-
-            if !isMain {
-                Section {
-                    if confirmDelete {
-                        HStack {
-                            Text("Supprimer « \(mode.wrappedValue.name) » ?")
-                            Spacer()
-                            Button("Annuler") { confirmDelete = false }
-                            Button("Supprimer", role: .destructive) {
-                                store.delete(mode.wrappedValue)
-                                PanelController.shared.router.path.removeAll()
-                            }
-                            .buttonStyle(.borderedProminent)
-                        }
-                    } else {
-                        Button("Supprimer le mode", role: .destructive) { confirmDelete = true }
-                            .buttonStyle(.link)
-                    }
-                }
+            } footer: {
+                if !isMain { deleteControl(mode.wrappedValue) }
             }
         }
         .formStyle(.grouped)
-        .subpage(title: mode.wrappedValue.name, back: "Murmure") { PanelController.shared.router.path.removeAll() }
+        // Le nom et l'icône se modifient dans la barre du haut : pas de doublon dans la page.
+        .subpage(back: "", action: { PanelController.shared.router.path.removeAll() }) {
+            HStack(spacing: 6) {
+                SymbolPicker(symbol: mode.symbol, size: 22)
+                TextField("Nom", text: mode.name, prompt: Text("Nom du mode"))
+                    .labelsHidden()
+                    .textFieldStyle(.plain)
+                    .fixedSize()
+                    .accessibilityLabel("Nom du mode")
+            }
+        }
+    }
+
+    /// Petite poubelle en bas de page ; un premier clic demande confirmation sur place.
+    @ViewBuilder
+    private func deleteControl(_ mode: Mode) -> some View {
+        HStack(spacing: 10) {
+            Spacer()
+            if confirmDelete {
+                Text("Supprimer « \(mode.name) » ?").foregroundStyle(.secondary)
+                Button("Annuler") { confirmDelete = false }
+                    .buttonStyle(.plain).foregroundStyle(.secondary)
+                Button("Supprimer") {
+                    store.delete(mode)
+                    PanelController.shared.router.path.removeAll()
+                }
+                .buttonStyle(.plain).foregroundStyle(Theme.warn).fontWeight(.semibold)
+            } else {
+                Button { confirmDelete = true } label: {
+                    Image(systemName: "trash")
+                        .font(.system(size: 11))
+                        .frame(width: 22, height: 22)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.tertiary)
+                .help("Supprimer le mode")
+                .accessibilityLabel("Supprimer le mode")
+            }
+        }
+        .font(.system(size: 12))
+        .padding(.top, 8)
     }
 
     private func addWebsite(_ mode: Binding<Mode>) {
@@ -175,20 +163,7 @@ struct InstructionsEditor: View {
     @Binding var text: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            CodeEditor(text: $text, placeholder: "Par exemple : transforme la dictée en e-mail professionnel.", height: 110, monospaced: false)
-            HStack(spacing: 6) {
-                Text("Insérer").font(.caption).foregroundStyle(.secondary)
-                ForEach(["CONTEXT.SELECTED_TEXT", "CONTEXT.CLIPBOARD", "CONTEXT.APP", "CONTEXT.URL"], id: \.self) { key in
-                    Button(key.replacingOccurrences(of: "CONTEXT.", with: "").lowercased()) {
-                        text += (text.isEmpty || text.hasSuffix(" ") ? "" : " ") + "{{\(key)}}"
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.mini)
-                    .help("{{\(key)}}")
-                }
-            }
-        }
+        CodeEditor(text: $text, placeholder: "Laissez vide pour dicter tel quel.", height: 110, monospaced: false)
     }
 }
 
@@ -237,6 +212,7 @@ struct Chip: View {
 
 struct SymbolPicker: View {
     @Binding var symbol: String
+    var size: CGFloat = 32
     static let symbols = ["waveform", "text.bubble", "envelope", "bubble.left.and.bubble.right", "globe", "sparkles",
                           "doc.text", "checklist", "arrowshape.turn.up.left", "textformat", "terminal",
                           "magnifyingglass", "briefcase", "heart", "bolt", "list.bullet"]
@@ -248,10 +224,10 @@ struct SymbolPicker: View {
             }
         } label: {
             Image(systemName: symbol)
-                .font(.system(size: 16, weight: .medium))
+                .font(.system(size: size / 2, weight: .medium))
                 .foregroundStyle(Theme.voice)
-                .frame(width: 32, height: 32)
-                .background(RoundedRectangle(cornerRadius: 8).fill(Theme.voiceSoft))
+                .frame(width: size, height: size)
+                .background(RoundedRectangle(cornerRadius: size / 4, style: .continuous).fill(Theme.voiceSoft))
         }
         .menuStyle(.borderlessButton)
         .menuIndicator(.hidden)
@@ -294,57 +270,18 @@ struct AppPickerButton: View {
     }
 }
 
-struct ScriptField: View {
-    let title: String
-    @Binding var script: String
-    let mode: Mode
-    @State private var result: String?
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text(title).font(.callout)
-                Spacer()
-                if !script.isEmpty {
-                    Button("Tester le script") { Task { await test() } }.controlSize(.small)
-                }
-            }
-            CodeEditor(text: $script, placeholder: "# zsh : le texte arrive sur stdin\ntr '[:lower:]' '[:upper:]'", height: 70)
-            if let result {
-                Text(result).font(.system(.caption, design: .monospaced)).foregroundStyle(.secondary).textSelection(.enabled)
-            }
-        }
-    }
-
-    private func test() async {
-        var ctx = DictationContext()
-        ctx.appName = "Notes"; ctx.appBundleID = "com.apple.Notes"; ctx.clipboard = "texte du presse-papiers"
-        ctx.selectedText = "texte sélectionné"; ctx.browserURL = "https://example.com"
-        do {
-            let r = try await ScriptRunner.run(script, input: "Ceci est une dictée d'essai.", context: ctx, mode: mode,
-                                               audioDuration: 42, audioFile: nil)
-            var lines = ["Sortie : \(r.output.isEmpty ? "(vide : rien ne sera inséré)" : r.output)"]
-            if r.skipAI { lines.append("skip_ai=1 : l'IA sera sautée") }
-            if let o = r.outputMode { lines.append("Sortie forcée : \(o.label)") }
-            if let s = r.switchMode { lines.append("Bascule vers le mode \(s)") }
-            result = lines.joined(separator: "\n")
-        } catch {
-            result = error.localizedDescription
-        }
-    }
-}
-
 /// Fait passer un texte d'essai par l'IA et la traduction du mode, sans dicter.
 struct ModeTester: View {
     let mode: Mode
     @EnvironmentObject var settings: Settings
-    @State private var input = "euh donc je voulais dire que la réunion de demain est décalée à 15h parce que Louis peut pas le matin"
+    @State private var input = "salut Thomas euh la réunion de jeudi est décalée à vendredi 10h parce que Louis peut pas dis-moi si ça te va"
     @State private var output: String?
     @State private var running = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            TextField("Texte dicté", text: $input, axis: .vertical)
+            TextField("Texte dicté", text: $input, prompt: Text("Ce que vous diriez"), axis: .vertical)
+                .labelsHidden()
                 .lineLimit(2...4)
             HStack {
                 Button(running ? "Traitement…" : "Tester") { Task { await run() } }

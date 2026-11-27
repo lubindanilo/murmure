@@ -64,14 +64,14 @@ struct SettingsIcon: View {
 
 /// Barre du haut des sous-pages : retour à gauche, titre au centre.
 /// La fenêtre n'a pas de barre d'outils ; le retour est donc dans le contenu.
-struct SubpageBar: View {
-    let title: String
+struct SubpageBar<Title: View>: View {
     let back: String
     let action: () -> Void
+    @ViewBuilder var title: () -> Title
 
     var body: some View {
         ZStack {
-            Text(title)
+            title()
                 .font(.system(size: 13, weight: .semibold))
                 .lineLimit(1)
                 .frame(maxWidth: 260)
@@ -79,7 +79,7 @@ struct SubpageBar: View {
                 Button(action: action) {
                     HStack(spacing: 3) {
                         Image(systemName: "chevron.left").font(.system(size: 12, weight: .semibold))
-                        Text(back)
+                        if !back.isEmpty { Text(back) }
                     }
                     .padding(.horizontal, 8)
                     .frame(height: 26)
@@ -89,6 +89,7 @@ struct SubpageBar: View {
                 .foregroundStyle(Theme.voice)
                 .keyboardShortcut("[", modifiers: .command)
                 .help("Retour (⌘[)")
+                .accessibilityLabel(back.isEmpty ? "Retour" : back)
                 Spacer()
             }
         }
@@ -100,8 +101,14 @@ struct SubpageBar: View {
 extension View {
     /// Sous-page : barre de retour en haut, contenu en dessous, sans bouton système.
     func subpage(title: String, back: String, action: @escaping () -> Void) -> some View {
+        subpage(back: back, action: action) { Text(title) }
+    }
+
+    /// Sous-page dont le titre est une vue (par exemple le nom d'un mode, modifiable sur place).
+    func subpage<Title: View>(back: String, action: @escaping () -> Void,
+                              @ViewBuilder title: @escaping () -> Title) -> some View {
         VStack(spacing: 0) {
-            SubpageBar(title: title, back: back, action: action)
+            SubpageBar(back: back, action: action, title: title)
             Divider().opacity(0.5)
             self.scrollContentBackground(.hidden)
         }
