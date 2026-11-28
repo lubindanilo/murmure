@@ -16,15 +16,15 @@ Personnes qui écrivent beaucoup sur Mac (mails, messages, prompts pour agents I
 
 ## Product Purpose
 
-Maintenir une touche, parler, relâcher : le texte transcrit est collé là où se trouve le curseur. Murmure propose les mêmes familles de modèles que Spokenly : modèles locaux gratuits et hors ligne, modèles cloud avec la clé API de l'utilisateur, et un post-traitement IA (nettoyage, reformulation) qui tourne en local.
+Maintenir une touche, parler, relâcher : le texte transcrit est collé là où se trouve le curseur. Ramage propose les mêmes familles de modèles que Spokenly : modèles locaux gratuits et hors ligne, modèles cloud avec la clé API de l'utilisateur, et un post-traitement IA (nettoyage, reformulation) qui tourne en local.
 
 ## Positioning
 
-Le post-traitement IA ne rajoute aucun coût de tokens : il tourne sur le Mac (LLM embarqué via llama.cpp, ou Ollama / LM Studio). Les modèles cloud sont optionnels et passent par les clés de l'utilisateur, jamais par un abonnement Murmure.
+Le post-traitement IA ne rajoute aucun coût de tokens : il tourne sur le Mac (LLM embarqué via llama.cpp, ou Ollama / LM Studio). Les modèles cloud sont optionnels et passent par les clés de l'utilisateur, jamais par un abonnement Ramage.
 
 ## Operating Context
 
-L'app vit dans la barre de menus. L'utilisateur est au milieu d'une autre tâche ; Murmure ne doit jamais prendre le focus. Seul le petit panneau d'enregistrement apparaît pendant la dictée. Les réglages s'ouvrent rarement : choix du modèle, du raccourci, du mode IA, du dictionnaire.
+L'app vit dans la barre de menus. L'utilisateur est au milieu d'une autre tâche ; Ramage ne doit jamais prendre le focus. Seul le petit panneau d'enregistrement apparaît pendant la dictée. Les réglages s'ouvrent rarement : choix du modèle, du raccourci, du mode IA, du dictionnaire.
 
 ## Capabilities and Constraints
 
@@ -39,7 +39,7 @@ L'app vit dans la barre de menus. L'utilisateur est au milieu d'une autre tâche
 
 ## Brand Commitments
 
-Nom : Murmure. Interface en français.
+Nom : Ramage (anciennement Murmure, renommé le 2026-11-28 à cause d'homonymes dans la dictée vocale). Domaine : ramage-ai.com. Identifiant interne inchangé (app.murmure.Murmure). Interface en français.
 
 ## Evidence on Hand
 
@@ -49,7 +49,7 @@ Aucun témoignage, chiffre ou client. Ne rien inventer. Les notes de précision 
 
 1. Ne jamais voler le focus : l'utilisateur reste dans son app.
 2. Local d'abord : tout ce qui peut tourner sur le Mac tourne sur le Mac.
-3. Zéro coût caché : pas de tokens facturés par Murmure.
+3. Zéro coût caché : pas de tokens facturés par Ramage.
 4. Rapide à relâcher : le texte doit arriver en moins de temps qu'il n'en faut pour le taper.
 
 ## Accessibility & Inclusion

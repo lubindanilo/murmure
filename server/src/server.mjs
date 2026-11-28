@@ -319,7 +319,7 @@ const routes = {
     status: 200,
     body: page('message.html', {
       title: 'Merci !',
-      text: "Le paiement est reçu. Retournez dans Murmure : l'activation se fait toute seule en quelques secondes.",
+      text: "Le paiement est reçu. Retournez dans Ramage : l'activation se fait toute seule en quelques secondes.",
     }),
   }),
 

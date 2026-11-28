@@ -47,7 +47,7 @@ enum RibbonMotion {
         guard let cg = frame(at: phase) else { return nil }
         let image = NSImage(cgImage: cg, size: NSSize(width: (height * aspect).rounded(), height: height))
         image.isTemplate = true
-        image.accessibilityDescription = "Murmure"
+        image.accessibilityDescription = "Ramage"
         return image
     }
 

@@ -152,7 +152,7 @@ final class PanelController: NSObject {
            event.type == .rightMouseUp || event.modifierFlags.contains(.control) {
             hide()
             let menu = NSMenu()
-            menu.addItem(withTitle: "Quitter Murmure", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+            menu.addItem(withTitle: "Quitter Ramage", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
             statusItem?.menu = menu
             statusItem?.button?.performClick(nil)
             statusItem?.menu = nil
@@ -295,7 +295,7 @@ struct Wordmark: View {
     var body: some View {
         HStack(spacing: size * 0.4) {
             RibbonLogo(height: size * 1.2)
-            Text("Murmure").font(.system(size: size, weight: .semibold)).tracking(-0.3)
+            Text("Ramage").font(.system(size: size, weight: .semibold)).tracking(-0.3)
         }
     }
 }

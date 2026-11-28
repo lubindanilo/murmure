@@ -141,17 +141,17 @@ final class AppController: ObservableObject {
 
     private func beginRecording(handsFree: Bool = false) {
         guard Setup.shared.isReady(selectedModel) else {
-            fail("Murmure termine son installation. Réessayez dans un instant.")
+            fail("Ramage termine son installation. Réessayez dans un instant.")
             PanelController.shared.show(.general)
             return
         }
         guard license.canDictate else {
-            fail("Votre essai gratuit est terminé. Activez Murmure pour continuer à dicter.")
+            fail("Votre essai gratuit est terminé. Activez Ramage pour continuer à dicter.")
             PanelController.shared.show(.license)
             return
         }
         guard AudioRecorder.permission != .denied else {
-            fail("Murmure n'a pas accès au micro. Autorisez-le dans Réglages Système > Confidentialité > Micro.")
+            fail("Ramage n'a pas accès au micro. Autorisez-le dans Réglages Système > Confidentialité > Micro.")
             return
         }
         DropCardController.shared.dismiss()

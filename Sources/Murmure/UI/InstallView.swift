@@ -13,7 +13,7 @@ final class InstallWindow: NSObject, NSWindowDelegate {
             controller.sizingOptions = []
             let window = NSWindow(contentViewController: controller)
             window.styleMask = [.titled, .closable]
-            window.title = "Murmure"
+            window.title = "Ramage"
             window.isMovableByWindowBackground = true
             window.setContentSize(NSSize(width: OnboardingView.size.width, height: OnboardingView.size.height))
             window.isReleasedWhenClosed = false
@@ -44,7 +44,7 @@ struct InstallView: View {
                 .padding(.top, 10)
 
             VStack(alignment: .leading, spacing: 8) {
-                Text("Installer Murmure")
+                Text("Installer Ramage")
                     .font(.system(size: 24, weight: .medium))
                     .tracking(-0.5)
                 Text(message)
@@ -86,7 +86,7 @@ struct InstallView: View {
     private var message: String {
         switch state {
         case .idle, .working: return "Il se range dans Applications, puis se rouvre tout seul."
-        case .failed: return "Impossible de le copier. Glissez l'icône de Murmure dans le dossier Applications."
+        case .failed: return "Impossible de le copier. Glissez l'icône de Ramage dans le dossier Applications."
         }
     }
 
@@ -117,7 +117,7 @@ private struct InstallArt: View {
             frame(t: t)
         }
         .accessibilityElement()
-        .accessibilityLabel("Murmure va dans le dossier Applications.")
+        .accessibilityLabel("Ramage va dans le dossier Applications.")
     }
 
     /// 0,3 à 1,6 s : l'icône part vers le dossier ; 1,6 à 2 s : elle y entre, le dossier rebondit.
@@ -145,7 +145,7 @@ private struct InstallArt: View {
                 .opacity((t == 0 ? 1 : min(1, t / 0.25)) * (1 - sink))
                 .offset(x: -90 + 180 * ease, y: -24 * sin(ease * .pi))
                 .onDrag { NSItemProvider(object: Bundle.main.bundleURL as NSURL) }
-                .help("Glissez Murmure dans le dossier Applications")
+                .help("Glissez Ramage dans le dossier Applications")
         }
         .frame(width: 320, height: 160)
     }

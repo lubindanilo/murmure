@@ -210,7 +210,7 @@ struct LocalLLM: Identifiable, Hashable {
     /// Murmure Cleanup 2 : Qwen 2.5 0.5B affiné pour nettoyer la dictée simple (training/cleanup-1 puis cleanup-2).
     /// Il n'apparaît pas dans la liste des LLM des modes : il ne sait faire que ça.
     static let cleanup = LocalLLM(
-        id: "murmure-cleanup-2", name: "Murmure Cleanup 2", repo: "", file: "murmure-cleanup-2.gguf",
+        id: "murmure-cleanup-2", name: "Ramage Cleanup 2", repo: "", file: "murmure-cleanup-2.gguf",
         sizeBytes: CleanupModelFile.sizeBytes, note: "Nettoyage de la dictée.",
         directURL: URL(string: "https://github.com/lubindanilo/murmure-releases/releases/download/models-cleanup-2/murmure-cleanup-2.gguf"))
 

@@ -1,11 +1,13 @@
 import AppKit
 
-/// Installation depuis le DMG : si Murmure est lancé directement depuis l'image disque (ou depuis la copie
+/// Installation depuis le DMG : si Ramage est lancé directement depuis l'image disque (ou depuis la copie
 /// « translocalisée » que macOS crée pour une app non installée), il propose de se ranger tout seul dans
 /// Applications. Lancé depuis Applications, il éjecte le DMG resté monté.
 /// La copie garde les attributs du fichier (dont la quarantaine) : les vérifications de macOS restent entières.
 enum Installer {
-    static let destination = URL(fileURLWithPath: "/Applications/Murmure.app")
+    static let destination = URL(fileURLWithPath: "/Applications/Ramage.app")
+    /// L'app s'appelait Murmure : cette ancienne copie (même identifiant) part à la corbeille à l'installation.
+    static let legacyDestination = URL(fileURLWithPath: "/Applications/Murmure.app")
 
     private static var bundlePath: String { Bundle.main.bundleURL.standardizedFileURL.path }
 
@@ -32,7 +34,7 @@ enum Installer {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0"
     }
 
-    /// Une copie de Murmure au moins aussi récente est déjà dans Applications.
+    /// Une copie de Ramage au moins aussi récente est déjà dans Applications.
     static var installedCopyIsCurrent: Bool {
         guard let info = info(destination),
               info["CFBundleIdentifier"] as? String == Bundle.main.bundleIdentifier,
@@ -52,6 +54,9 @@ enum Installer {
                     try fm.trashItem(at: destination, resultingItemURL: nil)
                 }
                 try fm.copyItem(at: source, to: destination)
+                if info(legacyDestination)?["CFBundleIdentifier"] as? String == Bundle.main.bundleIdentifier {
+                    try? fm.trashItem(at: legacyDestination, resultingItemURL: nil)
+                }
             } catch {
                 throw Failure.copy(error.localizedDescription)
             }
@@ -72,7 +77,7 @@ enum Installer {
         NSWorkspace.shared.open(URL(fileURLWithPath: "/Applications"))
     }
 
-    /// Lancé depuis Applications : éjecte les images disque de Murmure encore montées.
+    /// Lancé depuis Applications : éjecte les images disque de Ramage encore montées.
     /// Petit délai : la copie lancée depuis le DMG met un instant à se fermer.
     @MainActor static func ejectDiskImages() {
         guard runsFromApplications else { return }
@@ -82,7 +87,9 @@ enum Installer {
             for volume in volumes where volume.path.hasPrefix("/Volumes/") {
                 let values = try? volume.resourceValues(forKeys: Set(keys))
                 guard values?.volumeIsEjectable == true, values?.volumeIsInternal != true,
-                      info(volume.appendingPathComponent("Murmure.app"))?["CFBundleIdentifier"] as? String == Bundle.main.bundleIdentifier
+                      ["Ramage.app", "Murmure.app"].contains(where: {
+                          info(volume.appendingPathComponent($0))?["CFBundleIdentifier"] as? String == Bundle.main.bundleIdentifier
+                      })
                 else { continue }
                 try? NSWorkspace.shared.unmountAndEjectDevice(at: volume)
             }

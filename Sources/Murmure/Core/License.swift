@@ -16,7 +16,7 @@ final class LicenseManager: ObservableObject {
     /// Clé publique Ed25519 du serveur (base64, 32 octets). La clé privée ne vit que sur le serveur.
     static let publicKey = "UO9AMUGsHz7myfveHliePomBEKowpyo6s7+UcIPubbE="
     static var server: URL {
-        URL(string: UserDefaults.standard.string(forKey: "licenseServer") ?? "https://murmure-ai.com/api")!
+        URL(string: UserDefaults.standard.string(forKey: "licenseServer") ?? "https://ramage-ai.com/api")!
     }
 
     enum State: Equatable {

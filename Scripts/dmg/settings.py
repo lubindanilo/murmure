@@ -1,9 +1,9 @@
 # Mise en page de la fenêtre du DMG, pour dmgbuild (https://github.com/dmgbuild/dmgbuild).
-# Murmure à gauche, Applications à droite, une flèche entre les deux sur le fond (make-background.swift).
-# Usage, depuis la racine du dépôt : dmgbuild -s Scripts/dmg/settings.py -D app=build/Murmure.app Murmure build/Murmure.dmg
+# Ramage à gauche, Applications à droite, une flèche entre les deux sur le fond (make-background.swift).
+# Usage, depuis la racine du dépôt : dmgbuild -s Scripts/dmg/settings.py -D app=build/Ramage.app Ramage build/Ramage.dmg
 import os.path
 
-app = defines.get("app", "build/Murmure.app")  # noqa: F821 (fourni par dmgbuild)
+app = defines.get("app", "build/Ramage.app")  # noqa: F821 (fourni par dmgbuild)
 
 files = [app]
 symlinks = {"Applications": "/Applications"}

@@ -13,22 +13,25 @@ run=${1:-$(gh run list -R "$REPO" -w build.yml -b main -s success -L 1 --json da
 sha=$(gh run view "$run" -R "$REPO" --json headSha -q .headSha)
 work=$(mktemp -d); trap 'rm -rf "$work"' EXIT
 gh run download "$run" -R "$REPO" -D "$work"
-zip=$(find "$work" -name Murmure.zip | head -1)
+zip=$(find "$work" -name Ramage.zip | head -1)
 dir=$(dirname "${zip:-$work/none}")
-[ -f "$dir/Murmure.zip" ] && [ -f "$dir/Murmure.dmg" ] || { echo "Artefacts manquants" >&2; exit 1; }
+[ -f "$dir/Ramage.zip" ] && [ -f "$dir/Ramage.dmg" ] || { echo "Artefacts manquants" >&2; exit 1; }
 
 tag="v$VERSION"
-notes="Murmure $VERSION (${sha:0:7})"
+notes="Ramage $VERSION (${sha:0:7})"
+# Copies sous l'ancien nom : les liens Murmure.dmg / Murmure.zip déjà diffusés restent valides.
+cp "$dir/Ramage.zip" "$dir/Murmure.zip"; cp "$dir/Ramage.dmg" "$dir/Murmure.dmg"
+assets=("$dir/Ramage.zip" "$dir/Ramage.dmg" "$dir/Murmure.zip" "$dir/Murmure.dmg")
 if gh release view "$tag" -R "$PUB" >/dev/null 2>&1; then
-  gh release upload "$tag" "$dir/Murmure.zip" "$dir/Murmure.dmg" -R "$PUB" --clobber
+  gh release upload "$tag" "${assets[@]}" -R "$PUB" --clobber
 else
-  gh release create "$tag" "$dir/Murmure.zip" "$dir/Murmure.dmg" -R "$PUB" --title "Murmure $VERSION" --notes "$notes" --latest
+  gh release create "$tag" "${assets[@]}" -R "$PUB" --title "Ramage $VERSION" --notes "$notes" --latest
 fi
 
 printf '{\n  "version": "%s",\n  "published": "%s"\n}\n' "$VERSION" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > landing/version.json
 if ! git diff --quiet landing/version.json 2>/dev/null || ! git ls-files --error-unmatch landing/version.json >/dev/null 2>&1; then
   git add landing/version.json
-  git commit -qm "Publier Murmure $VERSION"
+  git commit -qm "Publier Ramage $VERSION"
   git push -q
 fi
 echo "Publié : https://github.com/$PUB/releases/tag/$tag"

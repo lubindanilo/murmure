@@ -67,7 +67,7 @@ func render(scale: CGFloat) -> Data {
 
     // Étape suivante, en une ligne sous les icônes : sans elle, on ne sait pas quoi faire après le glisser.
     let para = NSMutableParagraphStyle(); para.alignment = .center
-    let hint = NSMutableAttributedString(string: "Puis ouvrez Murmure depuis Applications", attributes: [
+    let hint = NSMutableAttributedString(string: "Puis ouvrez Ramage depuis Applications", attributes: [
         .font: NSFont.systemFont(ofSize: 14, weight: .medium),
         .foregroundColor: NSColor(srgbRed: 0.357, green: 0.392, blue: 0.471, alpha: 1),
         .paragraphStyle: para])

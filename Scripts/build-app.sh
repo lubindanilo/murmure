@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Construit build/Murmure.app à partir du package Swift.
+# Construit build/Ramage.app à partir du package Swift.
 # Usage : Scripts/build-app.sh [debug|release]   (release par défaut)
 set -euo pipefail
 
 CONFIG="${1:-release}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-APP="$ROOT/build/Murmure.app"
+APP="$ROOT/build/Ramage.app"
 VERSION="$(cat "$ROOT/VERSION" 2>/dev/null || echo 0.1.0)"
 # Identité de signature : "-" (ad hoc) par défaut, ou "Developer ID Application: …" pour distribuer.
 SIGN_ID="${MURMURE_SIGN_IDENTITY:--}"
@@ -18,14 +18,15 @@ BIN="$(swift build -c "$CONFIG" --arch arm64 --show-bin-path)"
 
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Frameworks" "$APP/Contents/Resources"
-cp "$BIN/Murmure" "$APP/Contents/MacOS/Murmure"
+# Le produit Swift s'appelle toujours Murmure (nom interne) ; l'exécutable livré s'appelle Ramage.
+cp "$BIN/Murmure" "$APP/Contents/MacOS/Ramage"
 
 # Framework llama.cpp (dynamique) et bundles de ressources des dépendances.
 cp -R "$BIN/llama.framework" "$APP/Contents/Frameworks/"
 for bundle in "$BIN"/*.bundle; do
   [ -e "$bundle" ] && cp -R "$bundle" "$APP/Contents/Resources/"
 done
-install_name_tool -add_rpath "@executable_path/../Frameworks" "$APP/Contents/MacOS/Murmure" 2>/dev/null || true
+install_name_tool -add_rpath "@executable_path/../Frameworks" "$APP/Contents/MacOS/Ramage" 2>/dev/null || true
 # Illustrations de l'interface : le ruban fixe et ses images en mouvement.
 cp "$ROOT/Resources/Ribbon.png" "$APP/Contents/Resources/Ribbon.png"
 cp "$ROOT/Resources/RibbonMotion.webp" "$APP/Contents/Resources/RibbonMotion.webp"
@@ -45,10 +46,10 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-  <key>CFBundleName</key><string>Murmure</string>
-  <key>CFBundleDisplayName</key><string>Murmure</string>
+  <key>CFBundleName</key><string>Ramage</string>
+  <key>CFBundleDisplayName</key><string>Ramage</string>
   <key>CFBundleIdentifier</key><string>app.murmure.Murmure</string>
-  <key>CFBundleExecutable</key><string>Murmure</string>
+  <key>CFBundleExecutable</key><string>Ramage</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleShortVersionString</key><string>${VERSION}</string>
   <key>CFBundleVersion</key><string>${VERSION}</string>
@@ -58,14 +59,14 @@ cat > "$APP/Contents/Info.plist" <<PLIST
   <key>LSUIElement</key><true/>
   <key>LSApplicationCategoryType</key><string>public.app-category.productivity</string>
   <key>NSHighResolutionCapable</key><true/>
-  <key>NSMicrophoneUsageDescription</key><string>Murmure écoute votre voix pendant que vous maintenez la touche de dictée.</string>
-  <key>NSAppleEventsUsageDescription</key><string>Murmure lit l'adresse de l'onglet actif pour activer le mode associé à un site.</string>
+  <key>NSMicrophoneUsageDescription</key><string>Ramage écoute votre voix pendant que vous maintenez la touche de dictée.</string>
+  <key>NSAppleEventsUsageDescription</key><string>Ramage lit l'adresse de l'onglet actif pour activer le mode associé à un site.</string>
   <key>CFBundleURLTypes</key>
   <array><dict>
     <key>CFBundleURLName</key><string>app.murmure.Murmure</string>
     <key>CFBundleURLSchemes</key><array><string>murmure</string></array>
   </dict></array>
-  <key>NSSpeechRecognitionUsageDescription</key><string>Murmure utilise la reconnaissance vocale d'Apple si vous choisissez ce modèle.</string>
+  <key>NSSpeechRecognitionUsageDescription</key><string>Ramage utilise la reconnaissance vocale d'Apple si vous choisissez ce modèle.</string>
 </dict>
 </plist>
 PLIST

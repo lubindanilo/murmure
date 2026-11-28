@@ -6,7 +6,7 @@ import Foundation
 @MainActor
 final class Updater: ObservableObject {
     static let shared = Updater()
-    static let site = URL(string: "https://murmure-ai.com")!
+    static let site = URL(string: "https://ramage-ai.com")!
 
     @Published private(set) var available: String?
 

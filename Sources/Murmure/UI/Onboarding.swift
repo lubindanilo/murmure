@@ -18,7 +18,7 @@ final class OnboardingWindow: NSObject, NSWindowDelegate {
             controller.sizingOptions = []
             let window = NSWindow(contentViewController: controller)
             window.styleMask = [.titled, .closable]
-            window.title = "Murmure"
+            window.title = "Ramage"
             window.isMovableByWindowBackground = true
             window.setContentSize(NSSize(width: OnboardingView.size.width, height: OnboardingView.size.height))
             window.isReleasedWhenClosed = false
@@ -171,7 +171,7 @@ struct OnboardingView: View {
 
     private var title: String {
         switch step {
-        case .welcome: return "Bienvenue dans Murmure"
+        case .welcome: return "Bienvenue dans Ramage"
         case .microphone: return "Le micro"
         case .accessibility: return "L'accès au clavier"
         case .key: return "Votre touche"
@@ -187,13 +187,13 @@ struct OnboardingView: View {
         case .microphone:
             return "Cliquez sur « Autoriser »."
         case .accessibility:
-            return "Activez Murmure dans la liste. On revient ici tout seuls."
+            return "Activez Ramage dans la liste. On revient ici tout seuls."
         case .key:
             return "Appuyez sur la touche de votre choix."
         case .tryIt:
             return asrReady ? "Maintenez \(settings.triggerKey.label) et parlez." : ""
         case .done:
-            return "Murmure vit dans la barre des menus."
+            return "Ramage vit dans la barre des menus."
         }
     }
 

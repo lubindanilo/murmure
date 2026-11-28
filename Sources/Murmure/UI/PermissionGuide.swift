@@ -149,7 +149,7 @@ struct PermissionGuideCard: View {
             HStack(spacing: 8) {
                 Image(systemName: model.granted ? "checkmark.circle.fill" : "hand.point.up.left.fill")
                     .foregroundStyle(model.granted ? Palette.ok : Theme.voice)
-                Text(model.granted ? "C'est autorisé" : "Activez Murmure")
+                Text(model.granted ? "C'est autorisé" : "Activez Ramage")
                     .font(.system(size: 13, weight: .semibold))
                 Spacer()
                 Button(action: onClose) {
@@ -188,7 +188,7 @@ private struct DragAppHint: View {
                 .resizable()
                 .frame(width: 30, height: 30)
                 .onDrag { NSItemProvider(object: Bundle.main.bundleURL as NSURL) }
-                .help("Glissez Murmure dans la liste des Réglages")
+                .help("Glissez Ramage dans la liste des Réglages")
             Image(systemName: "arrow.up.left").font(.system(size: 11, weight: .semibold)).foregroundStyle(Theme.voice)
             Text("Absent de la liste ? Glissez l'icône.")
                 .font(.system(size: 11))
@@ -209,7 +209,7 @@ struct SettingsToggleDemo: View {
             frame(t: granted || Theme.reduceMotion ? 1.4 : t)
         }
         .accessibilityElement()
-        .accessibilityLabel("Dans la liste, activez l'interrupteur à côté de Murmure.")
+        .accessibilityLabel("Dans la liste, activez l'interrupteur à côté de Ramage.")
     }
 
     /// 0 à 1 : le curseur arrive ; 1 à 1,15 : il clique ; ensuite l'interrupteur est allumé.
@@ -223,7 +223,7 @@ struct SettingsToggleDemo: View {
             Divider().opacity(0.5)
             HStack(spacing: 9) {
                 Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 22, height: 22)
-                Text("Murmure").font(.system(size: 12, weight: .medium))
+                Text("Ramage").font(.system(size: 12, weight: .medium))
                 Spacer()
                 ToggleShape(on: on, accent: granted ? Palette.ok : Color(nsColor: .controlAccentColor))
                     .scaleEffect(pressing ? 0.92 : 1)

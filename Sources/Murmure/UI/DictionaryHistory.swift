@@ -60,7 +60,7 @@ struct CorrectionsSettings: View {
                 }
 
                 if settings.replacements.isEmpty && !adding {
-                    Text("Ajoutez les mots que Murmure écrit de travers : noms propres, marques, jargon.")
+                    Text("Ajoutez les mots que Ramage écrit de travers : noms propres, marques, jargon.")
                         .font(.system(size: 12))
                         .foregroundStyle(Palette.muted)
                         .frame(maxWidth: .infinity, alignment: .leading)

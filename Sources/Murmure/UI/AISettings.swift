@@ -36,7 +36,7 @@ struct LicenseView: View {
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(Theme.voice)
                 } else {
-                    Button("Acheter Murmure") { license.buy() }
+                    Button("Acheter Ramage") { license.buy() }
                         .buttonStyle(AccentButtonStyle())
                     restore
                 }
@@ -79,7 +79,7 @@ struct LicenseView: View {
 
     private var title: String {
         switch license.state {
-        case .licensed: return "Murmure est activé"
+        case .licensed: return "Ramage est activé"
         case .trial(let days, _): return days > 1 ? "\(days) jours d'essai restants" : "Dernier jour d'essai"
         case .expired: return "L'essai est terminé"
         }

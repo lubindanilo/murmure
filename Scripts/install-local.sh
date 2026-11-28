@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Construit Murmure et l'installe sur CE Mac (/Applications), sans rien publier.
+# Construit Ramage et l'installe sur CE Mac (/Applications), sans rien publier.
 # Signature stable avec le certificat auto-signé de Murmure : l'autorisation Accessibilité
 # tient d'une installation à l'autre.
 #
@@ -11,7 +11,8 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CONF="$HOME/.config/murmure"
 KC="$HOME/Library/Keychains/murmure-signing.keychain-db"
-DEST="/Applications/Murmure.app"
+DEST="/Applications/Ramage.app"
+LEGACY="/Applications/Murmure.app"   # ancien nom de l'app, même identifiant
 
 if [ -f "$KC" ] && [ -f "$CONF/keychain-password" ]; then
   security unlock-keychain -p "$(cat "$CONF/keychain-password")" "$KC"
@@ -25,10 +26,12 @@ fi
 
 # Quitter l'app en cours, remplacer, relancer.
 osascript -e 'tell application id "app.murmure.Murmure" to quit' >/dev/null 2>&1 || true
-for _ in 1 2 3 4 5 6 7 8 9 10; do pgrep -x Murmure >/dev/null || break; sleep 0.3; done
+for _ in 1 2 3 4 5 6 7 8 9 10; do pgrep -x "Ramage|Murmure" >/dev/null || break; sleep 0.3; done
+pkill -x Ramage 2>/dev/null || true
 pkill -x Murmure 2>/dev/null || true
+rm -rf "$LEGACY"
 rm -rf "$DEST"
-ditto "$ROOT/build/Murmure.app" "$DEST"
+ditto "$ROOT/build/Ramage.app" "$DEST"
 xattr -dr com.apple.quarantine "$DEST" 2>/dev/null || true
 open "$DEST"
 echo "Installé : $DEST ($(defaults read "$DEST/Contents/Info.plist" CFBundleShortVersionString))"
